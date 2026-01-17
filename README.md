@@ -5,7 +5,7 @@
 <h1 align="center">Omit.</h1>
 
 <p align="center">
-  <a href="https://github.com/heisyoudan/Omit/releases/download/v1.0.0/Omit.app.zip">
+  <a href="https://github.com/heisyoudan/Omit/raw/main/dist/Omit.app.zip">
     <strong>📥 Download Now</strong>
   </a>
   &nbsp;•&nbsp;
@@ -41,7 +41,7 @@ In an era of information overload, most monitoring tools overwhelm you with exce
 
 ### Download & Install
 
-1.  [**Download the latest version (Omit.zip)**](../../releases/latest)
+1.  [**Download the latest version (Omit.zip)**](https://github.com/heisyoudan/Omit/raw/main/dist/Omit.app.zip)
 2.  Drag the App into your **Applications** folder.
 3.  **Right-click** the icon and select **Open** (this is needed for unsigned apps—completely normal & safe).
 4.  Enjoy your minimal system monitor!
@@ -70,7 +70,7 @@ In an era of information overload, most monitoring tools overwhelm you with exce
 
 ### 下载与安装
 
-1.  [**点击这里下载最新版本 (Omit.zip)**](../../releases/latest)
+1.  [**点击这里下载最新版本 (Omit.zip)**](https://github.com/heisyoudan/Omit/raw/main/dist/Omit.app.zip)
 2.  将 App 拖入你的 **「应用程序」** 文件夹。
 3.  **右键点击** 图标，选择 **「打开」**（独立开发的 App 首次运行需要这样操作，完全安全）。
 4.  享受你的极简系统监控工具！
@@ -99,7 +99,7 @@ In an era of information overload, most monitoring tools overwhelm you with exce
 
 ### ダウンロードとインストール
 
-1.  [**最新バージョンをダウンロード (Omit.zip)**](../../releases/latest)
+1.  [**最新バージョンをダウンロード (Omit.zip)**](https://github.com/heisyoudan/Omit/raw/main/dist/Omit.app.zip)
 2.  アプリを **「アプリケーション」** フォルダにドラッグします。
 3.  アイコンを **右クリック** して、 **「開く」** を選択します（独立開発のアプリは初回起動時にこの操作が必要です。完全に安全です）。
 4.  シンプルなシステムモニターの時間をお楽しみください！
