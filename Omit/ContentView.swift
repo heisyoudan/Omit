@@ -162,7 +162,7 @@ struct ContentView: View {
         .padding(20)
         .frame(width: 280)
         .fixedSize(horizontal: false, vertical: true)
-        .background(.ultraThinMaterial)
+        .background(VisualEffectBlur().ignoresSafeArea())
         .preferredColorScheme(.dark)
         .onAppear {
             monitor.updateStats() // 启动时刷新
@@ -214,55 +214,80 @@ struct ContentView: View {
 }
 
 // --- 权限引导卡片 [新增] ---
+// --- 权限引导卡片 (幽灵态 + 微光交互) ---
 struct PermissionGuideView: View {
     let language: Language
+    @State private var isHovering = false // [新增] 记录鼠标悬停状态
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 24) {
+            
+            // 1. 图标
             Image(systemName: "lock.shield.fill")
-                .font(.system(size: 40))
-                .foregroundStyle(.yellow)
-                .padding(.top, 10)
+                .font(.system(size: 54))
+                .foregroundStyle(.primary.opacity(0.4))
             
-            Text(OmitLang.get("PERM_TITLE", lang: language))
-                .font(.headline)
-                .foregroundStyle(.primary)
+            // 2. 文字组
+            VStack(spacing: 8) {
+                Text(OmitLang.get("PERM_TITLE", lang: language))
+                    .font(.title3.bold())
+                    .foregroundStyle(.primary)
+                
+                Text(OmitLang.get("PERM_DESC", lang: language))
+                    .font(.subheadline)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 30)
+            }
             
-            Text(OmitLang.get("PERM_DESC", lang: language))
-                .font(.caption)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal)
-            
+            // 3. 按钮：微光交互版
             Button(action: {
-                // 打开系统设置 -> 隐私与安全性 -> 完全磁盘访问权限
                 if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
                     NSWorkspace.shared.open(url)
                 }
             }) {
                 Text(OmitLang.get("PERM_BTN", lang: language))
-                    .font(.caption.bold())
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(Color.blue)
-                    .foregroundStyle(.white)
-                    .cornerRadius(8)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(isHovering ? .white : .primary.opacity(0.9)) // 悬停时文字变纯白
+                    .padding(.horizontal, 28)
+                    .padding(.vertical, 14)
+                    // [动态背景] 悬停时更亮，平时更淡
+                    .background(
+                        Material.regular  // <--- 显式指定 Material 类型
+                            .opacity(isHovering ? 0.9 : 0.4) // 直接在后面切换透明度，代码更简洁
+                    )
+                    .clipShape(Capsule())
+                    // [动态边框] 悬停时加光晕
+                    .overlay(
+                        Capsule()
+                            .stroke(
+                                isHovering ? Color.white.opacity(0.5) : Color.white.opacity(0.1),
+                                lineWidth: isHovering ? 1 : 0.5
+                            )
+                    )
+                    // [动态阴影] 悬停时增加发光感
+                    .shadow(
+                        color: isHovering ? Color.white.opacity(0.2) : Color.black.opacity(0.2),
+                        radius: isHovering ? 15 : 10,
+                        x: 0,
+                        y: isHovering ? 0 : 5
+                    )
+                    .animation(.easeInOut(duration: 0.2), value: isHovering) // 平滑过渡动画
             }
             .buttonStyle(.plain)
+            .onHover { hovering in
+                isHovering = hovering // 监听鼠标进出
+            }
             
+            // 4. 底部提示
             Text(OmitLang.get("PERM_HINT", lang: language))
-                .font(.system(size: 9))
+                .font(.caption2)
                 .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)
-                .padding(.bottom, 10)
+                .padding(.top, 4)
         }
         .frame(maxWidth: .infinity)
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
-        )
+        .padding(.vertical, 40)
     }
 }
 
@@ -503,4 +528,16 @@ struct OmitWideCard: View {
 
 #Preview {
     ContentView().background(Color.black)
+}
+
+// --- 这是一个专门制造“高级磨砂感”的组件 ---
+struct VisualEffectBlur: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.blendingMode = .behindWindow // 让背景透视
+        view.state = .active              // 保持激活状态
+        view.material = .hudWindow        // <--- 关键！这是“HUD”材质，最正宗的深色磨砂
+        return view
+    }
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
 }
