@@ -36,12 +36,11 @@ In an era of information overload, most monitoring tools overwhelm you with exce
 * **🚀 Zero Friction**: Launch at login, low resource usage, silent guardian.
 
 ### Download & Install
-Omit is an open-source project by an independent developer and is not notarized by Apple, so you may encounter a security prompt on first launch.
 
 1.  [**Download the latest version (Omit.zip)**](../../releases/latest)
 2.  Drag the App into your **Applications** folder.
-3.  **Right-click** the icon and select **Open**.
-4.  Click **Open** in the dialog box.
+3.  **Right-click** the icon and select **Open** (this is needed for unsigned apps—completely normal & safe).
+4.  Enjoy your minimal system monitor!
 
 <br>
 <br>
@@ -66,12 +65,11 @@ Omit is an open-source project by an independent developer and is not notarized 
 * **🚀 静默守护**: 支持开机自启，极低的资源占用。
 
 ### 下载与安装
-由于 Omit 是一款由独立开发者构建的开源软件，且未向 Apple 缴纳开发者年费，初次运行时可能会被 macOS 安全机制拦截。
 
 1.  [**点击这里下载最新版本 (Omit.zip)**](../../releases/latest)
 2.  将 App 拖入你的 **「应用程序」** 文件夹。
-3.  **右键点击** 图标，选择 **「打开」**。
-4.  在弹出的对话框中再次点击 **「打开」** 即可。
+3.  **右键点击** 图标，选择 **「打开」**（独立开发的 App 首次运行需要这样操作，完全安全）。
+4.  享受你的极简系统监控工具！
 
 <br>
 <br>
