@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://github.com/heisyoudan/Omit/releases/download/v1.0.0/Omit.app.zip">
-    <strong>📥 Download Now (No Account Required)</strong>
+    <strong>📥 Download Now</strong>
   </a>
   &nbsp;•&nbsp;
   <a href="#-english">English</a> • <a href="#-中文">中文</a> • <a href="#-日本語">日本語</a>
