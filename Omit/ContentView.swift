@@ -8,7 +8,6 @@
 import SwiftUI
 import Charts
 
-// --- 1. 多语言管理器 ---
 enum Language: String, CaseIterable, Identifiable {
     case english = "English"
     case chinese = "中文"
@@ -45,7 +44,6 @@ struct OmitLang {
     }
 }
 
-// 模块枚举
 enum OmitModule: String, CaseIterable {
     case cpu, battery, network, trash
 }
@@ -70,8 +68,6 @@ struct ContentView: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            
-            // --- Header ---
             HStack {
                 Text("Omit.")
                     .font(.system(size: 20, weight: .heavy, design: .default))
@@ -93,20 +89,15 @@ struct ContentView: View {
             .padding(.horizontal, 4)
             .padding(.top, 4)
             
-            // --- Content ---
             if showSettings {
                 SettingsView(launchManager: launchManager, languageRaw: $languageRaw)
                     .transition(.move(edge: .trailing).combined(with: .opacity))
             } else {
-                // [权限检测] 如果没有权限，显示引导卡片
                 if !monitor.hasTrashPermission {
                     PermissionGuideView(language: language)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 } else {
-                    // 正常内容
                     VStack(spacing: 12) {
-                        
-                        // 1. 核心层
                         if showMemory {
                             OmitCard(
                                 title: OmitLang.get("MEMORY", lang: language),
@@ -128,7 +119,6 @@ struct ContentView: View {
                             )
                         }
                         
-                        // 2. 动态流动层
                         let activeModules = getActiveModules()
                         
                         if activeModules.count == 1 { renderWide(activeModules[0]) }
@@ -144,7 +134,6 @@ struct ContentView: View {
                             HStack(spacing: 12) { renderSmall(activeModules[2]); renderSmall(activeModules[3]) }
                         }
                         
-                        // Zen Mode
                         if !showMemory && !showStorage && activeModules.isEmpty {
                             Text(OmitLang.get("ZEN_MODE", lang: language))
                                 .font(.caption)
@@ -156,7 +145,6 @@ struct ContentView: View {
                 }
             }
             
-            // --- Footer ---
             Spacer().frame(height: 4)
         }
         .padding(20)
@@ -165,11 +153,9 @@ struct ContentView: View {
         .background(VisualEffectBlur().ignoresSafeArea())
         .preferredColorScheme(.dark)
         .onAppear {
-            monitor.updateStats() // 启动时刷新
+            monitor.updateStats()
         }
     }
-    
-    // --- 逻辑助手 ---
     
     func getActiveModules() -> [OmitModule] {
         var modules: [OmitModule] = []
@@ -213,21 +199,16 @@ struct ContentView: View {
     }
 }
 
-// --- 权限引导卡片 [新增] ---
-// --- 权限引导卡片 (幽灵态 + 微光交互) ---
 struct PermissionGuideView: View {
     let language: Language
-    @State private var isHovering = false // [新增] 记录鼠标悬停状态
+    @State private var isHovering = false
     
     var body: some View {
         VStack(spacing: 24) {
-            
-            // 1. 图标
             Image(systemName: "lock.shield.fill")
                 .font(.system(size: 54))
                 .foregroundStyle(.primary.opacity(0.4))
             
-            // 2. 文字组
             VStack(spacing: 8) {
                 Text(OmitLang.get("PERM_TITLE", lang: language))
                     .font(.title3.bold())
@@ -291,9 +272,8 @@ struct PermissionGuideView: View {
     }
 }
 
-// --- 设置页面 (加入开机自启) ---
 struct SettingsView: View {
-    @ObservedObject var launchManager: LaunchManager // [新增]
+    @ObservedObject var launchManager: LaunchManager
     
     @AppStorage("showMemory") private var showMemory = true
     @AppStorage("showStorage") private var showStorage = true
@@ -329,7 +309,6 @@ struct SettingsView: View {
                 .padding(.top, 8)
             
             VStack(spacing: 0) {
-                // [新增] 开机自启开关
                 HStack {
                     Label(OmitLang.get("LAUNCH_LOGIN", lang: language), systemImage: "bolt.fill")
                         .font(.system(size: 14))
@@ -399,8 +378,7 @@ struct AlignedToggleRow: View {
     }
 }
 
-// OmitCard 等组件保持不变，这里省略，请保留原有的卡片组件代码...
-// (为了代码完整性，请确保下面的 OmitCard, OmitSmallCard, OmitWideCard 还在文件里)
+// OmitCard 等组件
 struct OmitCard: View {
     let title: String
     let value: String
@@ -408,6 +386,7 @@ struct OmitCard: View {
     let percent: Double
     let icon: String
     let color: Color
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         HStack(spacing: 16) {
@@ -446,7 +425,14 @@ struct OmitCard: View {
             }
         }
         .padding(14)
-        .background(Color.white.opacity(0.05))
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(colorScheme == .dark ? Color.white.opacity(0.05) : Color.black.opacity(0.04))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.08), lineWidth: 0.5)
+        )
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 }
@@ -456,6 +442,7 @@ struct OmitSmallCard: View {
     let value: String
     let icon: String
     let color: Color
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -486,7 +473,14 @@ struct OmitSmallCard: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white.opacity(0.05))
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(colorScheme == .dark ? Color.white.opacity(0.05) : Color.black.opacity(0.04))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.08), lineWidth: 0.5)
+        )
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 }
@@ -496,6 +490,7 @@ struct OmitWideCard: View {
     let value: String
     let icon: String
     let color: Color
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         HStack(alignment: .center, spacing: 16) {
@@ -521,7 +516,14 @@ struct OmitWideCard: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(Color.white.opacity(0.05))
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(colorScheme == .dark ? Color.white.opacity(0.05) : Color.black.opacity(0.04))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.08), lineWidth: 0.5)
+        )
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 }

@@ -12,10 +12,10 @@ import IOKit.ps
 
 class SystemMonitor: ObservableObject {
     
-    // --- 1. 发布给 UI 的数据 ---
     @Published var memoryUsedString: String = "0 GB"
     @Published var memoryTotalString: String = "16 GB"
     @Published var memoryPercent: Double = 0.0
+    @Published var memoryActiveString: String = "0 GB"
     
     @Published var storageFreeString: String = "0 GB"
     @Published var storageUsedPercent: Double = 0.0
@@ -30,10 +30,8 @@ class SystemMonitor: ObservableObject {
     
     @Published var trashSizeString: String = "Empty"
     
-    // [新增] 权限状态标记
     @Published var hasTrashPermission: Bool = true
     
-    // --- 2. 内部工具 ---
     private var timer: Timer?
     private let fileManager = FileManager.default
     
@@ -50,7 +48,6 @@ class SystemMonitor: ObservableObject {
     private var prevCpuInfo: processor_info_array_t?
     private var prevCpuInfoCount: mach_msg_type_number_t = 0
     
-    // --- 3. 初始化与清理 ---
     init() {
         checkPermission() // 启动时先检查一次权限
         startMonitoring()
@@ -67,11 +64,9 @@ class SystemMonitor: ObservableObject {
         }
     }
     
-    // [新增] 检查权限的方法
     func checkPermission() {
         let trashURL = fileManager.urls(for: .trashDirectory, in: .userDomainMask).first!
         do {
-            // 尝试读取废纸篓目录，如果没报错就是有权限
             _ = try fileManager.contentsOfDirectory(at: trashURL, includingPropertiesForKeys: nil)
             DispatchQueue.main.async { self.hasTrashPermission = true }
         } catch {
@@ -94,12 +89,6 @@ class SystemMonitor: ObservableObject {
         updateTrash()
     }
     
-    // --- 4. 核心逻辑 ---
-    // (A, B, C, D, E 省略，保持不变)
-    // 请保留你之前的 Memory, Storage, CPU, Battery, Network 代码
-    // 这里为了篇幅，我假设你保留了它们。如果丢失了请用上一个回复的代码。
-    
-    // A. 内存
     private func updateMemory() {
         var stats = vm_statistics64()
         var size = mach_msg_type_number_t(MemoryLayout<vm_statistics64>.stride / MemoryLayout<integer_t>.stride)
@@ -111,18 +100,27 @@ class SystemMonitor: ObservableObject {
         }
         if result == KERN_SUCCESS {
             let pageSize = UInt64(getpagesize())
-            let used = UInt64(stats.active_count + stats.wire_count) * pageSize
             let total = ProcessInfo.processInfo.physicalMemory
+            // 参考 exelban/stats 开源项目的计算方式
+            let active = UInt64(stats.active_count) * pageSize
+            let inactive = UInt64(stats.inactive_count) * pageSize
+            let speculative = UInt64(stats.speculative_count) * pageSize
+            let wired = UInt64(stats.wire_count) * pageSize
+            let compressed = UInt64(stats.compressor_page_count) * pageSize
+            let purgeable = UInt64(stats.purgeable_count) * pageSize
+            let external = UInt64(stats.external_page_count) * pageSize
+            // 已用 = active + inactive + speculative + wired + compressed - purgeable - external
+            let used = active + inactive + speculative + wired + compressed - purgeable - external
             let percent = Double(used) / Double(total)
             self.memoryUsedString = byteFormatter.string(fromByteCount: Int64(used))
             self.memoryTotalString = byteFormatter.string(fromByteCount: Int64(total))
+            self.memoryActiveString = byteFormatter.string(fromByteCount: Int64(active))
             self.memoryPercent = percent
         }
     }
     
-    // B. 硬盘
     private func updateStorage() {
-        let fileURL = URL(fileURLWithPath: NSHomeDirectory())
+        let fileURL = URL(fileURLWithPath: "/")
         do {
             let values = try fileURL.resourceValues(forKeys: [.volumeTotalCapacityKey, .volumeAvailableCapacityKey])
             if let capacity = values.volumeTotalCapacity, let available = values.volumeAvailableCapacity {
@@ -133,7 +131,6 @@ class SystemMonitor: ObservableObject {
         } catch {}
     }
     
-    // C. CPU
     private func updateCPU() {
         var numCPUs: natural_t = 0
         var cpuInfo: processor_info_array_t?
@@ -165,7 +162,6 @@ class SystemMonitor: ObservableObject {
         }
     }
     
-    // D. 电池
     private func updateBattery() {
         let snapshot = IOPSCopyPowerSourcesInfo().takeRetainedValue()
         let sources = IOPSCopyPowerSourcesList(snapshot).takeRetainedValue() as Array
@@ -189,7 +185,6 @@ class SystemMonitor: ObservableObject {
         }
     }
     
-    // E. 网络
     private func updateNetwork() {
         var ifaddr: UnsafeMutablePointer<ifaddrs>?
         guard getifaddrs(&ifaddr) == 0 else { return }
@@ -202,7 +197,8 @@ class SystemMonitor: ObservableObject {
                Int(interface.ifa_addr.pointee.sa_family) == AF_LINK,
                let data = interface.ifa_data {
                 let networkData = data.assumingMemoryBound(to: if_data.self).pointee
-                totalBytes += UInt64(networkData.ifi_ibytes)
+                // 累加下载+上传字节数
+                totalBytes += UInt64(networkData.ifi_ibytes) + UInt64(networkData.ifi_obytes)
             }
             ptr = interface.ifa_next
         }
@@ -222,12 +218,10 @@ class SystemMonitor: ObservableObject {
         lastCheckTime = now
     }
     
-    // F. 废纸篓 (修改版：增加权限标记)
     func updateTrash() {
         let trashURL = fileManager.urls(for: .trashDirectory, in: .userDomainMask).first!
         do {
             let fileURLs = try fileManager.contentsOfDirectory(at: trashURL, includingPropertiesForKeys: [.totalFileAllocatedSizeKey])
-            // 如果能走到这里，说明有权限
             DispatchQueue.main.async { self.hasTrashPermission = true }
             
             var totalSize: Int64 = 0
@@ -243,13 +237,11 @@ class SystemMonitor: ObservableObject {
                 self.trashSizeString = byteFormatter.string(fromByteCount: totalSize)
             }
         } catch {
-            // 如果报错，说明没权限
             DispatchQueue.main.async { self.hasTrashPermission = false }
             self.trashSizeString = "No Access"
         }
     }
     
-    // G. 清空动作
     func emptyTrashAction() {
         let trashURL = fileManager.urls(for: .trashDirectory, in: .userDomainMask).first!
         do {

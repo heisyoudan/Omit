@@ -36,25 +36,16 @@ echo "🔐 进行自签名..."
 codesign --force --deep --sign - "$APP_PATH"
 echo "✅ 自签名完成"
 
-# 5. 创建 DMG
-echo "📦 打包为 DMG..."
-DMG_PATH="dist/Omit.dmg"
+# 5. 创建 ZIP
+echo "📦 打包为 ZIP..."
+ZIP_PATH="dist/Omit.zip"
 
-# 创建临时目录
-TEMP_DMG_DIR=$(mktemp -d)
-trap "rm -rf $TEMP_DMG_DIR" EXIT
+# 打包为 ZIP（从 build/Build/Products/Release 目录）
+cd "build/Build/Products/Release"
+zip -r -y "../../../../$ZIP_PATH" "Omit.app"
+cd ../../../../
 
-# 复制应用到临时目录
-cp -r "$APP_PATH" "$TEMP_DMG_DIR/"
-
-# 创建 DMG（无压缩，更快）
-hdiutil create -volname "Omit" \
-    -srcfolder "$TEMP_DMG_DIR" \
-    -ov \
-    -format UDZO \
-    "$DMG_PATH"
-
-echo "✅ DMG 创建完成: $DMG_PATH"
+echo "✅ ZIP 创建完成: $ZIP_PATH"
 
 # 6. 获取应用版本
 VERSION=$(mdls -name kMDItemVersion "$APP_PATH" | cut -d'"' -f2)
@@ -67,10 +58,10 @@ echo "=========================================="
 echo "🎉 构建完成！"
 echo "=========================================="
 echo "应用版本: $VERSION"
-echo "输出文件: $DMG_PATH"
-echo "文件大小: $(du -h $DMG_PATH | cut -f1)"
+echo "输出文件: $ZIP_PATH"
+echo "文件大小: $(du -h $ZIP_PATH | cut -f1)"
 echo ""
 echo "下一步:"
 echo "1. 测试应用是否能正常运行"
-echo "2. 上传 $DMG_PATH 到 GitHub Releases"
+echo "2. 上传 $ZIP_PATH 到 GitHub"
 echo "=========================================="

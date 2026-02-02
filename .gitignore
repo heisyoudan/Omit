@@ -92,5 +92,11 @@ iOSInjectionProject/
 *.swo
 *~
 
+# Test files and monitoring scripts
+test_*.swift
+test_*.csv
+monitor_*.csv
+tools/
+
 # Build outputs
 Omit\ build/
