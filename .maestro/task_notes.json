@@ -17,6 +17,15 @@
       "taskId" : "TASK-UI-001",
       "timestamp" : "2026-08-25T12:30:48Z",
       "type" : "general"
+    },
+    {
+      "authorRole" : "qa",
+      "detailsMd" : "## Truth\n\n- Signed Debug build passed with `xcodebuild -project Omit.xcodeproj -scheme Omit -configuration Debug ... build` and ended in `BUILD SUCCEEDED`.\n- Commit `64568b2` maps CPU, Battery, and Trash through typed states into `OmitDashboardState`; source scan found no new `Empty` / `No Access` / icon-string state parsing.\n- Trash destructive wiring remains absent: no `emptyTrashAction` or `removeItem` implementation is reachable from the production dashboard callbacks.\n- Appearance is stored by `@AppStorage(\"appearancePreference\")`; after real UI selection, `defaults read com.dAn.Omit appearancePreference` returned `light`, proving the production preference key was written. ContentView reads the same key on construction.\n- Light and Dark production branches explicitly drive both SwiftUI color scheme and the host window `NSAppearance`; System clears the override and follows macOS.\n\n## Projection\n\n- Four PO screenshots from the real MenuBarExtra show a dark dashboard, System-selected dark settings, Light-selected light settings, and a light dashboard.\n- Dashboard values are projected coherently: Memory, Storage, CPU, Battery, and Network are visible and readable in both appearances.\n- Trash projects only the authorization-needed state and Authorize control; no card-wide delete or wired clear action is exposed.\n- The observed dark and light surfaces match the exact production appearance branches; System correctly matches the currently dark macOS appearance.\n\n## Observe\n\n- PO supplied screenshots in chat at 2026-08-25 21:58 JST.\n- Dark appearance: light text on dark surfaces, readable cards and controls.\n- Light appearance: dark text on light surfaces, readable cards and controls.\n- System appearance: selected while the real window follows the dark macOS appearance.\n- Visual hierarchy remains consistent with TASK-UI-001 and no acceptance-blocking clipping or contrast defect is visible.\n\n## Final Verdict\n\n**PASS**\n\nAll TASK-DEV-001 acceptance criteria are sufficiently supported by build, source, preference-store, and real MenuBarExtra observation evidence. No rollback or contract correction is required. Route to `closing` for Sage final review.\n",
+      "id" : "NTE-20260825-001",
+      "summary" : "QA 最终裁定：PASS",
+      "taskId" : "TASK-DEV-001",
+      "timestamp" : "2026-08-25T13:00:05Z",
+      "type" : "test_verdict"
     }
   ]
 }

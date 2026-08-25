@@ -109,6 +109,26 @@
       "summary" : "DEV 已推进流转：in_progress -> qa",
       "taskId" : "TASK-DEV-001",
       "timestamp" : "2026-08-25T12:41:22Z"
+    },
+    {
+      "authorRole" : "qa",
+      "detailsMd" : "【自动推进】\n- 当前流程采用 Agent-first 默认执行契约。\n- 在权限允许、前置满足时，`transition request` 会直接完成状态推进，不再等待 Sage 中间审批。\n\n【结果】\n- 从：qa\n- 到：closing\n- 下一交接：sage",
+      "id" : "JRN-20260825-012",
+      "stage" : "closing",
+      "status" : "info",
+      "summary" : "QA 已完成验证并推进流转：qa -> closing",
+      "taskId" : "TASK-DEV-001",
+      "timestamp" : "2026-08-25T13:00:35Z"
+    },
+    {
+      "authorRole" : "sage",
+      "detailsMd" : "Sage 最终复核通过：QA test_verdict=PASS，Gate RUN-20260825-003 通过；真实 MenuBarExtra 的 System/Light/Dark、AppStorage 持久化、类型化监控投影和 Trash 未接线安全边界均有证据，Sage 复跑 Debug 构建成功。",
+      "id" : "JRN-20260825-013",
+      "stage" : "done",
+      "status" : "success",
+      "summary" : "Sage 已关闭任务",
+      "taskId" : "TASK-DEV-001",
+      "timestamp" : "2026-08-25T13:02:45Z"
     }
   ]
 }
