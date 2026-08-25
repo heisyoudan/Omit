@@ -14,6 +14,13 @@ enum AppAppearance: String, CaseIterable, Identifiable {
     var colorScheme: ColorScheme? {
         switch self { case .system: nil; case .light: .light; case .dark: .dark }
     }
+    var nsAppearance: NSAppearance? {
+        switch self {
+        case .system: nil
+        case .light: NSAppearance(named: .aqua)
+        case .dark: NSAppearance(named: .darkAqua)
+        }
+    }
     var icon: String {
         switch self { case .system: "circle.lefthalf.filled"; case .light: "sun.max.fill"; case .dark: "moon.fill" }
     }
@@ -94,15 +101,37 @@ struct ContentView: View {
     private var language: Language { Language(rawValue: languageRaw) ?? .chinese }
     private var appearance: AppAppearance { AppAppearance(rawValue: appearanceRaw) ?? .system }
     private var dashboardState: OmitDashboardState {
+        let cpuValue: String?
+        switch monitor.cpuState {
+        case .unavailable: cpuValue = nil
+        case .available(let value): cpuValue = value
+        }
+
+        let batteryValue: String?
+        let batteryIsCharging: Bool
+        switch monitor.batteryState {
+        case .unavailable:
+            batteryValue = nil
+            batteryIsCharging = false
+        case .available(let value, let isCharging):
+            batteryValue = value
+            batteryIsCharging = isCharging
+        }
+
         let trash: TrashPresentation
-        if !monitor.hasTrashPermission || monitor.trashSizeString == "No Access" { trash = .unauthorized }
-        else if monitor.trashSizeString == "Empty" { trash = .empty }
-        else { trash = .content(monitor.trashSizeString) }
+        switch monitor.trashState {
+        case .unauthorized: trash = .unauthorized
+        case .empty: trash = .empty
+        case .content(let value): trash = .content(value)
+        case .scanning: trash = .scanning
+        case .error(let message): trash = .error(message)
+        }
+
         return OmitDashboardState(
             memoryUsed: monitor.memoryUsedString, memoryTotal: monitor.memoryTotalString, memoryPercent: monitor.memoryPercent,
             storageAvailable: monitor.storageFreeString, storageUsedPercent: monitor.storageUsedPercent,
-            cpuValue: monitor.cpuLoadString == "—" ? nil : monitor.cpuLoadString,
-            batteryValue: monitor.batteryPercentString, batteryIsCharging: monitor.batteryIcon.contains("bolt"),
+            cpuValue: cpuValue,
+            batteryValue: batteryValue, batteryIsCharging: batteryIsCharging,
             downloadValue: monitor.networkSpeedString, uploadValue: "—", trash: trash,
             updatedLabel: OmitLang.get("UPDATED", lang: language)
         )
@@ -129,8 +158,44 @@ struct ContentView: View {
                 }
             }
         }
-        .preferredColorScheme(appearance.colorScheme)
+        .omitAppearance(appearance)
         .onAppear { monitor.updateStats() }
+    }
+}
+
+private struct WindowAppearanceBridge: NSViewRepresentable {
+    let appearance: NSAppearance?
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView(frame: .zero)
+        applyAppearance(to: view)
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        applyAppearance(to: nsView)
+    }
+
+    private func applyAppearance(to view: NSView) {
+        DispatchQueue.main.async {
+            view.window?.appearance = appearance
+        }
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func omitAppearance(_ appearance: AppAppearance) -> some View {
+        switch appearance {
+        case .system:
+            background(WindowAppearanceBridge(appearance: nil))
+        case .light:
+            environment(\.colorScheme, .light)
+                .background(WindowAppearanceBridge(appearance: appearance.nsAppearance))
+        case .dark:
+            environment(\.colorScheme, .dark)
+                .background(WindowAppearanceBridge(appearance: appearance.nsAppearance))
+        }
     }
 }
 

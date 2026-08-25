@@ -11,6 +11,23 @@ import Combine
 import IOKit.ps
 
 class SystemMonitor: ObservableObject {
+    enum CPUState: Equatable {
+        case unavailable
+        case available(String)
+    }
+
+    enum BatteryState: Equatable {
+        case unavailable
+        case available(value: String, isCharging: Bool)
+    }
+
+    enum TrashState: Equatable {
+        case unauthorized
+        case empty
+        case content(String)
+        case scanning
+        case error(String)
+    }
     
     @Published var memoryUsedString: String = "0 GB"
     @Published var memoryTotalString: String = "16 GB"
@@ -20,17 +37,15 @@ class SystemMonitor: ObservableObject {
     @Published var storageFreeString: String = "0 GB"
     @Published var storageUsedPercent: Double = 0.0
     
-    @Published var cpuLoadString: String = "—"
+    @Published private(set) var cpuState: CPUState = .unavailable
     
-    @Published var batteryPercentString: String = "100%"
+    @Published private(set) var batteryState: BatteryState = .unavailable
     @Published var batteryIcon: String = "battery.100"
     @Published var batteryColor: Color = .green
     
     @Published var networkSpeedString: String = "0 KB/s"
     
-    @Published var trashSizeString: String = "Empty"
-    
-    @Published var hasTrashPermission: Bool = true
+    @Published private(set) var trashState: TrashState = .scanning
     
     private var timer: Timer?
     private let fileManager = FileManager.default
@@ -68,9 +83,8 @@ class SystemMonitor: ObservableObject {
         let trashURL = fileManager.urls(for: .trashDirectory, in: .userDomainMask).first!
         do {
             _ = try fileManager.contentsOfDirectory(at: trashURL, includingPropertiesForKeys: nil)
-            DispatchQueue.main.async { self.hasTrashPermission = true }
         } catch {
-            DispatchQueue.main.async { self.hasTrashPermission = false }
+            DispatchQueue.main.async { self.trashState = .unauthorized }
         }
     }
     
@@ -151,7 +165,7 @@ class SystemMonitor: ObservableObject {
                     if total > 0 { totalUsage += Float(inUse) / Float(total) }
                 }
                 let avgUsage = totalUsage / Float(numCPUs)
-                self.cpuLoadString = String(format: "%.0f%%", avgUsage * 100)
+                self.cpuState = .available(String(format: "%.0f%%", avgUsage * 100))
             }
             if let prev = prevCpuInfo {
                 let prevSize = Int(prevCpuInfoCount) * MemoryLayout<integer_t>.stride
@@ -165,13 +179,17 @@ class SystemMonitor: ObservableObject {
     private func updateBattery() {
         let snapshot = IOPSCopyPowerSourcesInfo().takeRetainedValue()
         let sources = IOPSCopyPowerSourcesList(snapshot).takeRetainedValue() as Array
-        if let source = sources.first {
+        guard let source = sources.first else {
+            batteryState = .unavailable
+            return
+        }
+        do {
             let info = IOPSGetPowerSourceDescription(snapshot, source).takeUnretainedValue() as! [String: Any]
             if let capacity = info[kIOPSCurrentCapacityKey] as? Int,
                let maxCapacity = info[kIOPSMaxCapacityKey] as? Int {
                 let percent = Int((Double(capacity) / Double(maxCapacity)) * 100)
-                self.batteryPercentString = "\(percent)%"
                 let isCharging = (info[kIOPSIsChargingKey] as? Bool) == true
+                self.batteryState = .available(value: "\(percent)%", isCharging: isCharging)
                 if isCharging {
                     self.batteryColor = .green; self.batteryIcon = "battery.100.bolt"
                 } else {
@@ -181,6 +199,8 @@ class SystemMonitor: ObservableObject {
                     else if percent > 25 { self.batteryIcon = "battery.50" }
                     else { self.batteryIcon = "battery.25" }
                 }
+            } else {
+                batteryState = .unavailable
             }
         }
     }
@@ -222,8 +242,6 @@ class SystemMonitor: ObservableObject {
         let trashURL = fileManager.urls(for: .trashDirectory, in: .userDomainMask).first!
         do {
             let fileURLs = try fileManager.contentsOfDirectory(at: trashURL, includingPropertiesForKeys: [.totalFileAllocatedSizeKey])
-            DispatchQueue.main.async { self.hasTrashPermission = true }
-            
             var totalSize: Int64 = 0
             for fileURL in fileURLs {
                 let values = try fileURL.resourceValues(forKeys: [.totalFileAllocatedSizeKey])
@@ -232,27 +250,12 @@ class SystemMonitor: ObservableObject {
                 }
             }
             if totalSize == 0 {
-                self.trashSizeString = "Empty"
+                self.trashState = .empty
             } else {
-                self.trashSizeString = byteFormatter.string(fromByteCount: totalSize)
+                self.trashState = .content(byteFormatter.string(fromByteCount: totalSize))
             }
         } catch {
-            DispatchQueue.main.async { self.hasTrashPermission = false }
-            self.trashSizeString = "No Access"
-        }
-    }
-    
-    func emptyTrashAction() {
-        let trashURL = fileManager.urls(for: .trashDirectory, in: .userDomainMask).first!
-        do {
-            let fileURLs = try fileManager.contentsOfDirectory(at: trashURL, includingPropertiesForKeys: nil)
-            for fileURL in fileURLs {
-                try fileManager.removeItem(at: fileURL)
-            }
-            if let sound = NSSound(named: "Tink") { sound.play() }
-            updateTrash()
-        } catch {
-            print("Empty Trash Failed: \(error)")
+            self.trashState = .unauthorized
         }
     }
 }

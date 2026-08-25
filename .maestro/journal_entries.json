@@ -89,6 +89,16 @@
       "summary" : "Sage 已发布并启动任务",
       "taskId" : "TASK-REL-001",
       "timestamp" : "2026-08-25T12:32:57Z"
+    },
+    {
+      "authorRole" : "dev",
+      "detailsMd" : "根因：MenuBarExtra 内容仅设置 preferredColorScheme，未同步承载 NSWindow 的 appearance，导致窗口材质与语义文字未可靠切换；ContentView 还通过 No Access、Empty、破折号和图标名解析监控状态。修复：增加 WindowAppearanceBridge，使 System/Light/Dark 同步驱动 NSWindow.appearance 与 SwiftUI colorScheme；将 CPU、Battery、Trash 改为类型化状态并在 ContentView 明确映射到 OmitDashboardState；移除未接线的真实 Trash 删除函数。验证：git diff --check 通过，字符串状态解析扫描通过，xcodebuild Debug CODE_SIGNING_ALLOWED=NO 成功。测试入口：真实 Settings 可重复切换三种主题，现有 previews 覆盖 Light/Dark、不可用指标及 Trash 多状态。保留边界：未修改任何监控采样公式，未启用 Sandbox/授权/bookmark，Network 上下行分离仍按后续逻辑任务处理，Trash 授权与清空仍未接线；真实 MenuBarExtra 人工视觉裁定交由 QA chat_observe。",
+      "id" : "JRN-20260825-010",
+      "stage" : "in_progress",
+      "status" : "info",
+      "summary" : "修复真实主题投影并建立类型化监控状态适配",
+      "taskId" : "TASK-DEV-001",
+      "timestamp" : "2026-08-25T12:40:47Z"
     }
   ]
 }
