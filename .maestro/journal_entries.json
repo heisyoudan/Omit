@@ -129,6 +129,16 @@
       "summary" : "Sage 已关闭任务",
       "taskId" : "TASK-DEV-001",
       "timestamp" : "2026-08-25T13:02:45Z"
+    },
+    {
+      "authorRole" : "dev",
+      "detailsMd" : "根因：网络将多个 en/bridge 接口的32位 RX/TX 合并为单值，无法区分上下行且会重复计数；CPU 使用有符号差值，首次采样、回绕和重置可产生无效结果；电池默认值会让无内置电池设备显示100%；内存公式直接做 UInt64 减法且无0...1边界。修复：新增纯函数 SystemMetrics，分别处理内存饱和运算与边界、CPU 首次基线/无效delta、网络独立RX/TX基线与接口切换/断网/计数器下降/休眠间隔；网络采样改用路由主接口和 NET_RT_IFLIST2 if_data64，避免无条件叠加VPN/bridge；电池明确输出 noBattery/unavailable/available；UI映射独立download/upload。验证：SystemMetricsProbe 覆盖内存下溢/溢出、CPU首次采样与重置、网络独立速率/接口切换/断网/休眠/计数器重置，并在实机读取 en0 64位计数 rx=3844220928 tx=69892096，结果PASS；xcodebuild Debug成功；git diff --check通过。保留边界：未改主面板设计、Trash、Sandbox及整体刷新线程架构；内存为Omit状态估算，不承诺复现Activity Monitor。",
+      "id" : "JRN-20260825-014",
+      "stage" : "in_progress",
+      "status" : "info",
+      "summary" : "修正系统指标语义、64位网络采样与计数器边界",
+      "taskId" : "TASK-DEV-002",
+      "timestamp" : "2026-08-25T13:21:00Z"
     }
   ]
 }

@@ -6,8 +6,8 @@
 //
 
 import Foundation
-import SwiftUI
 import Combine
+import Darwin
 import IOKit.ps
 
 class SystemMonitor: ObservableObject {
@@ -17,8 +17,14 @@ class SystemMonitor: ObservableObject {
     }
 
     enum BatteryState: Equatable {
+        case noBattery
         case unavailable
         case available(value: String, isCharging: Bool)
+    }
+
+    enum NetworkState: Equatable {
+        case unavailable
+        case available(download: String, upload: String)
     }
 
     enum TrashState: Equatable {
@@ -38,13 +44,8 @@ class SystemMonitor: ObservableObject {
     @Published var storageUsedPercent: Double = 0.0
     
     @Published private(set) var cpuState: CPUState = .unavailable
-    
     @Published private(set) var batteryState: BatteryState = .unavailable
-    @Published var batteryIcon: String = "battery.100"
-    @Published var batteryColor: Color = .green
-    
-    @Published var networkSpeedString: String = "0 KB/s"
-    
+    @Published private(set) var networkState: NetworkState = .unavailable
     @Published private(set) var trashState: TrashState = .scanning
     
     private var timer: Timer?
@@ -57,11 +58,9 @@ class SystemMonitor: ObservableObject {
         return f
     }()
     
-    private var lastNetworkBytes: UInt64 = 0
-    private var lastCheckTime: TimeInterval = Date().timeIntervalSince1970
-    
-    private var prevCpuInfo: processor_info_array_t?
-    private var prevCpuInfoCount: mach_msg_type_number_t = 0
+    private var cpuCalculator = CPUUsageCalculator()
+    private var networkCalculator = NetworkRateCalculator()
+    private let networkSampler = NetworkCounterSampler()
     
     init() {
         checkPermission() // 启动时先检查一次权限
@@ -72,11 +71,6 @@ class SystemMonitor: ObservableObject {
     deinit {
         timer?.invalidate()
         timer = nil
-        // 释放 CPU 信息内存
-        if let prev = prevCpuInfo {
-            let prevSize = Int(prevCpuInfoCount) * MemoryLayout<integer_t>.stride
-            vm_deallocate(mach_task_self_, vm_address_t(bitPattern: prev), vm_size_t(prevSize))
-        }
     }
     
     func checkPermission() {
@@ -115,22 +109,26 @@ class SystemMonitor: ObservableObject {
         if result == KERN_SUCCESS {
             let pageSize = UInt64(getpagesize())
             let total = ProcessInfo.processInfo.physicalMemory
-            // 参考 exelban/stats 开源项目的计算方式
-            let active = UInt64(stats.active_count) * pageSize
-            let inactive = UInt64(stats.inactive_count) * pageSize
-            let speculative = UInt64(stats.speculative_count) * pageSize
-            let wired = UInt64(stats.wire_count) * pageSize
-            let compressed = UInt64(stats.compressor_page_count) * pageSize
-            let purgeable = UInt64(stats.purgeable_count) * pageSize
-            let external = UInt64(stats.external_page_count) * pageSize
-            // 已用 = active + inactive + speculative + wired + compressed - purgeable - external
-            let used = active + inactive + speculative + wired + compressed - purgeable - external
-            let percent = Double(used) / Double(total)
-            self.memoryUsedString = byteFormatter.string(fromByteCount: Int64(used))
-            self.memoryTotalString = byteFormatter.string(fromByteCount: Int64(total))
-            self.memoryActiveString = byteFormatter.string(fromByteCount: Int64(active))
-            self.memoryPercent = percent
+            let usage = MemoryUsageCalculator.calculate(MemoryCounters(
+                active: bytes(stats.active_count, pageSize: pageSize),
+                inactive: bytes(stats.inactive_count, pageSize: pageSize),
+                speculative: bytes(stats.speculative_count, pageSize: pageSize),
+                wired: bytes(stats.wire_count, pageSize: pageSize),
+                compressed: bytes(stats.compressor_page_count, pageSize: pageSize),
+                purgeable: bytes(stats.purgeable_count, pageSize: pageSize),
+                external: bytes(stats.external_page_count, pageSize: pageSize),
+                total: total
+            ))
+            memoryUsedString = byteFormatter.string(fromByteCount: Int64(usage.used))
+            memoryTotalString = byteFormatter.string(fromByteCount: Int64(usage.total))
+            memoryActiveString = byteFormatter.string(fromByteCount: Int64(usage.active))
+            memoryPercent = usage.fractionUsed
         }
+    }
+
+    private func bytes(_ pageCount: natural_t, pageSize: UInt64) -> UInt64 {
+        let (value, overflow) = UInt64(pageCount).multipliedReportingOverflow(by: pageSize)
+        return overflow ? UInt64.max : value
     }
     
     private func updateStorage() {
@@ -150,92 +148,78 @@ class SystemMonitor: ObservableObject {
         var cpuInfo: processor_info_array_t?
         var numCpuInfo: mach_msg_type_number_t = 0
         let result = host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO, &numCPUs, &cpuInfo, &numCpuInfo)
-        if result == KERN_SUCCESS {
-            var totalUsage: Float = 0.0
-            if let prevCpuInfo = prevCpuInfo {
-                for i in 0 ..< Int32(numCPUs) {
-                    let inUse = Int32(cpuInfo![Int(i) * Int(CPU_STATE_MAX) + Int(CPU_STATE_USER)])
-                        - Int32(prevCpuInfo[Int(i) * Int(CPU_STATE_MAX) + Int(CPU_STATE_USER)])
-                        + Int32(cpuInfo![Int(i) * Int(CPU_STATE_MAX) + Int(CPU_STATE_SYSTEM)])
-                        - Int32(prevCpuInfo[Int(i) * Int(CPU_STATE_MAX) + Int(CPU_STATE_SYSTEM)])
-                        + Int32(cpuInfo![Int(i) * Int(CPU_STATE_MAX) + Int(CPU_STATE_NICE)])
-                        - Int32(prevCpuInfo[Int(i) * Int(CPU_STATE_MAX) + Int(CPU_STATE_NICE)])
-                    let total = inUse + Int32(cpuInfo![Int(i) * Int(CPU_STATE_MAX) + Int(CPU_STATE_IDLE)])
-                        - Int32(prevCpuInfo[Int(i) * Int(CPU_STATE_MAX) + Int(CPU_STATE_IDLE)])
-                    if total > 0 { totalUsage += Float(inUse) / Float(total) }
-                }
-                let avgUsage = totalUsage / Float(numCPUs)
-                self.cpuState = .available(String(format: "%.0f%%", avgUsage * 100))
-            }
-            if let prev = prevCpuInfo {
-                let prevSize = Int(prevCpuInfoCount) * MemoryLayout<integer_t>.stride
-                vm_deallocate(mach_task_self_, vm_address_t(bitPattern: prev), vm_size_t(prevSize))
-            }
-            prevCpuInfo = cpuInfo
-            prevCpuInfoCount = numCpuInfo
+        guard result == KERN_SUCCESS,
+              let cpuInfo,
+              numCPUs > 0,
+              numCpuInfo >= numCPUs * natural_t(CPU_STATE_MAX) else {
+            cpuState = .unavailable
+            return
         }
+        defer {
+            let size = Int(numCpuInfo) * MemoryLayout<integer_t>.stride
+            vm_deallocate(mach_task_self_, vm_address_t(bitPattern: cpuInfo), vm_size_t(size))
+        }
+
+        let ticks = (0 ..< Int(numCPUs)).map { cpu in
+            let offset = cpu * Int(CPU_STATE_MAX)
+            return CPUTicks(
+                user: unsignedTick(cpuInfo[offset + Int(CPU_STATE_USER)]),
+                system: unsignedTick(cpuInfo[offset + Int(CPU_STATE_SYSTEM)]),
+                nice: unsignedTick(cpuInfo[offset + Int(CPU_STATE_NICE)]),
+                idle: unsignedTick(cpuInfo[offset + Int(CPU_STATE_IDLE)])
+            )
+        }
+        if let usage = cpuCalculator.sample(ticks) {
+            cpuState = .available(String(format: "%.0f%%", usage * 100))
+        } else {
+            cpuState = .unavailable
+        }
+    }
+
+    private func unsignedTick(_ value: integer_t) -> UInt64 {
+        UInt64(UInt32(bitPattern: value))
     }
     
     private func updateBattery() {
         let snapshot = IOPSCopyPowerSourcesInfo().takeRetainedValue()
         let sources = IOPSCopyPowerSourcesList(snapshot).takeRetainedValue() as Array
-        guard let source = sources.first else {
+        let internalBattery = sources.first { source in
+            guard let description = IOPSGetPowerSourceDescription(snapshot, source)?.takeUnretainedValue() as? [String: Any] else {
+                return false
+            }
+            return description[kIOPSTypeKey] as? String == kIOPSInternalBatteryType
+        }
+        guard let internalBattery else {
+            batteryState = .noBattery
+            return
+        }
+        guard let info = IOPSGetPowerSourceDescription(snapshot, internalBattery)?.takeUnretainedValue() as? [String: Any],
+              let capacity = info[kIOPSCurrentCapacityKey] as? Int,
+              let maxCapacity = info[kIOPSMaxCapacityKey] as? Int,
+              maxCapacity > 0 else {
             batteryState = .unavailable
             return
         }
-        do {
-            let info = IOPSGetPowerSourceDescription(snapshot, source).takeUnretainedValue() as! [String: Any]
-            if let capacity = info[kIOPSCurrentCapacityKey] as? Int,
-               let maxCapacity = info[kIOPSMaxCapacityKey] as? Int {
-                let percent = Int((Double(capacity) / Double(maxCapacity)) * 100)
-                let isCharging = (info[kIOPSIsChargingKey] as? Bool) == true
-                self.batteryState = .available(value: "\(percent)%", isCharging: isCharging)
-                if isCharging {
-                    self.batteryColor = .green; self.batteryIcon = "battery.100.bolt"
-                } else {
-                    self.batteryColor = percent < 20 ? .red : .green
-                    if percent > 80 { self.batteryIcon = "battery.100" }
-                    else if percent > 50 { self.batteryIcon = "battery.75" }
-                    else if percent > 25 { self.batteryIcon = "battery.50" }
-                    else { self.batteryIcon = "battery.25" }
-                }
-            } else {
-                batteryState = .unavailable
-            }
-        }
+        let percent = min(max(Int((Double(capacity) / Double(maxCapacity)) * 100), 0), 100)
+        let isCharging = (info[kIOPSIsChargingKey] as? Bool) == true
+        batteryState = .available(value: "\(percent)%", isCharging: isCharging)
     }
     
     private func updateNetwork() {
-        var ifaddr: UnsafeMutablePointer<ifaddrs>?
-        guard getifaddrs(&ifaddr) == 0 else { return }
-        var ptr = ifaddr
-        var totalBytes: UInt64 = 0
-        while ptr != nil {
-            let interface = ptr!.pointee
-            if let name = String(validatingUTF8: interface.ifa_name),
-               (name.hasPrefix("en") || name == "bridge0"),
-               Int(interface.ifa_addr.pointee.sa_family) == AF_LINK,
-               let data = interface.ifa_data {
-                let networkData = data.assumingMemoryBound(to: if_data.self).pointee
-                // 累加下载+上传字节数
-                totalBytes += UInt64(networkData.ifi_ibytes) + UInt64(networkData.ifi_obytes)
-            }
-            ptr = interface.ifa_next
-        }
-        freeifaddrs(ifaddr)
-        let now = Date().timeIntervalSince1970
-        if lastNetworkBytes > 0 && totalBytes >= lastNetworkBytes {
-            let diff = totalBytes - lastNetworkBytes
-            let timeDiff = now - lastCheckTime
-            if timeDiff > 0 {
-                let speed = Double(diff) / timeDiff
-                self.networkSpeedString = byteFormatter.string(fromByteCount: Int64(speed)) + "/s"
-            }
+        let sample = networkSampler.sample(uptime: ProcessInfo.processInfo.systemUptime)
+        if let rates = networkCalculator.sample(sample) {
+            networkState = .available(
+                download: formatRate(rates.downloadBytesPerSecond),
+                upload: formatRate(rates.uploadBytesPerSecond)
+            )
         } else {
-             self.networkSpeedString = byteFormatter.string(fromByteCount: 0) + "/s"
+            networkState = .unavailable
         }
-        lastNetworkBytes = totalBytes
-        lastCheckTime = now
+    }
+
+    private func formatRate(_ rate: Double) -> String {
+        let bounded = min(max(rate, 0), Double(Int64.max))
+        return byteFormatter.string(fromByteCount: Int64(bounded.rounded())) + "/s"
     }
     
     func updateTrash() {

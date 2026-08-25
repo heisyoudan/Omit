@@ -110,12 +110,23 @@ struct ContentView: View {
         let batteryValue: String?
         let batteryIsCharging: Bool
         switch monitor.batteryState {
-        case .unavailable:
+        case .noBattery, .unavailable:
             batteryValue = nil
             batteryIsCharging = false
         case .available(let value, let isCharging):
             batteryValue = value
             batteryIsCharging = isCharging
+        }
+
+        let downloadValue: String
+        let uploadValue: String
+        switch monitor.networkState {
+        case .unavailable:
+            downloadValue = "—"
+            uploadValue = "—"
+        case .available(let download, let upload):
+            downloadValue = download
+            uploadValue = upload
         }
 
         let trash: TrashPresentation
@@ -132,7 +143,7 @@ struct ContentView: View {
             storageAvailable: monitor.storageFreeString, storageUsedPercent: monitor.storageUsedPercent,
             cpuValue: cpuValue,
             batteryValue: batteryValue, batteryIsCharging: batteryIsCharging,
-            downloadValue: monitor.networkSpeedString, uploadValue: "—", trash: trash,
+            downloadValue: downloadValue, uploadValue: uploadValue, trash: trash,
             updatedLabel: OmitLang.get("UPDATED", lang: language)
         )
     }

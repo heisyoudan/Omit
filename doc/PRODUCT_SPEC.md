@@ -35,7 +35,8 @@ The product competes through restraint rather than metric count. The main panel 
 - Supporting value: `used / physical total`.
 - Never label `memoryUsedString` as Active Memory.
 - The ring represents the same used-memory percentage shown by the numeric percentage.
-- Exact memory-pressure semantics and sampling formula are deferred to a later logic task.
+- Used memory is Omit's bounded status estimate: active + inactive + speculative + wired + compressed − purgeable − external.
+- The estimate is clamped to `0...physicalMemory`, including subtraction and overflow protection, and does not promise byte-for-byte parity with Activity Monitor.
 
 ### Storage
 
@@ -59,7 +60,8 @@ The product competes through restraint rather than metric count. The main panel 
 
 - Label the module Network, not Download.
 - The target presentation has separate receive and transmit rows (`↓` and `↑`).
-- Runtime separation and 64-bit counter sampling are deferred to a logic task.
+- Receive and transmit use independent 64-bit counters from the current routed primary interface.
+- Interface changes, disconnects, counter resets, and sleep-sized sampling gaps establish a new unavailable baseline instead of emitting a false spike.
 
 ### Trash
 
