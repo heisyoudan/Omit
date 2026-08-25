@@ -1,0 +1,315 @@
+{
+  "normalFlows": [
+    {
+      "id": "FLOW_SAGE_IDLE",
+      "role": "sage",
+      "execState": "idle",
+      "testType": "any",
+      "objective": "让任务 {{taskId}} 从待启动进入正式执行链。",
+      "steps": [
+        "确认任务边界、验收标准和依赖。",
+        "补全可执行定义：目标、当前执行动作、修复点、非目标、测试预期、状态语义。",
+        "确认下游角色能仅凭 `task context` 开始执行；若不能，继续补充任务定义。",
+        "如无需继续讨论，执行 `maestro task start {{taskId}} --role sage`。",
+        "执行正式交接：`maestro task dispatch {{taskId}} --role sage --to dev`。"
+      ],
+      "doneWhen": "下游角色已拿到完整可执行定义，并能直接开始。",
+      "allowedCases": [
+        "CASE_SPEC_UNCLEAR",
+        "CASE_STATE_CONFLICT"
+      ]
+    },
+    {
+      "id": "FLOW_DEV_IN_PROGRESS",
+      "role": "dev",
+      "execState": "in_progress",
+      "testType": "any",
+      "objective": "完成当前开发阶段，并把任务推进到 QA。",
+      "steps": [
+        "先读取本次任务目标与最近一次回退原因：{{latestRollbackReason}}。",
+        "只处理当前修复点，不扩散改动范围。",
+        "实现完成后执行 `maestro submit journal {{taskId}} --role dev --summary \"...\" --details-md \"...\"`。",
+        "运行门禁：`maestro gate run {{taskId}} --role dev`。",
+        "门禁通过后推进到 QA：`maestro transition request {{taskId}} --role dev --to qa`。"
+      ],
+      "doneWhen": "任务已进入 qa，等待 QA 接手。",
+      "allowedCases": [
+        "CASE_GATE_FAIL",
+        "CASE_SPEC_UNCLEAR",
+        "CASE_ROLLBACK_TO_SAGE"
+      ]
+    },
+    {
+      "id": "FLOW_DESIGN_IN_PROGRESS",
+      "role": "design",
+      "execState": "in_progress",
+      "testType": "any",
+      "objective": "完成当前 UI / 交互语义层交付，并把任务推进到 closing。",
+      "steps": [
+        "先读取任务目标与最近一次回退原因：{{latestRollbackReason}}。",
+        "先确认当前执行动作、主要服务对象和交付边界；若看不出这轮是在交付界面、补充观点还是等待 Dev 接线，应先补 note 再继续。",
+        "优先交付 UI shell、状态表达、信息层级、Preview / fixture / 测试承载面，不将真实业务逻辑硬绑进界面。",
+        "尽量一次补齐关键状态全集（例如 empty / loading / success / warning / error / disabled），不要只做单一 happy path。",
+        "复杂交互应附带可点击的演示面板、Preview 或 mock 场景，让 PO / QA 能直接观察本轮交付。",
+        "如需依赖真实接口或状态契约，先通过 `task note` 或 journal 明确接线要求，再继续实现。",
+        "交付时同时说明给 Dev 的接线契约：需要哪些输入、哪些状态由外部传入、哪些动作只是 UI 事件出口。",
+        "交付物必须可观察、可验证，可由 mock / fixture / 测试面板驱动。",
+        "实现完成后执行 `maestro submit journal {{taskId}} --role design --summary \"...\" --details-md \"...\"`。",
+        "运行门禁：`maestro gate run {{taskId}} --role design`。",
+        "门禁通过后推进到 closing：`maestro transition request {{taskId}} --role design --to closing`。"
+      ],
+      "doneWhen": "任务已进入 closing，等待 Sage 最终关单。",
+      "allowedCases": [
+        "CASE_GATE_FAIL",
+        "CASE_SPEC_UNCLEAR",
+        "CASE_ROLLBACK_TO_SAGE"
+      ]
+    },
+    {
+      "id": "FLOW_QA_LOGIC_ONLY",
+      "role": "qa",
+      "execState": "qa",
+      "testType": "logic_only",
+      "objective": "先设计纯逻辑测试方案，再完成自动验证并推进到 closing。",
+      "steps": [
+        "先确认这是 logic_only 任务，并先定义测试方案：自动验证命令、证据来源、通过规则、失败分流。",
+        "优先让 QA 自己完成脚本/门禁/状态写回验证，不要求 PO 参与。",
+        "执行回归并记录结论：`maestro submit journal {{taskId}} --role qa --summary \"...\" --details-md \"...\"`。",
+        "运行 QA 门禁：`maestro gate run {{taskId}} --role qa`。",
+        "门禁通过后推进到 closing：`maestro transition request {{taskId}} --role qa --to closing`。"
+      ],
+      "doneWhen": "任务已进入 closing，等待 Sage 关单。",
+      "allowedCases": [
+        "CASE_GATE_FAIL",
+        "CASE_SPEC_UNCLEAR",
+        "CASE_ROLLBACK_TO_EXECUTION",
+        "CASE_ROLLBACK_TO_SAGE"
+      ]
+    },
+    {
+      "id": "FLOW_QA_CHAT_OBSERVE",
+      "role": "qa",
+      "execState": "qa",
+      "testType": "chat_observe",
+      "objective": "默认 UI QA 走 chat_observe：先确认 Dev 提供的入口可覆盖关键分支，再通过 chat 收集 PO 观察结果并完成裁定。",
+      "steps": [
+        "先确认这是 chat_observe 任务，并先产出 5 行验证计划：看哪里、预期是什么、失败如何分流。",
+        "QA 只负责定义观察点、预期与失败备注，不要求 PO 理解脚本、fixture 或内部实现。",
+        "PO 只负责在 chat 中观察并输入结果；若无备注，QA 可直接采用按钮结果。",
+        "若有备注，必须先分析备注，再决定是否维持按钮结果。",
+        "通过则写 `type=test_verdict`、跑 gate，并执行 `maestro transition request {{taskId}} --role qa --to closing`。"
+      ],
+      "doneWhen": "已完成 QA 裁定，并进入 closing 或触发原子回退。",
+      "allowedCases": [
+        "CASE_PO_NOTE_CONFLICT",
+        "CASE_ROLLBACK_TO_EXECUTION",
+        "CASE_ROLLBACK_TO_SAGE",
+        "CASE_GATE_FAIL"
+      ]
+    },
+    {
+      "id": "FLOW_QA_AUDIT_OVERLAY",
+      "role": "qa",
+      "execState": "qa",
+      "testType": "chat_observe",
+      "objective": "当任务显式要求 `audit_required = true` 时，在 chat_observe 的基础上追加正式观察资产与会话留档。",
+      "steps": [
+        "先确认任务显式要求 `audit_required = true`，再进入正式观察会话。",
+        "QA 必须至少准备 observe.json；results.json 由 Maestro 自动维护，只有 truth setup/probe 必须自动化时才额外提供非交互式 run.sh/rollback.sh。",
+        "测试面板只允许 execute / observe 两类步骤；多个 execute 必须自动推进，直到 observe 才暂停。",
+        "PO 只负责 observe 输入，不应看到脚本细节、fixture 结构或内部实现。",
+        "会话结束后，QA 基于结果与备注完成 `type=test_verdict`，并决定推进到 closing 或回退。"
+      ],
+      "doneWhen": "已完成 QA 裁定，并进入 closing 或触发原子回退。",
+      "allowedCases": [
+        "CASE_PO_NOTE_CONFLICT",
+        "CASE_ROLLBACK_TO_EXECUTION",
+        "CASE_ROLLBACK_TO_SAGE",
+        "CASE_GATE_FAIL"
+      ]
+    },
+    {
+      "id": "FLOW_SAGE_BLOCKED",
+      "role": "sage",
+      "execState": "blocked",
+      "testType": "any",
+      "objective": "基于回退原因重新讨论、修改规格或重新发布。",
+      "steps": [
+        "先读取最近一次原子回退原因：{{latestRollbackReason}}。",
+        "判断这是规格争议、需求不清，还是需要重新拆任务。",
+        "若问题已澄清，更新规格并重新发布或重新 dispatch。",
+        "若仍需讨论，不要直接把任务交回执行层。"
+      ],
+      "doneWhen": "Sage 已形成明确决策，并重新发布到执行链或修改规格。",
+      "allowedCases": [
+        "CASE_SPEC_UNCLEAR",
+        "CASE_STATE_CONFLICT"
+      ]
+    },
+    {
+      "id": "FLOW_SAGE_CLOSING",
+      "role": "sage",
+      "execState": "closing",
+      "testType": "any",
+      "objective": "完成最终收口并关闭任务。",
+      "steps": [
+        "复核规格一致性、最近一次 QA 结论与必要代码变更。",
+        "确认无未处理阻塞后执行 `maestro task close {{taskId}} --role sage --note \"...\"`。"
+      ],
+      "doneWhen": "任务已进入 done。",
+      "allowedCases": [
+        "CASE_SPEC_UNCLEAR"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "CASE_GATE_FAIL",
+      "title": "门禁失败",
+      "trigger": "gate run 失败或构建未通过",
+      "appliesToRoles": [
+        "dev",
+        "qa"
+      ],
+      "appliesToExecStates": [
+        "in_progress",
+        "qa"
+      ],
+      "appliesToTestTypes": [
+        "any"
+      ],
+      "steps": [
+        "停止推进，不要继续 transition。",
+        "写明失败原因与失败项。",
+        "若属于实现问题，留在当前执行阶段修复。",
+        "若怀疑规格或目标不清，使用原子回退交回 Sage。"
+      ],
+      "completeWhen": "失败原因已记录，且下一责任方明确。",
+      "handoffCommand": "maestro task context {{taskId}} --role {{role}}"
+    },
+    {
+      "id": "CASE_SPEC_UNCLEAR",
+      "title": "规格不清",
+      "trigger": "需求边界、目标或规则无法明确判断",
+      "appliesToRoles": [
+        "dev",
+        "design",
+        "qa",
+        "sage"
+      ],
+      "appliesToExecStates": [
+        "idle",
+        "in_progress",
+        "qa",
+        "blocked",
+        "closing"
+      ],
+      "appliesToTestTypes": [
+        "any"
+      ],
+      "steps": [
+        "停止当前执行，不再继续猜测。",
+        "明确写出不清的点、冲突点或缺失前提。",
+        "若当前是执行级角色，使用原子回退交回 Sage。",
+        "若当前已是 Sage，则先更新规格，再决定是否重发任务。"
+      ],
+      "completeWhen": "规格争议已被结构化表达，并交到 Sage。",
+      "handoffCommand": "maestro task context {{taskId}} --role sage"
+    },
+    {
+      "id": "CASE_STATE_CONFLICT",
+      "title": "状态冲突",
+      "trigger": "任务状态、测试状态或交接状态互相矛盾",
+      "appliesToRoles": [
+        "sage",
+        "dev",
+        "qa"
+      ],
+      "appliesToExecStates": [
+        "idle",
+        "in_progress",
+        "qa",
+        "blocked",
+        "closing"
+      ],
+      "appliesToTestTypes": [
+        "any"
+      ],
+      "steps": [
+        "先停止写入主链动作。",
+        "读取任务真相源与最近一次回退记录。",
+        "若你不是 Sage，则交回 Sage 修复状态语义。"
+      ],
+      "completeWhen": "状态冲突已被定位并转交正确角色。",
+      "handoffCommand": "maestro task context {{taskId}} --role sage"
+    },
+    {
+      "id": "CASE_PO_NOTE_CONFLICT",
+      "title": "PO 备注与按钮冲突",
+      "trigger": "PO 按钮输入与备注含义冲突，或备注指出新的失败事实",
+      "appliesToRoles": [
+        "qa"
+      ],
+      "appliesToExecStates": [
+        "qa"
+      ],
+      "appliesToTestTypes": [
+        "chat_observe"
+      ],
+      "steps": [
+        "不得直接采用按钮结果。",
+        "先阅读 PO 备注，提炼冲突点。",
+        "判断问题属于实现偏差还是规格不清。",
+        "实现偏差则回退给当前执行角色；规格不清则回退给 Sage。"
+      ],
+      "completeWhen": "QA 已完成裁定，并执行正确的原子回退。",
+      "handoffCommand": "maestro task context {{taskId}} --role qa"
+    },
+    {
+      "id": "CASE_ROLLBACK_TO_EXECUTION",
+      "title": "回退给执行角色",
+      "trigger": "QA 发现实现问题，需要当前执行角色修复",
+      "appliesToRoles": [
+        "qa"
+      ],
+      "appliesToExecStates": [
+        "qa"
+      ],
+      "appliesToTestTypes": [
+        "any"
+      ],
+      "steps": [
+        "确认这是实现问题，不是规格争议。",
+        "执行原子回退：`maestro transition rollback {{taskId}} --role qa --to in_progress --reason \"...\"`。",
+        "reason 必须明确写出修复点和无需改动的点。",
+        "回退后的默认交接目标应与任务执行角色一致（Dev 或 Design）。"
+      ],
+      "completeWhen": "任务已回到 in_progress，当前执行角色能直接拿到修复点。",
+      "handoffCommand": "maestro task context {{taskId}} --role {{inProgressRole}}"
+    },
+    {
+      "id": "CASE_ROLLBACK_TO_SAGE",
+      "title": "交回 Sage",
+      "trigger": "执行级角色判断当前问题需要重新讨论或澄清规格",
+      "appliesToRoles": [
+        "dev",
+        "design",
+        "qa"
+      ],
+      "appliesToExecStates": [
+        "in_progress",
+        "qa"
+      ],
+      "appliesToTestTypes": [
+        "any"
+      ],
+      "steps": [
+        "确认问题属于规格争议、需求不清或目标冲突。",
+        "执行原子回退到 blocked，并写清 reason。",
+        "不要先改状态再补日志。"
+      ],
+      "completeWhen": "任务已进入 blocked，Sage 可直接读取回退原因。",
+      "handoffCommand": "maestro task context {{taskId}} --role sage"
+    }
+  ]
+}

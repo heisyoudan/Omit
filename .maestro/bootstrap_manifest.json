@@ -1,0 +1,226 @@
+{
+  "version": "2.0",
+  "commonManagedFiles": [
+    {
+      "source": "templates/shared/doc/SPEC.md",
+      "destination": "doc/SPEC.md",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/doc/README_AGENT.md",
+      "destination": "doc/README_AGENT.md",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/doc/WORKFLOW_RULES.md",
+      "destination": "doc/WORKFLOW_RULES.md",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/doc/QA_ONE_PATH.md",
+      "destination": "doc/QA_ONE_PATH.md",
+      "policy": "overwrite"
+    },
+    {
+      "source": "scripts/maestro",
+      "destination": "scripts/maestro",
+      "policy": "overwrite"
+    },
+    {
+      "source": "scripts/MaestroCLI",
+      "destination": "scripts/MaestroCLI",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/doc/examples/QA_DRIVER_MODEL_GUIDE.md",
+      "destination": "doc/examples/QA_DRIVER_MODEL_GUIDE.md",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/doc/examples/QA_SESSION_DEMO_LOGIC.md",
+      "destination": "doc/examples/QA_SESSION_DEMO_LOGIC.md",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/doc/examples/QA_SESSION_DEMO_VISUAL.md",
+      "destination": "doc/examples/QA_SESSION_DEMO_VISUAL.md",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/doc/examples/QA_SESSION_DEMO_BANNER.md",
+      "destination": "doc/examples/QA_SESSION_DEMO_BANNER.md",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/doc/examples/QA_TEST_PLAN_TEMPLATE.md",
+      "destination": "doc/examples/QA_TEST_PLAN_TEMPLATE.md",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/doc/examples/QA_ENTRY_REQUIREMENTS_TEMPLATE.md",
+      "destination": "doc/examples/QA_ENTRY_REQUIREMENTS_TEMPLATE.md",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/doc/examples/QA_SUPPORT_REQUEST_TEMPLATE.md",
+      "destination": "doc/examples/QA_SUPPORT_REQUEST_TEMPLATE.md",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/doc/examples/QA_REPORT_TEMPLATE.md",
+      "destination": "doc/examples/QA_REPORT_TEMPLATE.md",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/doc/examples/QA_VERDICT_TEMPLATE.md",
+      "destination": "doc/examples/QA_VERDICT_TEMPLATE.md",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/doc/examples/QA_BUSINESS_TEST_CASE_EXAMPLE.md",
+      "destination": "doc/examples/QA_BUSINESS_TEST_CASE_EXAMPLE.md",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/test-demos/banner-session-demo/observe.json",
+      "destination": ".maestro/test-demos/banner-session-demo/observe.json",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/test-demos/banner-session-demo/results.json",
+      "destination": ".maestro/test-demos/banner-session-demo/results.json",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/test-demos/banner-session-demo/run.sh",
+      "destination": ".maestro/test-demos/banner-session-demo/run.sh",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/test-demos/banner-session-demo/rollback.sh",
+      "destination": ".maestro/test-demos/banner-session-demo/rollback.sh",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/.maestro/agent_core_template.json",
+      "destination": ".maestro/agent_core_template.json",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/.maestro/workflow_templates.json",
+      "destination": ".maestro/workflow_templates.json",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/.maestro/task_contract_templates.json",
+      "destination": ".maestro/task_contract_templates.json",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/.maestro/bootstrap_manifest.json",
+      "destination": ".maestro/bootstrap_manifest.json",
+      "policy": "overwrite"
+    },
+    {
+      "source": "templates/shared/.maestro/skill_registry.json",
+      "destination": ".maestro/skill_registry.json",
+      "policy": "overwrite"
+    },
+    {
+      "source": ".maestro/bootstrap_seeds/tasks.json",
+      "destination": ".maestro/tasks.json",
+      "policy": "create_if_missing"
+    },
+    {
+      "source": ".maestro/bootstrap_seeds/journal_entries.json",
+      "destination": ".maestro/journal_entries.json",
+      "policy": "create_if_missing"
+    },
+    {
+      "source": ".maestro/bootstrap_seeds/task_notes.json",
+      "destination": ".maestro/task_notes.json",
+      "policy": "create_if_missing"
+    },
+    {
+      "source": ".maestro/bootstrap_seeds/gate_runs.json",
+      "destination": ".maestro/gate_runs.json",
+      "policy": "create_if_missing"
+    },
+    {
+      "source": ".maestro/bootstrap_seeds/transition_requests.json",
+      "destination": ".maestro/transition_requests.json",
+      "policy": "create_if_missing"
+    },
+    {
+      "source": ".maestro/bootstrap_seeds/issues.json",
+      "destination": ".maestro/issues.json",
+      "policy": "create_if_missing"
+    }
+  ],
+  "platforms": [
+    {
+      "id": "codex",
+      "displayName": "Codex",
+      "description": "导出 Codex 所需的项目级规则文件。",
+      "managedFiles": [
+        {
+          "source": "templates/platforms/codex/AGENTS.md",
+          "destination": "AGENTS.md",
+          "policy": "overwrite"
+        },
+        {
+          "source": "templates/shared/skills/sage-task-publish-review/SKILL.md",
+          "destination": ".codex/skills/sage-task-publish-review/SKILL.md",
+          "policy": "overwrite"
+        },
+        {
+          "source": "templates/shared/skills/dev-systematic-debugging/SKILL.md",
+          "destination": ".codex/skills/dev-systematic-debugging/SKILL.md",
+          "policy": "overwrite"
+        },
+        {
+          "source": "templates/shared/skills/design-ui-shell/SKILL.md",
+          "destination": ".codex/skills/design-ui-shell/SKILL.md",
+          "policy": "overwrite"
+        },
+        {
+          "source": "templates/shared/skills/qa-verification-before-close/SKILL.md",
+          "destination": ".codex/skills/qa-verification-before-close/SKILL.md",
+          "policy": "overwrite"
+        }
+      ]
+    },
+    {
+      "id": "copilot",
+      "displayName": "GitHub Copilot",
+      "description": "导出 GitHub Copilot 仓库级说明文件。",
+      "managedFiles": [
+        {
+          "source": "templates/platforms/copilot/.github/copilot-instructions.md",
+          "destination": ".github/copilot-instructions.md",
+          "policy": "overwrite"
+        },
+        {
+          "source": "templates/shared/skills/sage-task-publish-review/SKILL.md",
+          "destination": ".github/skills/sage-task-publish-review/SKILL.md",
+          "policy": "overwrite"
+        },
+        {
+          "source": "templates/shared/skills/dev-systematic-debugging/SKILL.md",
+          "destination": ".github/skills/dev-systematic-debugging/SKILL.md",
+          "policy": "overwrite"
+        },
+        {
+          "source": "templates/shared/skills/design-ui-shell/SKILL.md",
+          "destination": ".github/skills/design-ui-shell/SKILL.md",
+          "policy": "overwrite"
+        },
+        {
+          "source": "templates/shared/skills/qa-verification-before-close/SKILL.md",
+          "destination": ".github/skills/qa-verification-before-close/SKILL.md",
+          "policy": "overwrite"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "entries" : [
+    {
+      "authorRole" : "sage",
+      "detailsMd" : "使用 `task publish` 一步完成发布并自动启动。",
+      "id" : "JRN-20260825-001",
+      "stage" : "in_progress",
+      "status" : "info",
+      "summary" : "Sage 已发布并启动任务",
+      "taskId" : "TASK-UI-001",
+      "timestamp" : "2026-08-25T11:32:58Z"
+    }
+  ]
+}

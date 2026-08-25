@@ -1,0 +1,74 @@
+{
+  "version": "2.0",
+  "modules": {
+    "repoOverview": {
+      "summary": "Maestro 是 vendor-neutral 的 Agent-first 工作流框架，负责共享项目真相、任务契约、角色流转、验证协议与异常分流。"
+    },
+    "roleModel": {
+      "roles": [
+        "sage",
+        "design",
+        "dev",
+        "qa"
+      ],
+      "primaryChain": "sage -> dev -> qa -> sage(close); sage -> design -> sage(close)"
+    },
+    "executionContract": {
+      "normalPath": "正常情况自动推进到当前角色权限边界。",
+      "interruptionPolicy": "只有失败、冲突、阻塞、规格不清时才打断用户。",
+      "lifecycleTruth": "`execState` 是唯一生命周期真相；`ownerRole`、`gateProfile`、看板展示与下一步建议都只是派生伴随字段。"
+    },
+    "forbiddenActions": {
+      "items": [
+        "不得直接编辑 tasks.json 或 project.json。",
+        "不得输出不可执行的交接指令。",
+        "不得让用户承担手工搬运上下文的职责。"
+      ]
+    },
+    "testingPolicy": {
+      "modes": [
+        "logic_only",
+        "chat_observe"
+      ],
+      "auditOverlay": "audit_required",
+      "sessionModel": [
+        "execute",
+        "observe"
+      ],
+      "verificationLayers": [
+        "truth",
+        "projection",
+        "human_acceptance"
+      ]
+    },
+    "handoffContract": {
+      "requiredFields": [
+        "summary",
+        "currentAction",
+        "acceptanceCriteria",
+        "boundaries"
+      ],
+      "generatedGuidanceRule": "生成指引只是翻译层，不得与 task context、SPEC、README_AGENT、WORKFLOW_RULES 冲突。"
+    },
+    "localizationPolicy": {
+      "sourceOfTruth": ".maestro/project.json.isMultilingual",
+      "disabledBehavior": "不注入多语言约束。",
+      "enabledBehavior": "注入多语言 checklist 与禁止事项。"
+    },
+    "designProtocol": {
+      "summary": "Design 负责 UI shell、状态表达、信息层级、交互反馈与观察承载面。",
+      "boundary": "不把真实业务逻辑硬绑进界面。"
+    },
+    "rollbackPolicy": {
+      "summary": "执行级角色遇到实现偏差或规格不清时，必须通过原子回退交回 Dev 或 Sage；任务进入 closing 后，Sage 审核不通过时可正式回退到 qa 或 in_progress。"
+    },
+    "outputFormat": {
+      "machineInterfaces": [
+        "task context --json",
+        "task status --json",
+        "gate run --json"
+      ],
+      "linkedWorktreeRule": "若在 Git linked worktree 中执行，CLI 与 App 仍应回主项目根目录下的 .maestro/ 读写共享真相源。"
+    }
+  }
+}

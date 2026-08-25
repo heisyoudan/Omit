@@ -1,0 +1,56 @@
+{
+  "currentVersion" : "2.0",
+  "execStates" : [
+    "backlog",
+    "planned",
+    "in_progress",
+    "qa",
+    "closing",
+    "done",
+    "blocked"
+  ],
+  "gateProfiles" : {
+    "default_dev_gate" : [
+      "mock_check",
+      "build_check",
+      "journal_exists"
+    ],
+    "default_qa_gate" : [
+      "qa_verdict_exists",
+      "evidence_exists"
+    ]
+  },
+  "isMultilingual" : false,
+  "planStates" : [
+    "backlog",
+    "planned",
+    "paused",
+    "deprecated",
+    "superseded",
+    "cancelled"
+  ],
+  "priorities" : [
+    "S",
+    "M",
+    "L",
+    "P0"
+  ],
+  "projectId" : "omit",
+  "projectName" : "Omit",
+  "roles" : [
+    "sage",
+    "design",
+    "dev",
+    "qa"
+  ],
+  "schemaVersion" : "2.0",
+  "taskTypes" : [
+    "ui_frontend",
+    "logic_backend",
+    "integration",
+    "visual",
+    "hotfix",
+    "migration",
+    "meta"
+  ]
+}

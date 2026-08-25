@@ -100,3 +100,10 @@ tools/
 
 # Build outputs
 Omit\ build/
+
+# Local Codex / Maestro build cache
+.codex-cache/
+
+# Maestro migration backups
+.maestro/tasks.backup.*.json
+.maestro/.workflow.lock

@@ -1,0 +1,96 @@
+{
+  "version": "1.0",
+  "updatedAt": "2026-04-01T00:00:00Z",
+  "skills": [
+    {
+      "id": "sage-task-publish-review",
+      "title": "Sage Task Publish Review",
+      "category": "workflow",
+      "applicableRoles": ["sage"],
+      "summary": "约束 Sage 在发布或重新交接任务前补齐任务契约，并确保交接给当前可执行角色。",
+      "triggerWhen": [
+        "发布新任务",
+        "重写任务契约",
+        "blocked 后重新派发",
+        "发现交接目标不可执行"
+      ],
+      "absorbedFrom": [
+        "任务发布审查类 skill 的任务契约检查模式",
+        "规则生成/agents-md 生态中的仓库级工作流约束思路"
+      ],
+      "expectedOutputs": [
+        "完整的 summary/currentAction/acceptanceCriteria/boundaries",
+        "可执行的 dispatch 指令",
+        "必要时的重新拆分或回退决策"
+      ]
+    },
+    {
+      "id": "dev-systematic-debugging",
+      "title": "Dev Systematic Debugging",
+      "category": "engineering",
+      "applicableRoles": ["dev"],
+      "summary": "约束 Dev 以系统化调试流程处理问题，先定位根因，再实施最小修复与验证。",
+      "triggerWhen": [
+        "逻辑缺陷修复",
+        "状态机异常",
+        "回归问题定位",
+        "构建或门禁失败"
+      ],
+      "absorbedFrom": [
+        "systematic debugging / root-cause tracing 类开源 skill 的定位-验证-修复结构",
+        "verification-before-completion 类 skill 的完成前验证习惯"
+      ],
+      "expectedOutputs": [
+        "根因说明",
+        "最小修复范围",
+        "journal + gate + transition 主链输出"
+      ]
+    },
+    {
+      "id": "design-ui-shell",
+      "title": "Design UI Shell",
+      "category": "design",
+      "applicableRoles": ["design"],
+      "summary": "约束 Design 交付可观察的 UI shell、状态全集、信息层级与 preview/fixture，而不是停留在提建议。",
+      "triggerWhen": [
+        "新界面原型",
+        "交互语义调整",
+        "信息架构收口",
+        "需要 fixture/preview 承载面的任务"
+      ],
+      "absorbedFrom": [
+        "UI/UX 设计类 skill 的状态覆盖与信息层级原则",
+        "前端设计 guideline 类 skill 的可观察交付思路"
+      ],
+      "expectedOutputs": [
+        "UI shell",
+        "状态全集",
+        "preview 或 fixture",
+        "给 Dev 的接线契约"
+      ]
+    },
+    {
+      "id": "qa-verification-before-close",
+      "title": "QA Verification Before Close",
+      "category": "qa",
+      "applicableRoles": ["qa"],
+      "summary": "约束 QA 在推进到 closing 前完成证据检查、验证结论与失败分流，不凭感觉放行。",
+      "triggerWhen": [
+        "准备 closing",
+        "logic_only 回归",
+        "chat_observe 测试裁定",
+        "audit_required 正式观察裁定",
+        "需要回退 Dev 或交回 Sage"
+      ],
+      "absorbedFrom": [
+        "verification-before-completion / qa validation 类 skill 的完成前检查框架",
+        "观察式测试与证据驱动裁定思路"
+      ],
+      "expectedOutputs": [
+        "QA 结论 journal",
+        "gate 结果",
+        "closing 或 rollback 分流决定"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "publish": {
+    "requiredFields": [
+      "summary",
+      "currentAction",
+      "acceptanceCriteria",
+      "boundaries"
+    ],
+    "placeholderValues": [
+      "默认验收标准，待补充",
+      "默认边界，待补充"
+    ]
+  },
+  "handoff": {
+    "requiredFields": [
+      "summary",
+      "currentAction",
+      "acceptanceCriteria",
+      "boundaries"
+    ]
+  },
+  "rollback": {
+    "requiredFields": [
+      "reason",
+      "handoffCommand"
+    ]
+  }
+}

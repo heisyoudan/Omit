@@ -1,0 +1,100 @@
+{
+  "taskId": "TASK-DEMO-BANNER-AUDIT-001",
+  "testType": "chat_observe",
+  "qaMode": "chat_observe",
+  "qaDriver": "shell_script",
+  "truthSource": "run.sh / rollback.sh 触发的异常状态与调试输出",
+  "projectionSurface": "整理页顶部 Banner 区域",
+  "verificationStrategy": "先证明脚本已建立目标异常状态，再观察 Banner 是否正确投影该状态。",
+  "humanAcceptanceScope": "PO 只判断 Banner 的等级、文案和动作是否可接受。",
+  "secondaryChecks": [
+    "debug_panel"
+  ],
+  "truthChecks": [
+    "脚本必须成功建立对应异常场景。",
+    "脚本输出与状态写回应能证明当前异常类型成立。"
+  ],
+  "projectionChecks": [
+    "Error 场景应显示 Error Banner 和正确动作。",
+    "Trash 部分失败场景应保持 Warning，而不是升级成 Error。"
+  ],
+  "humanChecks": [
+    "PO 只判断 Banner 是否正确显示，不负责证明异常是否真的发生。"
+  ],
+  "poObserveRequired": true,
+  "observationTarget": "观察 Banner 的文案、等级和按钮动作是否符合当前异常场景。",
+  "qaAutoSteps": [
+    "先执行脚本准备异常场景。",
+    "程序自动把界面推进到首个需要 PO 观察的状态。",
+    "PO 完成观察后，程序自动继续下一轮 execute。"
+  ],
+  "poSteps": [
+    "只在 observe 步骤看界面并输入结果。",
+    "不要直接接触脚本或 fixture 目录。"
+  ],
+  "sessionMode": "single_button",
+  "primaryActionLabel": "开始测试",
+  "validationPlan": {
+    "testMode": "chat_observe + audit_required",
+    "automaticWork": "先运行脚本准备异常场景，再自动推进 execute。",
+    "poObserve": "观察 Banner 的等级、文案和按钮动作。",
+    "passRule": "所有 observe 步骤都与预期一致。",
+    "outOfScope": "购买链路与全量多语言验证。"
+  },
+  "steps": [
+    {
+      "id": "prepare_disk_full",
+      "kind": "execute",
+      "goal": "准备磁盘满场景",
+      "action": "运行脚本生成磁盘满异常数据",
+      "whereToLook": "整理页顶部 Banner 区域",
+      "onFailWrite": "若脚本失败，记录 stderr 并回退当前执行角色",
+      "script": "run.sh",
+      "title": "准备磁盘满场景",
+      "instruction": "程序自动准备异常状态。",
+      "expected": "界面进入需要观察的 Banner 状态。"
+    },
+    {
+      "id": "observe_disk_full_banner",
+      "kind": "observe",
+      "goal": "确认磁盘满 Error Banner",
+      "action": "查看 Banner 等级、文案与按钮",
+      "whereToLook": "界面顶部 Banner 区域",
+      "onFailWrite": "记录实际看到的 Banner 等级、文案和按钮",
+      "title": "确认磁盘满 Error Banner",
+      "instruction": "观察 Banner 是否显示错误级别，并提供“打开存储设置”动作。",
+      "expected": "显示 Error Banner，按钮文案为“打开存储设置”。",
+      "input": "yes_no_text",
+      "passLabel": "符合预期",
+      "failLabel": "不符合预期",
+      "notePlaceholder": "若不符合，请写出实际看到的 Banner 文案和按钮"
+    },
+    {
+      "id": "prepare_trash_partial_fail",
+      "kind": "execute",
+      "goal": "准备 Trash 部分失败场景",
+      "action": "运行脚本清理上一轮状态并写入新场景",
+      "whereToLook": "整理页顶部 Banner 区域",
+      "onFailWrite": "若脚本失败，记录 stderr 并回退当前执行角色",
+      "script": "rollback.sh",
+      "title": "准备 Trash 部分失败场景",
+      "instruction": "程序自动清理上一轮状态并生成新场景。",
+      "expected": "界面进入第二个需要观察的 Banner 状态。"
+    },
+    {
+      "id": "observe_trash_warning_banner",
+      "kind": "observe",
+      "goal": "确认 Trash 部分失败 Warning Banner",
+      "action": "查看 Banner 是否保持 Warning，不升级为 Error",
+      "whereToLook": "界面顶部 Banner 区域",
+      "onFailWrite": "记录实际看到的 Banner 等级与文案",
+      "title": "确认 Trash 部分失败 Warning Banner",
+      "instruction": "观察 Banner 是否为 Warning，而不是 Error。",
+      "expected": "显示 Warning Banner，不升级成 Error。",
+      "input": "yes_no_text",
+      "passLabel": "符合预期",
+      "failLabel": "不符合预期",
+      "notePlaceholder": "若不符合，请写出实际看到的 Banner 等级与文案"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "schemaVersion" : "2.2",
+  "tasks" : [
+    {
+      "acceptanceCriteria" : [
+        "主面板在 Light 与 Dark 下均保持相同信息层级：Memory/Storage 全宽，CPU/Battery/Network/Trash 两列；面板目标宽度 312 pt，所有文字不小于 10 pt。",
+        "设置面板新增 Appearance，提供 System、Light、Dark 三项；选择即时生效、当前选择清晰可见并使用 AppStorage 持久化。",
+        "Memory 文案表达已用/总量，Storage 百分比明确标注已用且主值表达可用空间，Network Shell 可展示独立下行与上行。",
+        "Trash Shell 覆盖未授权、空、有内容和确认清空状态；授权和清空使用独立按钮，不存在整卡 destructive tap；真实授权与删除回调保持未接线或注入。",
+        "提供可在 Xcode 直接观察的 Light、Dark、Settings、Trash 未授权和不可用指标 fixtures/previews，且项目能够成功编译。",
+        "UI 使用语义色和主题化表面，设置按钮至少 28×28 pt，移除无语义彩色状态点，并保留 Omit. 品牌标题。"
+      ],
+      "boundaries" : [
+        "不修改 SystemMonitor 的 CPU、内存、磁盘、电池、网络或废纸篓采样算法。",
+        "不启用 App Sandbox，不新增 entitlements，不实现 security-scoped bookmark 或 Full Disk Access 流程。",
+        "不执行真实废纸篓删除、不改变刷新调度、不处理 App Store 提交流程。",
+        "不增加曲线图、进程列表、温度、风扇、GPU 或其他新监控指标。",
+        "不重构 Maestro 真相源或工作流文件；设计依据 doc/PRODUCT_SPEC.md、DESIGN.md 和 doc/assets/omit-ui-light-dark-reference.png。"
+      ],
+      "currentAction" : "阅读 doc/PRODUCT_SPEC.md、DESIGN.md 和参考图，重构 ContentView 的展示层与组件层，使用注入式展示状态和 fixtures/previews 覆盖亮暗主题及关键模块状态；保持真实监控、权限和删除逻辑在本轮范围外。",
+      "deliverySurface" : "ui",
+      "dependsOn" : [
+
+      ],
+      "execState" : "in_progress",
+      "gateProfile" : "default_dev_gate",
+      "id" : "TASK-UI-001",
+      "issueRefs" : [
+
+      ],
+      "ownerRole" : "design",
+      "planState" : "planned",
+      "priority" : "p1",
+      "summary" : "依据 Omit 产品规格和亮暗主题参考图，完成可直接观察的 SwiftUI 主面板与设置面板 UI Shell，并建立 System、Light、Dark 三种持久化外观选择。",
+      "tags" : [
+
+      ],
+      "taskType" : "ui_frontend",
+      "title" : "重构主面板并支持亮色/暗色外观"
+    }
+  ]
+}
