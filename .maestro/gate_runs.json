@@ -1,3 +1,31 @@
 {
-  "runs": []
+  "runs" : [
+    {
+      "canReturnToQA" : false,
+      "checks" : [
+        {
+          "key" : "mock_check",
+          "message" : "模拟检查通过",
+          "result" : "pass"
+        },
+        {
+          "key" : "build_check",
+          "message" : "Xcode 构建通过",
+          "result" : "pass"
+        },
+        {
+          "key" : "journal_exists",
+          "message" : "已存在日志",
+          "result" : "pass"
+        }
+      ],
+      "closeReady" : true,
+      "gateProfile" : "default_dev_gate",
+      "id" : "RUN-20260825-001",
+      "stage" : "in_progress",
+      "status" : "pass",
+      "taskId" : "TASK-UI-001",
+      "timestamp" : "2026-08-25T11:52:32Z"
+    }
+  ]
 }

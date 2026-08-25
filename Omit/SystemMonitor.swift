@@ -20,7 +20,7 @@ class SystemMonitor: ObservableObject {
     @Published var storageFreeString: String = "0 GB"
     @Published var storageUsedPercent: Double = 0.0
     
-    @Published var cpuLoadString: String = "0%"
+    @Published var cpuLoadString: String = "—"
     
     @Published var batteryPercentString: String = "100%"
     @Published var batteryIcon: String = "battery.100"

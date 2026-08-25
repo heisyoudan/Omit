@@ -1,3 +1,22 @@
 {
-  "notes": []
+  "notes" : [
+    {
+      "authorRole" : "po",
+      "detailsMd" : "- 原因：已完成\n- 原状态：plan=planned, exec=in_progress, owner=dev\n- 新状态：plan=planned, exec=qa, owner=qa\n- 来源：Maestro 看板拖拽手动覆盖",
+      "id" : "NTE-MANUAL-6709281A",
+      "summary" : "手动状态调整：进行中 -> 测试验收",
+      "taskId" : "TASK-UI-001",
+      "timestamp" : "2026-08-25T12:30:43Z",
+      "type" : "general"
+    },
+    {
+      "authorRole" : "po",
+      "detailsMd" : "- 原因：已完成\n- 原状态：plan=planned, exec=qa, owner=qa\n- 新状态：plan=planned, exec=done, owner=sage\n- 来源：Maestro 看板拖拽手动覆盖",
+      "id" : "NTE-MANUAL-929399D8",
+      "summary" : "手动状态调整：测试验收 -> 已完成",
+      "taskId" : "TASK-UI-001",
+      "timestamp" : "2026-08-25T12:30:48Z",
+      "type" : "general"
+    }
+  ]
 }

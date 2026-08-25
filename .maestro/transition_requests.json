@@ -1,3 +1,39 @@
 {
-  "requests": []
+  "requests" : [
+    {
+      "checks" : {
+        "gateRunId" : "RUN-20260825-001",
+        "journalExists" : true,
+        "latestGatePassed" : true
+      },
+      "fromState" : "in_progress",
+      "id" : "TRN-20260825-001",
+      "requestedByRole" : "design",
+      "resolvedAt" : "2026-08-25T11:52:36Z",
+      "resolvedByRole" : "design",
+      "stage" : "in_progress",
+      "status" : "approved",
+      "taskId" : "TASK-UI-001",
+      "timestamp" : "2026-08-25T11:52:36Z",
+      "toState" : "closing"
+    },
+    {
+      "checks" : {
+        "gateRunId" : "RUN-20260825-001",
+        "journalExists" : true,
+        "latestGatePassed" : false
+      },
+      "fromState" : "closing",
+      "id" : "TRN-20260825-002",
+      "rejectedReason" : "Sage 关单复核未通过：xcodebuild 成功，但实机 MenuBarExtra 从 Dark 切换到 Light 后仍保持白色文字与相同灰暗材质，主题仅改变选择高亮，未满足外观即时生效；同时 ContentView/SystemMonitor 与 Maestro 流转记录仍未提交推送，远端不可见。请修复真实窗口主题投影，实机确认两种主题，并提交推送后重新门禁。",
+      "requestedByRole" : "sage",
+      "resolvedAt" : "2026-08-25T12:27:14Z",
+      "resolvedByRole" : "sage",
+      "stage" : "closing",
+      "status" : "approved",
+      "taskId" : "TASK-UI-001",
+      "timestamp" : "2026-08-25T12:27:14Z",
+      "toState" : "in_progress"
+    }
+  ]
 }
