@@ -170,7 +170,8 @@ struct ContentView: View {
             }
         }
         .omitAppearance(appearance)
-        .onAppear { monitor.updateStats() }
+        .onAppear { monitor.startMonitoring() }
+        .onDisappear { monitor.stopMonitoring() }
     }
 }
 

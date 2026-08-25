@@ -1,6 +1,6 @@
 import Foundation
 
-struct MemoryCounters: Equatable {
+nonisolated struct MemoryCounters: Equatable, Sendable {
     let active: UInt64
     let inactive: UInt64
     let speculative: UInt64
@@ -11,14 +11,14 @@ struct MemoryCounters: Equatable {
     let total: UInt64
 }
 
-struct MemoryUsage: Equatable {
+nonisolated struct MemoryUsage: Equatable, Sendable {
     let used: UInt64
     let active: UInt64
     let total: UInt64
     let fractionUsed: Double
 }
 
-enum MemoryUsageCalculator {
+nonisolated enum MemoryUsageCalculator {
     /// Product semantic: an estimated resident footprint useful for a compact status view.
     /// It deliberately does not promise byte-for-byte parity with Activity Monitor.
     static func calculate(_ counters: MemoryCounters) -> MemoryUsage {
@@ -50,14 +50,14 @@ enum MemoryUsageCalculator {
     }
 }
 
-struct CPUTicks: Equatable {
+nonisolated struct CPUTicks: Equatable, Sendable {
     let user: UInt64
     let system: UInt64
     let nice: UInt64
     let idle: UInt64
 }
 
-struct CPUUsageCalculator {
+nonisolated struct CPUUsageCalculator: Sendable {
     private(set) var previous: [CPUTicks]?
 
     mutating func sample(_ current: [CPUTicks]) -> Double? {
@@ -100,19 +100,19 @@ struct CPUUsageCalculator {
     }
 }
 
-struct NetworkCounterSample: Equatable {
+nonisolated struct NetworkCounterSample: Equatable, Sendable {
     let interfaceName: String
     let receivedBytes: UInt64
     let transmittedBytes: UInt64
     let uptime: TimeInterval
 }
 
-struct NetworkRates: Equatable {
+nonisolated struct NetworkRates: Equatable, Sendable {
     let downloadBytesPerSecond: Double
     let uploadBytesPerSecond: Double
 }
 
-struct NetworkRateCalculator {
+nonisolated struct NetworkRateCalculator: Sendable {
     var maximumInterval: TimeInterval = 10
     private(set) var previous: NetworkCounterSample?
 

@@ -2,7 +2,7 @@ import Darwin
 import Foundation
 import SystemConfiguration
 
-final class NetworkCounterSampler {
+nonisolated final class NetworkCounterSampler {
     private let dynamicStore = SCDynamicStoreCreate(
         nil,
         "Omit.NetworkCounterSampler" as CFString,

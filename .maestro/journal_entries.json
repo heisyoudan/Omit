@@ -169,6 +169,16 @@
       "summary" : "Sage 已关闭任务",
       "taskId" : "TASK-DEV-002",
       "timestamp" : "2026-08-25T13:36:30Z"
+    },
+    {
+      "authorRole" : "dev",
+      "detailsMd" : "根因：原实现由主线程单一 1 秒 Timer 同步采样全部指标，文件系统与电源查询阻塞 UI，CPU/网络基线也与 UI 生命周期耦合。修复：集中定义 1s/2s/15s/20s 分层 cadence；用串行 actor 执行采样并在 MainActor 投影；以 generation token 处理启动、停止、休眠、唤醒和释放，重启时重置 CPU/网络基线；存储等失败改为类型化状态。验证：MonitoringScheduleProbe PASS（频率、取消、MainActor 投影、并发防重入）；SystemMetricsProbe PASS；xcodebuild Debug CODE_SIGNING_ALLOWED=NO 成功。边界：未改变指标公式、网络接口策略、Trash 权限/删除能力或视觉设计。",
+      "id" : "JRN-20260826-001",
+      "stage" : "in_progress",
+      "status" : "info",
+      "summary" : "完成分层后台监控调度与生命周期防重入",
+      "taskId" : "TASK-DEV-003",
+      "timestamp" : "2026-08-25T15:02:45Z"
     }
   ]
 }
