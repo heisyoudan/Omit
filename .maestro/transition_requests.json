@@ -34,6 +34,23 @@
       "taskId" : "TASK-UI-001",
       "timestamp" : "2026-08-25T12:27:14Z",
       "toState" : "in_progress"
+    },
+    {
+      "checks" : {
+        "gateRunId" : "RUN-20260825-002",
+        "journalExists" : true,
+        "latestGatePassed" : true
+      },
+      "fromState" : "in_progress",
+      "id" : "TRN-20260825-003",
+      "requestedByRole" : "dev",
+      "resolvedAt" : "2026-08-25T12:41:22Z",
+      "resolvedByRole" : "dev",
+      "stage" : "in_progress",
+      "status" : "approved",
+      "taskId" : "TASK-DEV-001",
+      "timestamp" : "2026-08-25T12:41:22Z",
+      "toState" : "qa"
     }
   ]
 }

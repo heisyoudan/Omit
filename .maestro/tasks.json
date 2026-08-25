@@ -52,13 +52,13 @@
       "dependsOn" : [
 
       ],
-      "execState" : "in_progress",
-      "gateProfile" : "default_dev_gate",
+      "execState" : "qa",
+      "gateProfile" : "default_qa_gate",
       "id" : "TASK-DEV-001",
       "issueRefs" : [
 
       ],
-      "ownerRole" : "dev",
+      "ownerRole" : "qa",
       "planState" : "planned",
       "priority" : "p0",
       "summary" : "将 TASK-UI-001 的 SwiftUI Shell 接入真实 MenuBarExtra、持久化外观和类型化展示状态，使 System/Light/Dark 与现有监控数据在生产界面真实生效。",
