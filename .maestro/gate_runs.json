@@ -104,6 +104,30 @@
       "status" : "pass",
       "taskId" : "TASK-DEV-002",
       "timestamp" : "2026-08-25T13:21:06Z"
+    },
+    {
+      "canReturnToQA" : false,
+      "checks" : [
+        {
+          "detailsMd" : "# QA Verdict for TASK-DEV-002\n\n## Delivery Surface\n- ui\n\n## Truth\n- What was proven: CPU、内存、电池及网络采样边界；网络使用 64 位计数并独立读取 RX/TX；接口切换、断网、休眠恢复、计数器下降/重置分支；download/upload 映射方向。\n- Evidence: 系统指标自动探针 PASS；真实 en0 64 位 RX/TX 独立读取成功；Debug xcodebuild BUILD SUCCEEDED；代码映射审查通过。\n- Result: PASS\n\n## Projection\n- What the UI should project: Dashboard Network 卡片分别显示下行与上行实时数值，download 对应下行、upload 对应上行。\n- Evidence: 最新 Debug 构建运行后的真实 MenuBarExtra Dashboard。\n- Result: PASS\n\n## Observe\n- What was actually observed: Omit 运行约 2–3 秒后，Network 卡片显示下行 9 KB/s、上行 5 KB/s，二者均为数值且上行不是破折号。\n- Evidence: .maestro/tests/TASK-DEV-002/network-dashboard-observe.png；PO 已确认自动 QA 结果并要求继续 Sage 后续流程。\n- Result: PASS\n- Which final verdict this supports: 证明真实 UI 正确投影独立 download/upload 指标，满足 deliverySurface=ui 的最小 Observe 要求。\n\n## Final Verdict\n- PASS\n- Blocking reason: 无。\n- Next routing: QA Gate 通过后推进至 closing，由 Sage 最终复核与关单。\n",
+          "key" : "qa_verdict_exists",
+          "message" : "已找到结构化 QA 最终测试裁定",
+          "result" : "pass"
+        },
+        {
+          "key" : "evidence_exists",
+          "message" : "已找到任务备注",
+          "result" : "pass"
+        }
+      ],
+      "closeReady" : true,
+      "gateProfile" : "default_qa_gate",
+      "id" : "RUN-20260825-005",
+      "stage" : "qa",
+      "status" : "pass",
+      "taskId" : "TASK-DEV-002",
+      "timestamp" : "2026-08-25T13:36:02Z",
+      "verdictOutcome" : "PASS"
     }
   ]
 }

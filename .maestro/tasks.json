@@ -87,13 +87,13 @@
       "dependsOn" : [
 
       ],
-      "execState" : "qa",
-      "gateProfile" : "default_qa_gate",
+      "execState" : "done",
+      "gateProfile" : "default_dev_gate",
       "id" : "TASK-DEV-002",
       "issueRefs" : [
 
       ],
-      "ownerRole" : "qa",
+      "ownerRole" : "sage",
       "planState" : "planned",
       "priority" : "p0",
       "summary" : "修复当前 CPU、内存、网络和电池采样中的定义、计数器与设备状态问题，为 UI 提供类型化且可验证的系统指标。",

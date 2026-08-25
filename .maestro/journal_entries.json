@@ -149,6 +149,26 @@
       "summary" : "DEV 已推进流转：in_progress -> qa",
       "taskId" : "TASK-DEV-002",
       "timestamp" : "2026-08-25T13:21:32Z"
+    },
+    {
+      "authorRole" : "qa",
+      "detailsMd" : "【自动推进】\n- 当前流程采用 Agent-first 默认执行契约。\n- 在权限允许、前置满足时，`transition request` 会直接完成状态推进，不再等待 Sage 中间审批。\n\n【结果】\n- 从：qa\n- 到：closing\n- 下一交接：sage",
+      "id" : "JRN-20260825-016",
+      "stage" : "closing",
+      "status" : "info",
+      "summary" : "QA 已完成验证并推进流转：qa -> closing",
+      "taskId" : "TASK-DEV-002",
+      "timestamp" : "2026-08-25T13:36:10Z"
+    },
+    {
+      "authorRole" : "sage",
+      "detailsMd" : "Sage 最终复核通过：实现满足系统指标采样正确性契约；自动探针与 Debug 构建通过，真实 Dashboard Observe 显示下行 9 KB/s、上行 5 KB/s；QA Gate RUN-20260825-005 为 PASS，无未处理阻塞。",
+      "id" : "JRN-20260825-017",
+      "stage" : "done",
+      "status" : "success",
+      "summary" : "Sage 已关闭任务",
+      "taskId" : "TASK-DEV-002",
+      "timestamp" : "2026-08-25T13:36:30Z"
     }
   ]
 }
