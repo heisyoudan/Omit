@@ -39,6 +39,56 @@
       "summary" : "SAGE 审核未通过，退回执行阶段：closing -> in_progress",
       "taskId" : "TASK-UI-001",
       "timestamp" : "2026-08-25T12:27:14Z"
+    },
+    {
+      "authorRole" : "sage",
+      "detailsMd" : "使用 `task publish` 一步完成发布并自动启动。",
+      "id" : "JRN-20260825-005",
+      "stage" : "in_progress",
+      "status" : "info",
+      "summary" : "Sage 已发布并启动任务",
+      "taskId" : "TASK-DEV-001",
+      "timestamp" : "2026-08-25T12:31:57Z"
+    },
+    {
+      "authorRole" : "sage",
+      "detailsMd" : "使用 `task publish` 一步完成发布并自动启动。",
+      "id" : "JRN-20260825-006",
+      "stage" : "in_progress",
+      "status" : "info",
+      "summary" : "Sage 已发布并启动任务",
+      "taskId" : "TASK-DEV-002",
+      "timestamp" : "2026-08-25T12:32:12Z"
+    },
+    {
+      "authorRole" : "sage",
+      "detailsMd" : "使用 `task publish` 一步完成发布并自动启动。",
+      "id" : "JRN-20260825-007",
+      "stage" : "in_progress",
+      "status" : "info",
+      "summary" : "Sage 已发布并启动任务",
+      "taskId" : "TASK-DEV-003",
+      "timestamp" : "2026-08-25T12:32:27Z"
+    },
+    {
+      "authorRole" : "sage",
+      "detailsMd" : "使用 `task publish` 一步完成发布并自动启动。",
+      "id" : "JRN-20260825-008",
+      "stage" : "in_progress",
+      "status" : "info",
+      "summary" : "Sage 已发布并启动任务",
+      "taskId" : "TASK-DEV-004",
+      "timestamp" : "2026-08-25T12:32:42Z"
+    },
+    {
+      "authorRole" : "sage",
+      "detailsMd" : "使用 `task publish` 一步完成发布并自动启动。",
+      "id" : "JRN-20260825-009",
+      "stage" : "in_progress",
+      "status" : "info",
+      "summary" : "Sage 已发布并启动任务",
+      "taskId" : "TASK-REL-001",
+      "timestamp" : "2026-08-25T12:32:57Z"
     }
   ]
 }

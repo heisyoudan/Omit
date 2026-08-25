@@ -3,11 +3,11 @@
   "tasks" : [
     {
       "acceptanceCriteria" : [
-        "主面板在 Light 与 Dark 下均保持相同信息层级：Memory\/Storage 全宽，CPU\/Battery\/Network\/Trash 两列；面板目标宽度 312 pt，所有文字不小于 10 pt。",
+        "主面板在 Light 与 Dark 下均保持相同信息层级：Memory/Storage 全宽，CPU/Battery/Network/Trash 两列；面板目标宽度 312 pt，所有文字不小于 10 pt。",
         "设置面板新增 Appearance，提供 System、Light、Dark 三项；选择即时生效、当前选择清晰可见并使用 AppStorage 持久化。",
-        "Memory 文案表达已用\/总量，Storage 百分比明确标注已用且主值表达可用空间，Network Shell 可展示独立下行与上行。",
+        "Memory 文案表达已用/总量，Storage 百分比明确标注已用且主值表达可用空间，Network Shell 可展示独立下行与上行。",
         "Trash Shell 覆盖未授权、空、有内容和确认清空状态；授权和清空使用独立按钮，不存在整卡 destructive tap；真实授权与删除回调保持未接线或注入。",
-        "提供可在 Xcode 直接观察的 Light、Dark、Settings、Trash 未授权和不可用指标 fixtures\/previews，且项目能够成功编译。",
+        "提供可在 Xcode 直接观察的 Light、Dark、Settings、Trash 未授权和不可用指标 fixtures/previews，且项目能够成功编译。",
         "UI 使用语义色和主题化表面，设置按钮至少 28×28 pt，移除无语义彩色状态点，并保留 Omit. 品牌标题。"
       ],
       "boundaries" : [
@@ -15,7 +15,7 @@
         "不启用 App Sandbox，不新增 entitlements，不实现 security-scoped bookmark 或 Full Disk Access 流程。",
         "不执行真实废纸篓删除、不改变刷新调度、不处理 App Store 提交流程。",
         "不增加曲线图、进程列表、温度、风扇、GPU 或其他新监控指标。",
-        "不重构 Maestro 真相源或工作流文件；设计依据 doc\/PRODUCT_SPEC.md、DESIGN.md 和 doc\/assets\/omit-ui-light-dark-reference.png。"
+        "不重构 Maestro 真相源或工作流文件；设计依据 doc/PRODUCT_SPEC.md、DESIGN.md 和 doc/assets/omit-ui-light-dark-reference.png。"
       ],
       "deliverySurface" : "ui",
       "dependsOn" : [
@@ -32,7 +32,180 @@
 
       ],
       "taskType" : "ui_frontend",
-      "title" : "重构主面板并支持亮色\/暗色外观"
+      "title" : "重构主面板并支持亮色/暗色外观"
+    },
+    {
+      "acceptanceCriteria" : [
+        "System、Light、Dark 在真实 MenuBarExtra 中即时生效；Light 使用深色文字与浅色表面，Dark 使用浅色文字与深色表面，System 跟随 macOS。",
+        "外观选择通过 AppStorage 持久化，退出并重启应用后仍恢复选择。",
+        "真实 Memory、Storage、CPU、Battery 和 Network 当前可用值稳定映射到 OmitDashboardState；不存在依赖 Empty/No Access 等英文 UI 字符串判断状态的新增代码。",
+        "Trash 授权与清空仍保持安全的不可执行或明确未接线状态，不重新引入整卡点击删除。",
+        "提供可重复的主题与展示状态测试入口，xcodebuild Debug 成功，并由 QA 在真实菜单栏窗口观察 Light/Dark/System。"
+      ],
+      "boundaries" : [
+        "不修改 CPU、内存、磁盘、电池、网络采样公式。",
+        "不启用 Sandbox，不实现 security-scoped bookmark，不执行真实废纸篓删除。",
+        "不重新设计 TASK-UI-001 已确认的信息层级和组件视觉。"
+      ],
+      "currentAction" : "读取 TASK-UI-001 设计交付和回退记录，修复 MenuBarExtra 的真实 appearance 投影，将 SystemMonitor 输出通过明确适配层映射到 OmitDashboardState，并保留 Trash 写操作为未接线状态。",
+      "deliverySurface" : "ui",
+      "dependsOn" : [
+
+      ],
+      "execState" : "in_progress",
+      "gateProfile" : "default_dev_gate",
+      "id" : "TASK-DEV-001",
+      "issueRefs" : [
+
+      ],
+      "ownerRole" : "dev",
+      "planState" : "planned",
+      "priority" : "p0",
+      "summary" : "将 TASK-UI-001 的 SwiftUI Shell 接入真实 MenuBarExtra、持久化外观和类型化展示状态，使 System/Light/Dark 与现有监控数据在生产界面真实生效。",
+      "tags" : [
+
+      ],
+      "taskType" : "ui_frontend",
+      "title" : "接线真实主题与 UI 展示状态"
+    },
+    {
+      "acceptanceCriteria" : [
+        "网络提供独立 download/upload 数值，使用64位字节计数或等价可靠来源，并处理首次采样、计数器下降、接口切换、断网及休眠恢复。",
+        "网络接口策略有明确代码注释和测试证据，不把 VPN/bridge 流量无条件重复相加。",
+        "无内置电池的 Mac 输出 noBattery/unavailable 类型化状态，不再默认显示100%。",
+        "CPU 首次采样输出 unavailable，delta 计算处理无效总量、计数器回绕或重置，不产生负值或 NaN。",
+        "内存 used 公式有明确产品语义、UInt64 下溢保护和0...1百分比边界；文档说明不承诺复现 Activity Monitor。",
+        "关键计算拆为可测试纯函数或采样适配器，并具有自动化测试/探针证据。"
+      ],
+      "boundaries" : [
+        "不修改主面板视觉设计、外观选择或设置布局。",
+        "不实现 Trash Sandbox 授权、递归统计或删除。",
+        "不在本任务重构整体刷新调度和线程架构，除采样正确性所需的最小隔离外。"
+      ],
+      "currentAction" : "重构 SystemMonitor 的指标输出：优先完成网络独立 RX/TX 与64位计数、接口切换基线；随后补充无电池状态、CPU 首次采样与计数器防御、内存公式边界与语义说明。",
+      "deliverySurface" : "ui",
+      "dependsOn" : [
+
+      ],
+      "execState" : "in_progress",
+      "gateProfile" : "default_dev_gate",
+      "id" : "TASK-DEV-002",
+      "issueRefs" : [
+
+      ],
+      "ownerRole" : "dev",
+      "planState" : "planned",
+      "priority" : "p0",
+      "summary" : "修复当前 CPU、内存、网络和电池采样中的定义、计数器与设备状态问题，为 UI 提供类型化且可验证的系统指标。",
+      "tags" : [
+
+      ],
+      "taskType" : "logic_backend",
+      "title" : "修正系统监控数据语义与采样正确性"
+    },
+    {
+      "acceptanceCriteria" : [
+        "CPU/Network 约1秒刷新，Memory 约1–2秒，Battery/Storage 约10–30秒，Trash 约10–30秒或事件触发；周期集中配置且可测试。",
+        "磁盘与 Trash 文件系统操作不在主线程同步执行，UI 更新统一回到 MainActor。",
+        "应用休眠/唤醒、界面生命周期和对象释放不会遗留重复 Timer、任务或资源。",
+        "并发采样不会重入或交叉覆盖基线，失败有类型化状态或日志而不是静默 catch。",
+        "提供调度频率、取消、主线程投影和重入防御的自动化测试/探针证据，xcodebuild 成功。"
+      ],
+      "boundaries" : [
+        "不改变各指标的计算公式和网络接口选择策略。",
+        "不实现 App Sandbox、Trash bookmark 或删除。",
+        "不调整 TASK-UI-001 的视觉设计。"
+      ],
+      "currentAction" : "建立可取消的监控调度器或等价结构，将快速指标、慢速指标和 Trash 指标分组执行；耗时采样进入串行后台执行面，ObservableObject 状态统一在 MainActor 发布。",
+      "deliverySurface" : "ui",
+      "dependsOn" : [
+
+      ],
+      "execState" : "in_progress",
+      "gateProfile" : "default_dev_gate",
+      "id" : "TASK-DEV-003",
+      "issueRefs" : [
+
+      ],
+      "ownerRole" : "dev",
+      "planState" : "planned",
+      "priority" : "p1",
+      "summary" : "将当前所有指标每秒同步运行的单一 Timer 拆为分层刷新与后台采样，避免文件系统和 IOKit 操作阻塞菜单栏 UI。",
+      "tags" : [
+
+      ],
+      "taskType" : "logic_backend",
+      "title" : "重构监控刷新频率与后台执行模型"
+    },
+    {
+      "acceptanceCriteria" : [
+        "Debug/Release Sandbox 均开启并通过签名构建；工程具有最小必要的 user-selected read/write 与 app-scoped bookmark entitlements。",
+        "用户未授权或取消时，CPU/Memory/Storage/Battery/Network 仍可使用，仅 Trash 卡显示未授权状态。",
+        "用户选择废纸篓后可保存 bookmark，应用重启后恢复访问；bookmark 失效时能重新授权而不崩溃。",
+        "Trash 大小递归统计普通文件并防止符号链接循环，扫描不阻塞主线程且不按每秒执行。",
+        "清空只由独立按钮触发，必须确认，逐项错误可反馈；测试不得在未明确隔离的真实用户废纸篓执行破坏性删除。",
+        "在签名 Sandbox 构建中提交读取、重启恢复和受控测试目录删除的证据；若 ~/.Trash 选择受系统限制，记录可复现证据并停止正式接线。"
+      ],
+      "boundaries" : [
+        "不请求或假定 Full Disk Access 是最终方案，除非 Sandbox 原型证据证明标准授权不可行并由 Sage重新裁定。",
+        "不修改 CPU、内存、磁盘、电池或网络采样算法。",
+        "不执行 App Store 上传或提交审核。",
+        "所有删除测试必须使用隔离 fixture；不得清空用户真实废纸篓。"
+      ],
+      "currentAction" : "先建立签名 Sandbox 原型：使用 NSOpenPanel 让用户明确选择 ~/.Trash，创建并恢复 security-scoped bookmark；四项验证通过后再接入 TrashPresentation 与授权/清空事件出口。",
+      "deliverySurface" : "ui",
+      "dependsOn" : [
+
+      ],
+      "execState" : "in_progress",
+      "gateProfile" : "default_dev_gate",
+      "id" : "TASK-DEV-004",
+      "issueRefs" : [
+
+      ],
+      "ownerRole" : "dev",
+      "planState" : "planned",
+      "priority" : "p0",
+      "summary" : "在 Mac App Store Sandbox 约束下验证用户废纸篓的显式授权、security-scoped bookmark 持久化、递归统计和安全清空路径。",
+      "tags" : [
+
+      ],
+      "taskType" : "integration",
+      "title" : "实现 App Sandbox 废纸篓授权原型"
+    },
+    {
+      "acceptanceCriteria" : [
+        "PrivacyInfo.xcprivacy 声明实际使用的 Required Reason API 类别和合法原因，不声明未使用的数据收集或跟踪。",
+        "Release 配置具有明确版本号、构建号、版权、最低系统版本和稳定 Bundle ID；README 中未签名安装说明与 App Store 路线被区分。",
+        "生成 Release Archive 或等价预归档证据，验证产物结构、签名配置入口、Sandbox/entitlements 接入点和禁止自更新要求。",
+        "形成上架检查清单：隐私、导出合规、本地化、图标/截图、登录启动、审核备注、废纸篓权限说明与回退方案。",
+        "任务只建立合规与归档基线，不声称在 TASK-DEV-004 完成前已具备最终 App Store 提交条件。"
+      ],
+      "boundaries" : [
+        "不上传 App Store Connect、不提交审核、不创建付费或法律承诺。",
+        "不替代 TASK-DEV-004 的 Sandbox 废纸篓可行性验证。",
+        "不修改监控算法或 UI 视觉设计。"
+      ],
+      "currentAction" : "审计磁盘容量等 Required Reason API、Info.plist/版权/Bundle ID/版本号和 Release 配置，新增准确的 PrivacyInfo.xcprivacy，建立不上传商店的 Archive/preflight 检查清单与自动证据。",
+      "deliverySurface" : "ui",
+      "dependsOn" : [
+
+      ],
+      "execState" : "in_progress",
+      "gateProfile" : "default_dev_gate",
+      "id" : "TASK-REL-001",
+      "issueRefs" : [
+
+      ],
+      "ownerRole" : "dev",
+      "planState" : "planned",
+      "priority" : "p1",
+      "summary" : "补齐 Omit 上架前可独立完成的隐私清单、应用元数据、Release 构建与审核检查基线，为后续 Sandbox 原型结果留出明确接入点。",
+      "tags" : [
+
+      ],
+      "taskType" : "integration",
+      "title" : "建立 Mac App Store 合规与归档基线"
     }
   ]
 }
