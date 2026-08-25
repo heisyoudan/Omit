@@ -179,6 +179,16 @@
       "summary" : "完成分层后台监控调度与生命周期防重入",
       "taskId" : "TASK-DEV-003",
       "timestamp" : "2026-08-25T15:02:45Z"
+    },
+    {
+      "authorRole" : "dev",
+      "detailsMd" : "【自动推进】\n- 当前流程采用 Agent-first 默认执行契约。\n- 在权限允许、前置满足时，`transition request` 会直接完成状态推进，不再等待 Sage 中间审批。\n\n【结果】\n- 从：in_progress\n- 到：qa\n- 下一交接：sage",
+      "id" : "JRN-20260826-002",
+      "stage" : "qa",
+      "status" : "info",
+      "summary" : "DEV 已推进流转：in_progress -> qa",
+      "taskId" : "TASK-DEV-003",
+      "timestamp" : "2026-08-25T15:03:19Z"
     }
   ]
 }

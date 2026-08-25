@@ -121,13 +121,13 @@
       "dependsOn" : [
 
       ],
-      "execState" : "in_progress",
-      "gateProfile" : "default_dev_gate",
+      "execState" : "qa",
+      "gateProfile" : "default_qa_gate",
       "id" : "TASK-DEV-003",
       "issueRefs" : [
 
       ],
-      "ownerRole" : "dev",
+      "ownerRole" : "qa",
       "planState" : "planned",
       "priority" : "p1",
       "summary" : "将当前所有指标每秒同步运行的单一 Timer 拆为分层刷新与后台采样，避免文件系统和 IOKit 操作阻塞菜单栏 UI。",

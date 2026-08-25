@@ -102,6 +102,23 @@
       "taskId" : "TASK-DEV-002",
       "timestamp" : "2026-08-25T13:36:10Z",
       "toState" : "closing"
+    },
+    {
+      "checks" : {
+        "gateRunId" : "RUN-20260826-001",
+        "journalExists" : true,
+        "latestGatePassed" : true
+      },
+      "fromState" : "in_progress",
+      "id" : "TRN-20260826-001",
+      "requestedByRole" : "dev",
+      "resolvedAt" : "2026-08-25T15:03:19Z",
+      "resolvedByRole" : "dev",
+      "stage" : "in_progress",
+      "status" : "approved",
+      "taskId" : "TASK-DEV-003",
+      "timestamp" : "2026-08-25T15:03:19Z",
+      "toState" : "qa"
     }
   ]
 }
