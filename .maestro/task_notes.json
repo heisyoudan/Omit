@@ -35,6 +35,15 @@
       "taskId" : "TASK-DEV-002",
       "timestamp" : "2026-08-25T13:36:02Z",
       "type" : "test_verdict"
+    },
+    {
+      "authorRole" : "qa",
+      "detailsMd" : "## QA Verdict: FAIL\n\n### Truth\n- 自动化调度探针、指标回归探针与 Debug 构建均通过，但这些证据未覆盖 MenuBarExtra 窗口在显示模块切换时的动态布局路径。\n\n### Projection / Observe\n- 触发路径：打开设置页，切换显示模块开关；应用随即出现彩虹球且无法正常关闭。\n- Xcode 截图显示主线程因 AppKit 窗口约束更新一致性异常进入 __pthread_kill；异常文本以 “The window has been marked as needing another Update Constraints in Window pass...” 开头。\n- 这表明问题类型是窗口布局/约束更新循环，不是后台指标采样本身的普通耗时。\n\n### Suspected implementation area\n- MenuBarExtra 使用 .window 样式，根视图通过固定宽度与 vertical fixedSize 让窗口跟随内容高度变化。\n- 显示模块状态变化与设置/仪表盘动态内容切换、过渡动画或监控状态发布叠加时，可能在同一布局周期反复请求窗口更新。\n- Xcode 当前停点只是异常终止点；Dev 应结合完整 Exception Backtrace 定位首个业务栈帧，不应把 pthread_kill 当作根因。\n\n### Impact\n- P1 阻断：真实用户操作可使菜单栏应用完全无响应，必须强制退出。\n\n### Required follow-up\n- Dev 复现该路径并保存完整异常原因及 Exception Backtrace。\n- 检查并消除动态窗口高度、fixedSize、transition/withAnimation 与模块状态更新之间的布局反馈环。\n- 增加连续切换各显示模块、关闭/重开设置页的回归验证，确认无异常、无彩虹球、窗口高度稳定收敛。\n\n### Final Verdict\n- FAIL：当前实现不能进入 closing。\n",
+      "id" : "NTE-20260826-001",
+      "summary" : "QA FAIL：切换显示模块触发 AppKit 窗口约束更新循环并卡死",
+      "taskId" : "TASK-DEV-003",
+      "timestamp" : "2026-08-25T15:26:57Z",
+      "type" : "test_verdict"
     }
   ]
 }

@@ -189,6 +189,26 @@
       "summary" : "DEV 已推进流转：in_progress -> qa",
       "taskId" : "TASK-DEV-003",
       "timestamp" : "2026-08-25T15:03:19Z"
+    },
+    {
+      "authorRole" : "qa",
+      "detailsMd" : "[原子回退]\n- from: qa\n- to: in_progress\n- byRole: qa\n- reason: 真实 MenuBarExtra 中切换显示模块后触发 AppKit 窗口约束更新循环，出现彩虹球且无法关闭；Xcode 主线程因窗口 Update Constraints 一致性异常进入 __pthread_kill。请 Dev 结合完整 Exception Backtrace 修复动态窗口高度、fixedSize、过渡动画或状态发布造成的布局反馈环，并补充连续切换模块的回归证据。\n- handoffCommand: maestro task context TASK-DEV-003 --role dev",
+      "id" : "JRN-20260826-003",
+      "stage" : "in_progress",
+      "status" : "warning",
+      "summary" : "QA 已带理由回退：qa -> in_progress",
+      "taskId" : "TASK-DEV-003",
+      "timestamp" : "2026-08-25T15:27:15Z"
+    },
+    {
+      "authorRole" : "dev",
+      "detailsMd" : "根因：QA 的 NSWindow Update Constraints 一致性异常对应 MenuBarExtra 根视图的三个同周期反馈源：vertical fixedSize 强制内容高度反复参与窗口尺寸协商，设置页/仪表盘 move+opacity 过渡在高度变化时持续产生中间布局，WindowAppearanceBridge 又在每次状态发布时异步重复写入相同 NSWindow.appearance。修复：移除根面板 vertical fixedSize 与页面切换动画；外观桥改为 viewDidMoveToWindow 后按 appearance name 幂等更新；抽取 OmitPanelContent 供真实 NSHostingView 回归。验证：MenuBarLayoutProbe 在 AppKit 窗口中主动按 fittingSize 调整窗口，连续 80 次设置/仪表盘切换及 480 次模块变更均收敛；MonitoringScheduleProbe PASS；SystemMetricsProbe PASS；Debug xcodebuild 成功。边界：未改变监控公式、采样 cadence、网络接口策略、Trash 权限/删除能力及卡片视觉结构。",
+      "id" : "JRN-20260826-004",
+      "stage" : "in_progress",
+      "status" : "info",
+      "summary" : "修复 MenuBarExtra 动态布局约束反馈环",
+      "taskId" : "TASK-DEV-003",
+      "timestamp" : "2026-08-26T01:00:45Z"
     }
   ]
 }

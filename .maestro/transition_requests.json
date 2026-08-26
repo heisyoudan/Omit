@@ -119,6 +119,24 @@
       "taskId" : "TASK-DEV-003",
       "timestamp" : "2026-08-25T15:03:19Z",
       "toState" : "qa"
+    },
+    {
+      "checks" : {
+        "gateRunId" : "RUN-20260826-002",
+        "journalExists" : true,
+        "latestGatePassed" : false
+      },
+      "fromState" : "qa",
+      "id" : "TRN-20260826-002",
+      "rejectedReason" : "真实 MenuBarExtra 中切换显示模块后触发 AppKit 窗口约束更新循环，出现彩虹球且无法关闭；Xcode 主线程因窗口 Update Constraints 一致性异常进入 __pthread_kill。请 Dev 结合完整 Exception Backtrace 修复动态窗口高度、fixedSize、过渡动画或状态发布造成的布局反馈环，并补充连续切换模块的回归证据。",
+      "requestedByRole" : "qa",
+      "resolvedAt" : "2026-08-25T15:27:15Z",
+      "resolvedByRole" : "qa",
+      "stage" : "qa",
+      "status" : "approved",
+      "taskId" : "TASK-DEV-003",
+      "timestamp" : "2026-08-25T15:27:15Z",
+      "toState" : "in_progress"
     }
   ]
 }

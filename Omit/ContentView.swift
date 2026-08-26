@@ -155,42 +155,79 @@ struct ContentView: View {
     }
 
     var body: some View {
+        OmitPanelContent(
+            launchManager: launchManager,
+            dashboardState: dashboardState,
+            language: language,
+            appearance: appearance,
+            visibleModules: visibleModules,
+            showMemory: showMemory,
+            showStorage: showStorage,
+            showSettings: showSettings,
+            languageRaw: $languageRaw,
+            appearanceRaw: $appearanceRaw
+        ) {
+            showSettings.toggle()
+        }
+        .onAppear { monitor.startMonitoring() }
+        .onDisappear { monitor.stopMonitoring() }
+    }
+}
+
+struct OmitPanelContent: View {
+    @ObservedObject var launchManager: LaunchManager
+    let dashboardState: OmitDashboardState
+    let language: Language
+    let appearance: AppAppearance
+    let visibleModules: Set<OmitModule>
+    let showMemory: Bool
+    let showStorage: Bool
+    let showSettings: Bool
+    @Binding var languageRaw: String
+    @Binding var appearanceRaw: String
+    let onSettings: () -> Void
+
+    var body: some View {
         OmitPanelSurface {
             VStack(spacing: 16) {
-                OmitHeader(isShowingSettings: showSettings) {
-                    withAnimation(.easeInOut(duration: 0.18)) { showSettings.toggle() }
-                }
+                OmitHeader(isShowingSettings: showSettings, onSettings: onSettings)
                 if showSettings {
                     SettingsView(launchManager: launchManager, languageRaw: $languageRaw, appearanceRaw: $appearanceRaw)
-                        .transition(.opacity.combined(with: .move(edge: .trailing)))
                 } else {
                     OmitDashboardView(state: dashboardState, language: language, visibleModules: visibleModules, showMemory: showMemory, showStorage: showStorage, onAuthorizeTrash: {}, onClearTrash: {})
-                        .transition(.opacity.combined(with: .move(edge: .leading)))
                 }
             }
         }
         .omitAppearance(appearance)
-        .onAppear { monitor.startMonitoring() }
-        .onDisappear { monitor.stopMonitoring() }
     }
 }
 
 private struct WindowAppearanceBridge: NSViewRepresentable {
     let appearance: NSAppearance?
 
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView(frame: .zero)
-        applyAppearance(to: view)
+    func makeNSView(context: Context) -> AppearanceView {
+        let view = AppearanceView(frame: .zero)
+        view.targetAppearance = appearance
         return view
     }
 
-    func updateNSView(_ nsView: NSView, context: Context) {
-        applyAppearance(to: nsView)
+    func updateNSView(_ nsView: AppearanceView, context: Context) {
+        nsView.targetAppearance = appearance
     }
 
-    private func applyAppearance(to view: NSView) {
-        DispatchQueue.main.async {
-            view.window?.appearance = appearance
+    final class AppearanceView: NSView {
+        var targetAppearance: NSAppearance? {
+            didSet { applyAppearanceIfNeeded() }
+        }
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            applyAppearanceIfNeeded()
+        }
+
+        private func applyAppearanceIfNeeded() {
+            guard let window, window.appearance?.name != targetAppearance?.name else { return }
+            window.appearance = targetAppearance
         }
     }
 }
@@ -214,7 +251,7 @@ private extension View {
 struct OmitPanelSurface<Content: View>: View {
     @ViewBuilder let content: Content
     var body: some View {
-        content.padding(20).frame(width: 312).fixedSize(horizontal: false, vertical: true)
+        content.padding(20).frame(width: 312)
             .background(.ultraThinMaterial).background(Color(nsColor: .windowBackgroundColor).opacity(0.72))
     }
 }
