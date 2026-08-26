@@ -157,13 +157,13 @@
       "dependsOn" : [
 
       ],
-      "execState" : "in_progress",
-      "gateProfile" : "default_dev_gate",
+      "execState" : "qa",
+      "gateProfile" : "default_qa_gate",
       "id" : "TASK-DEV-004",
       "issueRefs" : [
 
       ],
-      "ownerRole" : "dev",
+      "ownerRole" : "qa",
       "planState" : "planned",
       "priority" : "p0",
       "summary" : "在 Mac App Store Sandbox 约束下验证用户废纸篓的显式授权、security-scoped bookmark 持久化、递归统计和安全清空路径。",

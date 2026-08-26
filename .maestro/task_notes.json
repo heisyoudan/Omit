@@ -44,6 +44,24 @@
       "taskId" : "TASK-DEV-003",
       "timestamp" : "2026-08-25T15:26:57Z",
       "type" : "test_verdict"
+    },
+    {
+      "authorRole" : "qa",
+      "detailsMd" : "## QA 无界面复核记录\n\n### Scope\n- 按 PO 明确要求，本轮仅审查代码与无界面自动化证据。\n- 当前为远程场景，PO 无法操作电脑；未启动 Omit，未打开 MenuBarExtra，也未进行真实显示模块切换复测。\n\n### Code Review\n- 审查范围：5effab7..6efae17；6610643 仅为重新流转至 QA 的流程提交。\n- 修复移除根面板 vertical fixedSize 与设置/仪表盘切换动画，消除动态高度协商中的两个反馈源。\n- WindowAppearanceBridge 改为 viewDidMoveToWindow 后按 appearance name 幂等更新，不再在每次 SwiftUI 状态发布时异步重复写入 NSWindow.appearance。\n- OmitPanelContent 被抽取供生产布局和压力探针复用；未发现监控公式、采样 cadence、网络接口策略或 Trash 能力发生越界变化。\n- git diff --check 通过；未发现新的阻断性代码问题。\n\n### Automated Evidence\n- MenuBarLayoutProbe：独立编译通过；源码覆盖 80 次设置/仪表盘循环和 480 次模块变更。按 PO 要求未执行，因为探针会创建 AppKit 测试窗口；Dev 提交记录声明执行 PASS。\n- MonitoringScheduleProbe：QA 独立复跑 PASS。\n- SystemMetricsProbe：QA 在允许读取系统路由接口的只读环境复跑 PASS，读取 en0 64 位 RX/TX 计数成功。\n- xcodebuild unsigned Debug：QA 独立复跑 BUILD SUCCEEDED；未启动构建产物。\n\n### Deferred Observe\n- 仍需在真实 MenuBarExtra 中连续切换内存、磁盘、CPU、电池、网络、废纸篓开关，并多次关闭/重开设置页。\n- 验收目标：无 Update Constraints 异常、无彩虹球、无卡死，窗口高度稳定收敛，模块显隐正确。\n- 延期原因：PO 当前远程且无法操作本机；PO 表示回家后再执行这部分验证，并由 Sage 继续记录/跟踪。\n\n### QA Status\n- 自动化与代码审查部分通过，但真实 UI 投影/人工观察尚未完成。\n- 本备注不是新的最终 test_verdict，不覆盖 NTE-20260826-001 的 FAIL；当前不得推进 closing，任务保持 qa，等待延期复测。\n",
+      "id" : "NTE-20260826-002",
+      "summary" : "QA 无界面复核通过；真实 MenuBarExtra 复测延期，保持 QA",
+      "taskId" : "TASK-DEV-003",
+      "timestamp" : "2026-08-26T01:13:34Z",
+      "type" : "general"
+    },
+    {
+      "authorRole" : "dev",
+      "detailsMd" : "## QA 本轮范围\n\n- PO 已明确授权：TASK-DEV-004 现在可以转交 QA。\n- QA 本轮先执行代码审核与无界面逻辑验证，复核 entitlement、bookmark 生命周期、后台递归扫描、符号链接防护、隔离 fixture 删除及逐项错误报告。\n- QA 不需要等待 PO，也不要启动 Omit、打开 NSOpenPanel、访问或清空真实 `~/.Trash`。\n- 真实 `~/.Trash` 选择、应用重启后的 security-scoped bookmark 恢复、MenuBarExtra 投影，由 PO 回家后与团队共同进行补充界面测试。\n- 本轮 QA 应如实区分自动验证结论与 Deferred Observe，不得把尚未执行的真实授权界面测试记为 PASS。\n",
+      "id" : "NTE-20260826-003",
+      "summary" : "QA 先做代码审核；真实 Trash 授权与界面观察延期由 PO 联合测试",
+      "taskId" : "TASK-DEV-004",
+      "timestamp" : "2026-08-26T01:57:03Z",
+      "type" : "general"
     }
   ]
 }
