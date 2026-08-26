@@ -187,10 +187,10 @@ actor TrashAccessService {
 
     func authorize(selectedURL: URL) -> TrashState {
         do {
-            let normalizedURL = selectedURL.standardizedFileURL.resolvingSymlinksInPath()
-            try validateSelection(normalizedURL)
+            let normalizedURL = try validateTargetPolicy(selectedURL)
             let didStartAccess = normalizedURL.startAccessingSecurityScopedResource()
             defer { if didStartAccess { normalizedURL.stopAccessingSecurityScopedResource() } }
+            try validateDirectory(normalizedURL)
             let bookmark = try codec.create(for: normalizedURL)
             defaults.set(bookmark, forKey: bookmarkKey)
             return try scanResolvedURL(normalizedURL, scopeAlreadyActive: didStartAccess)
@@ -209,7 +209,8 @@ actor TrashAccessService {
         do {
             let resolved = try resolveBookmark()
             guard !resolved.isStale else { return .staleBookmark }
-            return try scanResolvedURL(resolved.url, scopeAlreadyActive: false)
+            let validatedURL = try validateTargetPolicy(resolved.url)
+            return try scanResolvedURL(validatedURL, scopeAlreadyActive: false)
         } catch let error as TrashAccessError {
             return state(for: error)
         } catch {
@@ -223,12 +224,14 @@ actor TrashAccessService {
             guard !resolved.isStale else {
                 return failureReport(.bookmarkInvalid("Bookmark is stale"))
             }
-            let didStartAccess = resolved.url.startAccessingSecurityScopedResource()
+            let validatedURL = try validateTargetPolicy(resolved.url)
+            let didStartAccess = validatedURL.startAccessingSecurityScopedResource()
             guard didStartAccess || !codec.usesSecurityScope else {
                 return failureReport(.securityScopeDenied)
             }
-            defer { if didStartAccess { resolved.url.stopAccessingSecurityScopedResource() } }
-            return try TrashFileTree.clearContents(at: resolved.url, fileManager: fileManager) {
+            defer { if didStartAccess { validatedURL.stopAccessingSecurityScopedResource() } }
+            try validateDirectory(validatedURL)
+            return try TrashFileTree.clearContents(at: validatedURL, fileManager: fileManager) {
                 try fileManager.removeItem(at: $0)
             }
         } catch let error as TrashAccessError {
@@ -256,24 +259,30 @@ actor TrashAccessService {
             throw TrashAccessError.securityScopeDenied
         }
         defer { if didStartAccess { url.stopAccessingSecurityScopedResource() } }
+        try validateDirectory(url)
         let result = try TrashFileTree.scan(at: url, fileManager: fileManager)
         let byteCount = min(result.allocatedBytes, UInt64(Int64.max))
         let formattedSize = ByteCountFormatter.string(fromByteCount: Int64(byteCount), countStyle: .file)
         return result.fileCount == 0 ? .empty : .content(formattedSize)
     }
 
-    private func validateSelection(_ url: URL) throws {
-        let values = try url.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
-        guard values.isDirectory == true, values.isSymbolicLink != true else { throw TrashAccessError.invalidSelection }
+    private func validateTargetPolicy(_ url: URL) throws -> URL {
+        let normalizedURL = url.standardizedFileURL.resolvingSymlinksInPath()
         switch selectionPolicy {
         case .userTrash:
             let expected = TrashLocation.userTrashURL(fileManager: fileManager)
                 .standardizedFileURL
                 .resolvingSymlinksInPath()
-            guard url == expected else { throw TrashAccessError.invalidSelection }
+            guard normalizedURL == expected else { throw TrashAccessError.invalidSelection }
         case .anyDirectoryForTesting:
             break
         }
+        return normalizedURL
+    }
+
+    private func validateDirectory(_ url: URL) throws {
+        let values = try url.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
+        guard values.isDirectory == true, values.isSymbolicLink != true else { throw TrashAccessError.invalidSelection }
     }
 
     private func state(for error: TrashAccessError) -> TrashState {

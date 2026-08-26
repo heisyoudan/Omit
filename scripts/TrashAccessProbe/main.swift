@@ -73,6 +73,21 @@ struct TrashAccessProbe {
             expect(invalidSelectionState == .unauthorized, "non-directory selection is rejected")
             try fileManager.removeItem(at: invalidSelection)
 
+            let unexpectedBookmarkKey = "unexpected-target-bookmark"
+            let unexpectedBookmark = try TrashBookmarkCodec(usesSecurityScope: false).create(for: externalDirectory)
+            defaults.set(unexpectedBookmark, forKey: unexpectedBookmarkKey)
+            let productionPolicyService = TrashAccessService(
+                defaults: defaults,
+                bookmarkKey: unexpectedBookmarkKey,
+                usesSecurityScope: false,
+                selectionPolicy: .userTrash
+            )
+            let rejectedScanState = await productionPolicyService.scan()
+            expect(rejectedScanState == .unauthorized, "restored non-Trash bookmark is rejected before scanning")
+            let rejectedClearReport = await productionPolicyService.clear()
+            expect(!rejectedClearReport.isComplete && rejectedClearReport.deletedItemNames.isEmpty, "restored non-Trash bookmark fails closed before deletion")
+            expect(fileManager.fileExists(atPath: externalDirectory.appendingPathComponent("must-survive.bin").path), "rejected bookmark cannot delete its target")
+
             _ = await restoredService.authorize(selectedURL: trashFixture)
             let clearReport = await restoredService.clear()
             expect(clearReport.isComplete && clearReport.deletedItemNames.count == 3, "authorized clear deletes each top-level fixture item")
