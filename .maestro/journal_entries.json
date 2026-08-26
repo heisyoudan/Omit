@@ -239,6 +239,36 @@
       "summary" : "DEV 已推进流转：in_progress -> qa",
       "taskId" : "TASK-DEV-004",
       "timestamp" : "2026-08-26T01:57:27Z"
+    },
+    {
+      "authorRole" : "qa",
+      "detailsMd" : "[原子回退]\n- from: qa\n- to: in_progress\n- byRole: qa\n- reason: 恢复 security-scoped bookmark 后，scan/clear 未重新执行 userTrash 目标校验。QA 隔离 fixture 证明：production .userTrash 策略下，持久化的非 Trash bookmark 可被 clear，哨兵文件被删除。请在所有恢复路径规范化并重验 resolved URL，clear 必须 fail closed，并增加非预期 bookmark 的 scan/clear 拒绝回归。真实授权、重启恢复与 MenuBarExtra Observe 继续延期，未记为 PASS。\n- handoffCommand: maestro task context TASK-DEV-004 --role dev",
+      "id" : "JRN-20260826-008",
+      "stage" : "in_progress",
+      "status" : "warning",
+      "summary" : "QA 已带理由回退：qa -> in_progress",
+      "taskId" : "TASK-DEV-004",
+      "timestamp" : "2026-08-26T02:05:52Z"
+    },
+    {
+      "authorRole" : "dev",
+      "detailsMd" : "## 根因\n\n`TrashAccessService` 只在 `authorize(selectedURL:)` 时执行 `.userTrash` 目标校验。持久化 bookmark 经 `resolveBookmark()` 恢复后，`scan()` 和 `clear()` 直接使用解析 URL，因此被替换或错误保存的非 Trash bookmark 可以绕过策略；`clear()` 会对该目录执行逐项删除。\n\n## 最小修复\n\n- 将 URL 规范化和 `.userTrash` 路径策略提取为所有入口共用的 `validateTargetPolicy`。\n- `authorize`、bookmark 恢复后的 `scan`、bookmark 恢复后的 `clear` 均在文件访问前执行该校验。\n- `clear` 对目标不匹配返回失败报告，保持零删除，默认拒绝。\n- security scope 启动后再次验证目标为非符号链接目录，再进入扫描或删除。\n- 新增回归探针：向 `.userTrash` 策略 service 植入指向隔离非 Trash 目录的 bookmark，验证扫描被拒绝、清空零删除、哨兵文件保留。\n\n## 验证\n\n- `TrashAccessProbe`: PASS；新增非 Trash bookmark 的 scan/clear 拒绝回归通过。\n- Debug Sandbox 签名构建: PASS。\n- Release Sandbox 签名构建: PASS。\n- 两个产物 `codesign --verify --deep --strict`: PASS。\n- 两个产物 entitlements 仍仅包含 App Sandbox、user-selected read/write、app-scoped bookmark。\n- `git diff --check`: PASS。\n- 修复提交：`538b4cb`，已推送。\n\n## 保持延期\n\n未启动 Omit、未打开 NSOpenPanel、未访问或清空真实 `~/.Trash`。真实 Trash 授权及取消、重启恢复与失效重授权、MenuBarExtra 投影继续作为 Deferred Observe，不记为 PASS。\n",
+      "id" : "JRN-20260826-009",
+      "stage" : "in_progress",
+      "status" : "info",
+      "summary" : "修复恢复 bookmark 绕过 Trash 目标校验的清空越权",
+      "taskId" : "TASK-DEV-004",
+      "timestamp" : "2026-08-26T04:21:42Z"
+    },
+    {
+      "authorRole" : "dev",
+      "detailsMd" : "【自动推进】\n- 当前流程采用 Agent-first 默认执行契约。\n- 在权限允许、前置满足时，`transition request` 会直接完成状态推进，不再等待 Sage 中间审批。\n\n【结果】\n- 从：in_progress\n- 到：qa\n- 下一交接：sage",
+      "id" : "JRN-20260826-010",
+      "stage" : "qa",
+      "status" : "info",
+      "summary" : "DEV 已推进流转：in_progress -> qa",
+      "taskId" : "TASK-DEV-004",
+      "timestamp" : "2026-08-26T04:21:53Z"
     }
   ]
 }

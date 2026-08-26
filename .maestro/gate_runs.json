@@ -234,6 +234,58 @@
       "status" : "pass",
       "taskId" : "TASK-DEV-004",
       "timestamp" : "2026-08-26T01:57:16Z"
+    },
+    {
+      "canReturnToQA" : false,
+      "checks" : [
+        {
+          "detailsMd" : "## QA Verdict: FAIL\n\n### Truth — Verified PASS\n- 审查范围：6610643..dd4b9cb；ff8fd1b 为流转提交。git diff --check 通过。\n- Debug 与 Release 均以本地签名方式 BUILD SUCCEEDED；codesign --verify --deep --strict 均通过。\n- 两个最终 Omit.app 均实际嵌入且仅嵌入 com.apple.security.app-sandbox、com.apple.security.files.bookmarks.app-scope、com.apple.security.files.user-selected.read-write。\n- TrashAccessProbe 仅使用 /tmp/Omit-TASK-DEV-004-* 隔离 fixture 并 PASS：递归统计普通文件、后台线程证据、跳过 2 个符号链接、外部 symlink 目标存活、受控清空及逐项失败反馈均成立；未访问或修改真实 ~/.Trash。\n- MonitoringScheduleProbe PASS：Trash 分组周期为 20 秒，不按每秒扫描。\n- 源码确认 security-scoped bookmark 创建/解析使用 withSecurityScope；startAccessing 与 stopAccessing 通过 defer 成对；stale/invalid bookmark 返回可重新授权状态而非崩溃。\n- 源码确认 Trash 清空由独立按钮进入二次确认，partial failure 通过 TrashClearReport 逐项保留 itemName/message，并映射为 Trash error 状态。\n\n### Truth — Blocking FAIL\n- 首次 authorize(selectedURL:) 会调用 validateSelection，限制到规范化后的 ~/.Trash；但 scan() 与 clear() 在 resolveBookmark() 后没有再次调用 validateSelection。\n- QA 使用隔离 /tmp fixture 直接持久化一个指向非废纸篓目录的 bookmark，再以生产 .userTrash selectionPolicy 创建 TrashAccessService 并调用 clear()。结果：restore-policy-check: deleted=[\"must-not-delete.txt\"] failures=0 sentinelSurvived=false。\n- 因此恢复后的 bookmark 可以绕过 production userTrash 目录不变量；clear() 会删除 bookmark 解析目录的全部顶层项目。这是破坏性操作的 fail-open 安全缺陷。真实 ~/.Trash 未被访问。\n\n### Required Fix\n- 在任何恢复 bookmark 的 scan/clear 之前，对 resolved.url 规范化并重新执行 userTrash 目标校验；clear 必须 fail closed。\n- bookmark stale、解析失败或目标不再是预期 Trash 时，不得删除，返回 unauthorized/stale/error 并要求重新授权。\n- 增加回归：恢复 bookmark 指向非预期隔离目录时 clear 必须拒绝，哨兵必须存活；同时覆盖 scan 的同一目标校验。建议将 expected Trash URL 注入策略以便在隔离 fixture 中测试 production invariant。\n\n### Projection — Code Mapping Only\n- 未授权/stale bookmark 映射到 Trash 未授权卡；scanning/empty/content/error 分支存在。\n- Clear 仅在 content 状态显示并需要二次确认；逐项失败文本映射存在。\n- 本轮未打开 MenuBarExtra，以上仅为源码映射审查，不是实际界面 PASS。\n\n### Deferred Observe — NOT TESTED / NOT PASS\n- 按 PO 要求未启动 Omit、未打开 NSOpenPanel、未读取或清空真实 ~/.Trash。\n- 真实授权与取消、签名 Sandbox 中读取、应用重启恢复、失效后重新授权、MenuBarExtra 状态投影与确认交互，全部延期至 PO 回家后共同测试。\n- Deferred Observe 不计为 PASS。\n\n### Final Verdict\n- FAIL：恢复 bookmark 后缺少目标目录重新校验，存在对非 Trash 授权目录执行 clear 的安全风险。任务不得进入 closing，应回退 Dev 修复；延期观察在修复并重新进入 QA 后继续。\n",
+          "key" : "qa_verdict_exists",
+          "message" : "已找到结构化 QA 最终测试裁定",
+          "result" : "pass"
+        },
+        {
+          "key" : "evidence_exists",
+          "message" : "已找到任务备注",
+          "result" : "pass"
+        }
+      ],
+      "closeReady" : false,
+      "gateProfile" : "default_qa_gate",
+      "id" : "RUN-20260826-005",
+      "stage" : "qa",
+      "status" : "pass",
+      "taskId" : "TASK-DEV-004",
+      "timestamp" : "2026-08-26T02:05:37Z",
+      "verdictOutcome" : "FAIL"
+    },
+    {
+      "canReturnToQA" : true,
+      "checks" : [
+        {
+          "key" : "mock_check",
+          "message" : "模拟检查通过",
+          "result" : "pass"
+        },
+        {
+          "key" : "build_check",
+          "message" : "Xcode 构建通过",
+          "result" : "pass"
+        },
+        {
+          "key" : "journal_exists",
+          "message" : "已存在日志",
+          "result" : "pass"
+        }
+      ],
+      "closeReady" : false,
+      "gateProfile" : "default_dev_gate",
+      "id" : "RUN-20260826-006",
+      "stage" : "in_progress",
+      "status" : "pass",
+      "taskId" : "TASK-DEV-004",
+      "timestamp" : "2026-08-26T04:21:50Z",
+      "verdictOutcome" : "FAIL"
     }
   ]
 }
