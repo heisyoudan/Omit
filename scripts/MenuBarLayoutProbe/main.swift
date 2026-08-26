@@ -41,6 +41,8 @@ private struct LayoutStressView: View {
             showSettings: driver.showSettings,
             languageRaw: $driver.languageRaw,
             appearanceRaw: $driver.appearanceRaw,
+            onAuthorizeTrash: {},
+            onClearTrash: {},
             onSettings: { driver.showSettings.toggle() }
         )
     }

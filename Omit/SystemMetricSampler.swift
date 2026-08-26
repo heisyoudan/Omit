@@ -5,8 +5,6 @@ import IOKit.ps
 nonisolated enum CPUState: Equatable, Sendable { case unavailable, available(String) }
 nonisolated enum BatteryState: Equatable, Sendable { case noBattery, unavailable, available(value: String, isCharging: Bool) }
 nonisolated enum NetworkState: Equatable, Sendable { case unavailable, available(download: String, upload: String) }
-nonisolated enum TrashState: Equatable, Sendable { case unauthorized, empty, content(String), scanning, error(String) }
-
 nonisolated enum MetricKind: Hashable, Sendable { case cpu, memory, network, battery, storage, trash }
 nonisolated enum MetricSamplingError: Error, Equatable, Sendable {
     case kernel(metric: MetricKind, code: Int32)
@@ -30,15 +28,15 @@ nonisolated enum MonitorProjection: Sendable {
 }
 
 actor SystemMetricSampler {
-    private let fileManager: FileManager
     private let networkSampler: NetworkCounterSampler
+    private let trashAccessService: TrashAccessService
     private let byteFormatter: ByteCountFormatter
     private var cpuCalculator = CPUUsageCalculator()
     private var networkCalculator = NetworkRateCalculator()
 
-    init(fileManager: FileManager = .default) {
-        self.fileManager = fileManager
+    init(trashAccessService: TrashAccessService = TrashAccessService()) {
         self.networkSampler = NetworkCounterSampler()
+        self.trashAccessService = trashAccessService
         let formatter = ByteCountFormatter()
         formatter.countStyle = .file
         formatter.allowsNonnumericFormatting = false
@@ -50,13 +48,25 @@ actor SystemMetricSampler {
         networkCalculator = NetworkRateCalculator()
     }
 
-    func sample(_ group: MonitorGroup) -> MonitorProjection {
+    func sample(_ group: MonitorGroup) async -> MonitorProjection {
         switch group {
         case .fast: .fast(sampleFast())
         case .memory: .memory(sampleMemory())
         case .slow: .slow(sampleSlow())
-        case .trash: .trash(sampleTrash())
+        case .trash: .trash(await trashAccessService.scan())
         }
+    }
+
+    func authorizeTrash(at selectedURL: URL) async -> TrashState {
+        await trashAccessService.authorize(selectedURL: selectedURL)
+    }
+
+    func trashAuthorizationCancelled() async -> TrashState {
+        await trashAccessService.authorizationCancelled()
+    }
+
+    func clearTrash() async -> TrashClearReport {
+        await trashAccessService.clear()
     }
 
     private func sampleFast() -> FastProjection {
@@ -158,20 +168,6 @@ actor SystemMetricSampler {
               maxCapacity > 0 else { return .unavailable }
         let percent = min(max(Int((Double(capacity) / Double(maxCapacity)) * 100), 0), 100)
         return .available(value: "\(percent)%", isCharging: (info[kIOPSIsChargingKey] as? Bool) == true)
-    }
-
-    private func sampleTrash() -> TrashState {
-        guard let trashURL = fileManager.urls(for: .trashDirectory, in: .userDomainMask).first else { return .error("Trash directory unavailable") }
-        do {
-            let files = try fileManager.contentsOfDirectory(at: trashURL, includingPropertiesForKeys: [.totalFileAllocatedSizeKey])
-            var totalSize: Int64 = 0
-            for file in files {
-                if let size = try file.resourceValues(forKeys: [.totalFileAllocatedSizeKey]).totalFileAllocatedSize { totalSize += Int64(size) }
-            }
-            return totalSize == 0 ? .empty : .content(byteFormatter.string(fromByteCount: totalSize))
-        } catch {
-            return .unauthorized
-        }
     }
 
     private func bytes(_ pages: natural_t, pageSize: UInt64) -> UInt64 {

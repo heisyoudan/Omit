@@ -13,12 +13,14 @@ final class SystemMonitor: ObservableObject {
     @Published private(set) var cpuState: CPUState = .unavailable
     @Published private(set) var batteryState: BatteryState = .unavailable
     @Published private(set) var networkState: NetworkState = .unavailable
-    @Published private(set) var trashState: TrashState = .scanning
+    @Published private(set) var trashState: TrashState = .unauthorized
+    @Published private(set) var trashClearReport: TrashClearReport?
     @Published private(set) var samplingFailures: [MetricKind: MetricSamplingError] = [:]
 
     private let sampler: SystemMetricSampler
     private let cadence: MonitorCadence
     private var monitoringTask: Task<Void, Never>?
+    private var trashOperationTask: Task<Void, Never>?
     private var lifecycle = MonitoringLifecycle()
     private var wantsMonitoring = false
     private var sleepObserver: NSObjectProtocol?
@@ -35,6 +37,7 @@ final class SystemMonitor: ObservableObject {
 
     deinit {
         monitoringTask?.cancel()
+        trashOperationTask?.cancel()
         if let sleepObserver { NSWorkspace.shared.notificationCenter.removeObserver(sleepObserver) }
         if let wakeObserver { NSWorkspace.shared.notificationCenter.removeObserver(wakeObserver) }
     }
@@ -47,6 +50,46 @@ final class SystemMonitor: ObservableObject {
     func stopMonitoring() {
         wantsMonitoring = false
         cancelMonitoringTask()
+    }
+
+    func authorizeTrash() {
+        guard trashOperationTask == nil else { return }
+        trashState = .scanning
+        let sampler = sampler
+        trashOperationTask = Task { [weak self, sampler] in
+            let selectedURL = await TrashAuthorizationPanel.chooseUserTrash()
+            guard !Task.isCancelled else { return }
+            let state: TrashState
+            if let selectedURL {
+                state = await sampler.authorizeTrash(at: selectedURL)
+            } else {
+                state = await sampler.trashAuthorizationCancelled()
+            }
+            guard !Task.isCancelled else { return }
+            self?.trashState = state
+            self?.trashOperationTask = nil
+        }
+    }
+
+    func clearTrash() {
+        guard trashOperationTask == nil else { return }
+        trashState = .scanning
+        trashClearReport = nil
+        let sampler = sampler
+        trashOperationTask = Task { [weak self, sampler] in
+            let report = await sampler.clearTrash()
+            guard !Task.isCancelled else { return }
+            self?.trashClearReport = report
+            if report.failures.isEmpty {
+                let projection = await sampler.sample(.trash)
+                guard !Task.isCancelled else { return }
+                self?.apply(projection)
+            } else {
+                let details = report.failures.map { "\($0.itemName): \($0.message)" }.joined(separator: "; ")
+                self?.trashState = .error(details)
+            }
+            self?.trashOperationTask = nil
+        }
     }
 
     private func launchMonitoringTaskIfNeeded() {

@@ -131,7 +131,7 @@ struct ContentView: View {
 
         let trash: TrashPresentation
         switch monitor.trashState {
-        case .unauthorized: trash = .unauthorized
+        case .unauthorized, .staleBookmark: trash = .unauthorized
         case .empty: trash = .empty
         case .content(let value): trash = .content(value)
         case .scanning: trash = .scanning
@@ -165,7 +165,9 @@ struct ContentView: View {
             showStorage: showStorage,
             showSettings: showSettings,
             languageRaw: $languageRaw,
-            appearanceRaw: $appearanceRaw
+            appearanceRaw: $appearanceRaw,
+            onAuthorizeTrash: monitor.authorizeTrash,
+            onClearTrash: monitor.clearTrash
         ) {
             showSettings.toggle()
         }
@@ -185,6 +187,8 @@ struct OmitPanelContent: View {
     let showSettings: Bool
     @Binding var languageRaw: String
     @Binding var appearanceRaw: String
+    let onAuthorizeTrash: () -> Void
+    let onClearTrash: () -> Void
     let onSettings: () -> Void
 
     var body: some View {
@@ -194,7 +198,15 @@ struct OmitPanelContent: View {
                 if showSettings {
                     SettingsView(launchManager: launchManager, languageRaw: $languageRaw, appearanceRaw: $appearanceRaw)
                 } else {
-                    OmitDashboardView(state: dashboardState, language: language, visibleModules: visibleModules, showMemory: showMemory, showStorage: showStorage, onAuthorizeTrash: {}, onClearTrash: {})
+                    OmitDashboardView(
+                        state: dashboardState,
+                        language: language,
+                        visibleModules: visibleModules,
+                        showMemory: showMemory,
+                        showStorage: showStorage,
+                        onAuthorizeTrash: onAuthorizeTrash,
+                        onClearTrash: onClearTrash
+                    )
                 }
             }
         }
