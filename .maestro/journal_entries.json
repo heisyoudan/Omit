@@ -219,6 +219,16 @@
       "summary" : "DEV 已推进流转：in_progress -> qa",
       "taskId" : "TASK-DEV-003",
       "timestamp" : "2026-08-26T01:01:45Z"
+    },
+    {
+      "authorRole" : "dev",
+      "detailsMd" : "## 实现内容\n\n- Debug 与 Release 均启用 App Sandbox，并接入显式 Trash 授权流程。\n- Trash 卡片通过 `NSOpenPanel` 仅接受当前登录用户的 `~/.Trash`；取消时保留已有授权状态，无 bookmark 时保持未授权。\n- 新增独立 `TrashAccessService` actor；授权、扫描和清空操作串行执行。Trash 未授权、bookmark 无效或权限不足只更新 Trash 状态，不改变 CPU、内存、磁盘、电池、网络采样逻辑。\n- 递归统计由采样 actor 在后台执行，生产调度保持 20 秒一次；仅统计普通文件，跳过符号链接并对大小累加做溢出保护。\n- 清空只由 Trash 卡片既有的二次确认流程独立触发；逐个删除顶层项目，返回已删除项目与逐项失败信息。\n\n## Entitlement 配置\n\nDebug 与 Release 使用同一 `Omit/Omit.entitlements`，签名产物只包含：\n\n- `com.apple.security.app-sandbox = true`\n- `com.apple.security.files.user-selected.read-write = true`\n- `com.apple.security.files.bookmarks.app-scope = true`\n\n未申请 Full Disk Access，未加入网络、下载目录或其他文件权限。`CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO`，Debug/Release 临时签名产物均未注入 `get-task-allow`。\n\n## Bookmark 生命周期\n\n- 用户选择目录后先校验其规范化路径等于当前登录用户真实 `~/.Trash`，拒绝文件、符号链接目录和其他目录。\n- 产品路径使用 `.withSecurityScope` 创建并持久化 app-scoped bookmark。\n- 每次扫描或清空前解析 bookmark，检查 stale 标志，并成对调用 `startAccessingSecurityScopedResource` / `stopAccessingSecurityScopedResource`。\n- 无 bookmark、权限拒绝映射为未授权；损坏或 stale bookmark 映射为需要重新授权；取消选择不会伪造成功。\n\n## Fixture 安全证明\n\n`TrashAccessProbe` 仅在系统临时目录内创建带 `Omit-TASK-DEV-004-<UUID>` 前缀的隔离 fixture，并在任何删除前验证规范化路径位于该前缀下。fixture 包含嵌套文件、指回自身的符号链接、指向外部 sentinel 的符号链接、损坏 bookmark、取消、非法选择以及注入的单项删除失败。结果证明：\n\n- 扫描在非主线程运行，只统计 fixture 内普通文件并跳过两个符号链接；不会形成循环。\n- 隔离 UserDefaults 中 bookmark 可由新 service 实例恢复；损坏 bookmark 进入重新授权状态。\n- 清空仅删除 fixture 顶层项目，外部符号链接目标完整保留。\n- 成功与失败项目逐项报告，失败项目仍保留。\n- 探针未访问、未修改真实 `~/.Trash`。\n\n## 构建与探针结果\n\n- `TrashAccessProbe`: PASS。\n- `MonitoringScheduleProbe`: PASS，Trash 生产节奏为 20 秒，后台串行采样与 MainActor 投影约束通过。\n- `SystemMetricsProbe`: PASS；现有 CPU、内存、磁盘、电池、网络采样回归通过。\n- Debug Sandbox 签名构建: PASS；`codesign --verify --deep --strict`: PASS。\n- Release Sandbox 签名构建: PASS；`codesign --verify --deep --strict`: PASS。\n- 两个签名产物 entitlement 审查: PASS，仅含上述三项。\n- `plutil -lint Omit/Omit.entitlements`: PASS。\n- `git diff --check`: PASS。\n- 未启动 Omit，未打开 `NSOpenPanel` 或其他应用窗口。\n\n## Deferred Observe（未完成，任务保持 in_progress）\n\n由于 PO 当前不在电脑前，以下真实授权证据不能无界面完成，未伪造 PASS：\n\n1. 启动签名 Sandbox Omit，在 Trash 卡片主动选择真实 `~/.Trash`，确认授权后 Trash 统计可用且其他五项系统指标继续工作。\n2. 退出并重新启动 Omit，确认 app-scoped security-scoped bookmark 从持久化数据恢复且不重复弹窗。\n3. 在 MenuBarExtra 中观察未授权、授权后内容、取消、失效/重新授权的 Trash 单卡片投影；不得用真实 Trash 执行删除验收。\n\n这是推进 QA 前唯一剩余的验证阶段。当前不运行 Dev gate，不请求转入 QA。\n",
+      "id" : "JRN-20260826-006",
+      "stage" : "in_progress",
+      "status" : "info",
+      "summary" : "Sandbox Trash 授权原型完成无界面实现与验证；真实授权保留 Deferred Observe",
+      "taskId" : "TASK-DEV-004",
+      "timestamp" : "2026-08-26T01:39:48Z"
     }
   ]
 }
