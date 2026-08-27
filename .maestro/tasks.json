@@ -171,6 +171,43 @@
       ],
       "taskType" : "integration",
       "title" : "建立无全局 Trash 的 Mac App Store 合规与归档基线"
+    },
+    {
+      "acceptanceCriteria" : [
+        "提供简体中文、英文、日文的应用名称建议、副标题、推广文本、完整描述、关键词与版本说明草稿，并标注各字段的 App Store 字符限制检查结果。",
+        "文案准确表达三秒读懂 Mac 状态、安静原生、亮暗模式与模块化展示，不包含无法证明的性能提升、清理加速、温度数值或隐私承诺。",
+        "App Store 内容只覆盖 Memory、Storage、CPU、Battery、Network 及已实现后的系统 Thermal State；不得出现 Trash、Full Disk Access 或 GitHub Direct 专属能力。",
+        "提供一套可执行的截图 storyboard：每张截图的语言、主题、模块组合、真实状态、主标题、副标题、尺寸安全区与取景要求明确。",
+        "亮色与暗色至少各有一张核心 Dashboard 画面，并包含 Settings 中 System/Light/Dark 的真实切换表达。",
+        "所有截图内容都能由生产 UI 或明确 fixture 稳定复现；未完成的 Thermal 画面必须标记 BLOCKED，不得伪造成已交付功能。",
+        "输出集中保存在 doc/app-store/ 下，PO 无需阅读代码即可审核文案和截图顺序。"
+      ],
+      "boundaries" : [
+        "不修改 SwiftUI、监控采样、Sandbox、entitlements 或构建配置。",
+        "不上传 App Store Connect，不创建正式商店记录，不填写法律、隐私政策或支持网址的虚构地址。",
+        "不制作 GitHub Direct 商品页，不展示 Trash 或真实温度。",
+        "不使用未经授权的第三方商标、设备边框或营销素材。"
+      ],
+      "currentAction" : "基于当前 App Store 产品合同和真实已交付能力，产出简体中文、英文、日文三套商品页草稿，并设计亮色/暗色截图序列、画面状态、标题文案和最终素材清单，供 PO 审核后进入截图制作。",
+      "deliverySurface" : "ui",
+      "dependsOn" : [
+
+      ],
+      "execState" : "in_progress",
+      "gateProfile" : "default_dev_gate",
+      "id" : "TASK-STORE-001",
+      "issueRefs" : [
+
+      ],
+      "ownerRole" : "design",
+      "planState" : "planned",
+      "priority" : "p0",
+      "summary" : "为 Omit 的 Mac App Store 首次上架准备准确、克制且可本地化的商品页文案、截图叙事与素材制作规范。",
+      "tags" : [
+
+      ],
+      "taskType" : "visual_ui",
+      "title" : "创作 Mac App Store 商品页内容与截图叙事"
     }
   ]
 }

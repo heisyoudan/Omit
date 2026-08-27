@@ -249,6 +249,16 @@
       "summary" : "Sage 已发布并启动任务",
       "taskId" : "TASK-REL-001",
       "timestamp" : "2026-08-27T06:10:10Z"
+    },
+    {
+      "authorRole" : "sage",
+      "detailsMd" : "使用 `task publish` 一步完成发布并自动启动。",
+      "id" : "JRN-20260827-007",
+      "stage" : "in_progress",
+      "status" : "info",
+      "summary" : "Sage 已发布并启动任务",
+      "taskId" : "TASK-STORE-001",
+      "timestamp" : "2026-08-27T06:22:33Z"
     }
   ]
 }
