@@ -233,13 +233,13 @@
       "dependsOn" : [
 
       ],
-      "execState" : "qa",
-      "gateProfile" : "default_qa_gate",
+      "execState" : "in_progress",
+      "gateProfile" : "default_dev_gate",
       "id" : "TASK-DEV-005",
       "issueRefs" : [
 
       ],
-      "ownerRole" : "qa",
+      "ownerRole" : "dev",
       "planState" : "planned",
       "priority" : "p0",
       "summary" : "为 App Store 发行变体建立显式能力配置，彻底移除 Trash 产品入口，接入 macOS 系统 Thermal State，并实现不会触发布局反馈环的自适应状态卡排列。",

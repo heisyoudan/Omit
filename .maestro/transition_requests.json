@@ -205,6 +205,24 @@
       "taskId" : "TASK-DEV-005",
       "timestamp" : "2026-08-27T06:50:56Z",
       "toState" : "qa"
+    },
+    {
+      "checks" : {
+        "gateRunId" : "RUN-20260827-004",
+        "journalExists" : true,
+        "latestGatePassed" : false
+      },
+      "fromState" : "qa",
+      "id" : "TRN-20260827-004",
+      "rejectedReason" : "QA FAIL：当前 UI 修改将三卡 Wide 优先级改为 Network→Thermal→Battery→CPU，违反任务合同；现有能力探针从实现自身读取 expected，无法捕获该偏差；100% 电池文案忽略 charging 状态；且两处 UI 修改尚未提交推送。请修复、增强独立回归并重新交接。",
+      "requestedByRole" : "qa",
+      "resolvedAt" : "2026-08-27T07:56:18Z",
+      "resolvedByRole" : "qa",
+      "stage" : "qa",
+      "status" : "approved",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T07:56:18Z",
+      "toState" : "in_progress"
     }
   ]
 }

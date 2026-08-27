@@ -62,6 +62,24 @@
       "taskId" : "TASK-DEV-003",
       "timestamp" : "2026-08-27T05:31:22Z",
       "type" : "test_verdict"
+    },
+    {
+      "authorRole" : "qa",
+      "detailsMd" : "## Truth\n\n- 当前任务真相为 `TASK-DEV-005`，execState=qa；交接提交为 `b926326` / `97a856f`。\n- 当前工作区另有未提交修改：`Omit/ContentView.swift`、`Omit/DashboardModel.swift`，已按 PO 要求一并纳入审查，但不能视为已推送交付物。\n- App Store Debug 构建：PASS。\n- App Store/Direct capability probe：PASS。\n- MenuBarLayoutProbe：PASS，全部 16 种组合和 128 次 Settings/Dashboard 循环收敛。\n- MonitoringScheduleProbe：PASS。\n- SystemMetricsProbe：PASS（沙箱外实机主路由 en0 计数可读取；沙箱内失败属于执行环境限制）。\n- Direct TrashAccessProbe：PASS，仅使用隔离 fixture，未访问或清空真实 Trash。\n- `git diff --check`、entitlements plist lint：PASS。\n- 合同偏差：`StatusCardLayoutPlanner.widePriority` 被改为 Network → Thermal → Battery → CPU，而任务明确要求 Network → Battery → CPU → Thermal。\n- 探针缺口：`AppStoreDashboardProbe` 通过读取实现自身的 `widePriority` 计算 expectedWide，因此任意修改优先级仍会 PASS，未独立固化验收合同。\n- 状态投影问题：`batteryStatusLabel` 仅凭 value == \"100%\" 输出 Fully Charged，忽略 `batteryIsCharging`；拔电且 100% 时会投影错误状态。\n\n## Projection\n\n- App Store capability 在代码路径上排除了 Trash，Thermal 五态和 Battery noBattery/unavailable 选择逻辑成立。\n- 当前 UI 修改可编译，静态布局压力收敛，且未重新引入 fixedSize、Geometry/Preference 或模块切换动画。\n- 但三卡 Wide 投影顺序不符合已发布验收合同，Battery 100% 文案也不能可靠对应真实电源状态。\n\n## Observe\n\n- NOT_COMPLETED。真实 MenuBarExtra 最终视觉/快速切换未记为 PASS。\n- Truth 层已经存在确定性合同失败，继续要求 PO 做视觉观察不会改变本轮 FAIL 裁定。\n\n## Final Verdict\n\nFAIL。\n\n回退 Dev：\n1. 恢复合同规定的 Wide 优先级，或由 Sage 正式修改任务合同后再实现。\n2. 将优先级期望写死在独立测试中，不得从被测实现的 `widePriority` 反推 expected。\n3. 修正 100% 电池状态文案，使其同时考虑充电/供电状态。\n4. 提交并推送 UI 修改后重新交接 QA。\n5. 重新提交后再完成真实 MenuBarExtra 快速切换和最终视觉 Observe。\n",
+      "id" : "NTE-20260827-002",
+      "summary" : "QA FAIL：UI 修改偏离三卡 Wide 合同，回归探针未能独立检测",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T07:56:04Z",
+      "type" : "test_verdict"
+    },
+    {
+      "authorRole" : "sage",
+      "detailsMd" : "## PO-approved UI contract correction\n\n### Accepted and frozen UI\n- PO has reviewed the current TASK-DEV-005 UI and explicitly accepts it as the product specification.\n- Three-card Wide priority is now Network → Thermal → Battery → CPU.\n- The short Wide card appears above the two Compact cards.\n- The current primary-card gradient rings, Wide/Compact card forms, concise Thermal presentation, arrow-only Network rows, localized supporting labels, and removal of the persistent updated footer are accepted.\n- Do not revert these visual changes to the previous shell.\n\n### Remaining Dev corrections\n1. Update the independent probe to hard-code the approved priority Network → Thermal → Battery → CPU and assert explicit three-card combinations. Expected results must not be derived from StatusCardLayoutPlanner.widePriority.\n2. Replace string-derived Battery status projection with typed power facts. A value of 100% without external power must show On Battery, not Fully Charged. Cover charging, connected-and-full, on-battery-at-100, and unavailable.\n3. Commit and push Omit/ContentView.swift and Omit/DashboardModel.swift with the corrections. Uncommitted local changes are not delivery evidence.\n4. Re-run capability, all 16 layouts, 128-switch stress, schedule, metrics, Direct Trash isolation, App Store builds, and real MenuBarExtra Observe.\n\n### Routing\n- TASK-DEV-005 remains in_progress with Dev.\n- This note formally supersedes only the old Wide-priority acceptance clause. The prior QA FAIL remains valid until all remaining corrections pass a new QA verdict.\n",
+      "id" : "NTE-20260827-003",
+      "summary" : "PO 冻结当前 UI；Wide 优先级改为 Network→Thermal→Battery→CPU",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T08:07:00Z",
+      "type" : "contract_correction"
     }
   ]
 }

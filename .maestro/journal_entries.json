@@ -319,6 +319,16 @@
       "summary" : "DEV 已推进流转：in_progress -> qa",
       "taskId" : "TASK-DEV-005",
       "timestamp" : "2026-08-27T06:50:56Z"
+    },
+    {
+      "authorRole" : "qa",
+      "detailsMd" : "[原子回退]\n- from: qa\n- to: in_progress\n- byRole: qa\n- reason: QA FAIL：当前 UI 修改将三卡 Wide 优先级改为 Network→Thermal→Battery→CPU，违反任务合同；现有能力探针从实现自身读取 expected，无法捕获该偏差；100% 电池文案忽略 charging 状态；且两处 UI 修改尚未提交推送。请修复、增强独立回归并重新交接。\n- handoffCommand: maestro task context TASK-DEV-005 --role dev",
+      "id" : "JRN-20260827-014",
+      "stage" : "in_progress",
+      "status" : "warning",
+      "summary" : "QA 已带理由回退：qa -> in_progress",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T07:56:18Z"
     }
   ]
 }

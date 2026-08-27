@@ -21,7 +21,7 @@ Omit should feel quiet, precise, native, and immediately readable. It is a compa
 2. Memory and Storage as primary cards.
 3. CPU, Battery, Network, and Thermal as adaptive status cards.
 4. GitHub Direct only: Trash as a full-width utility card between primary resources and adaptive status cards.
-5. Last-update information as quiet footer context.
+5. No persistent last-update footer in the approved App Store shell; freshness remains an implementation/test concern rather than a permanent visual row.
 
 The panel must be understandable without tooltips. A user should not need to infer whether a percentage means used or available.
 
@@ -33,9 +33,14 @@ The panel must be understandable without tooltips. A user should not need to inf
 - Card corner radius: approximately 16–18 pt with continuous corners.
 - Primary cards use a ring plus a clear value hierarchy.
 - Adaptive status cards follow one deterministic rule: `4 -> 2+2`, `3 -> 1+2`, `2 -> 2`, `1 -> 1`, `0 -> none`.
-- With three status cards, the wide row is above the pair. Wide priority is Network, Battery, CPU, then Thermal.
+- With three status cards, the wide row is above the pair. Wide priority is Network, Thermal, Battery, then CPU. This order is PO-approved and frozen for the App Store dashboard.
 - The GitHub Direct Trash card is always a full-width Wide Utility card and never participates in status-card parity.
 - Module changes must use stable row identities and must not animate MenuBarExtra window-height negotiation.
+- Compact status cards use a tall two-column form; a single or selected three-card module uses the shorter full-width form above the pair.
+- The approved full-width Thermal form is intentionally compact, so Thermal may take the second Wide priority without creating an empty-looking row.
+- Primary Memory and Storage cards retain gradient progress rings. Memory presents estimated used memory as the primary value and physical total as supporting context; Storage presents available space with an explicitly labeled used percentage.
+- Network uses separate arrow-led receive and transmit values with normalized `B/s`, `KB/s`, `MB/s`, or `GB/s` units; redundant row labels are omitted in the compact shell.
+- The dashboard has no persistent “updated just now” footer in the frozen shell.
 - The header Settings icon remains visually compact but has at least a 28 × 28 pt hit target.
 - Text must not be smaller than 10 pt.
 
@@ -75,6 +80,7 @@ The UI shell and previews must cover:
 - Unavailable CPU or Battery data.
 - No-battery hardware with Battery omitted from the dashboard.
 - Thermal nominal, fair, serious, critical, and unavailable states.
+- Approved Thermal copy maps those states to concise localized user language (for example Normal / Elevated / Hot / Critical) without showing a numeric temperature.
 - All Compact-card counts and Wide-priority combinations.
 - Long localized strings without truncating critical values.
 

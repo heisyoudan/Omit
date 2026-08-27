@@ -104,10 +104,13 @@ Requirements:
 - Memory and Storage are primary full-width cards.
 - Memory and Storage remain independent full-width Large cards when enabled.
 - CPU, Battery, Network, and Thermal use the shared Adaptive Compact layout: `4 -> 2+2`, `3 -> 1+2`, `2 -> 2`, `1 -> 1`, `0 -> none`.
-- For three Compact cards, the full-width card appears above the pair. Wide priority is Network, Battery, CPU, then Thermal.
+- For three Compact cards, the full-width card appears above the pair. PO-approved Wide priority is Network, Thermal, Battery, then CPU.
 - GitHub Direct places Trash in a dedicated full-width Wide Utility card between Large cards and Adaptive Compact cards. Trash does not participate in Compact parity.
 - A Mac with no battery automatically omits Battery from the dashboard. A temporary unavailable reading remains visible as unavailable and must not cause layout churn.
 - Header, Settings entry, empty-dashboard state, and footer remain stable across module combinations.
+- The approved App Store dashboard shell omits a persistent last-updated footer; removing that footer must not change sampling cadence or observability in tests.
+- Thermal uses concise localized state labels and a state indicator; it never displays a numeric temperature.
+- Battery status copy must come from typed power-source facts. A numeric value of `100%` alone is not evidence that the Mac is connected to external power or fully charged.
 - Minimum text size is 10 pt.
 - Settings control keeps a minimum 28 × 28 pt hit area.
 - Decorative colored status dots are not used unless they communicate a real state.
