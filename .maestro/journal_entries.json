@@ -329,6 +329,26 @@
       "summary" : "QA 已带理由回退：qa -> in_progress",
       "taskId" : "TASK-DEV-005",
       "timestamp" : "2026-08-27T07:56:18Z"
+    },
+    {
+      "authorRole" : "dev",
+      "detailsMd" : "## 根因\n\nQA 回退包含两个有效缺陷：能力探针从 `StatusCardLayoutPlanner.widePriority` 自身推导 expected，无法独立发现优先级回归；Battery UI 仅凭字符串 `100%` 显示“Fully Charged”，没有使用电源来源事实。Wide 顺序本身以已提交的 PO 冻结规格 `8a62d2d` 为准：Network → Thermal → Battery → CPU。\n\n## 修复范围\n\n- 保留 PO 冻结后的 Dashboard UI 与 Wide 优先级，并将三卡 expected 直接固化在独立探针中，不再引用实现的 priority 常量。\n- 新增类型化 `BatteryPowerState`：onBattery、charging、fullyCharged、externalPower。\n- 从 IOKit 的 `kIOPSPowerSourceStateKey` 与 `kIOPSIsChargingKey` 组合解析电源状态；100% 但未连接外部电源时明确投影为 On Battery，不再误报 Fully Charged。\n- 为接电但未充电且未满的情况增加 Power Adapter 中英日文案；Battery 图标同样依据类型化外部电源事实。\n- 未改变 CPU、内存、磁盘、网络计算公式，也未改变 App Store capability 与 sandbox entitlement。\n\n## 验证\n\n- AppStoreDashboardProbe（App Store 与 Direct）：PASS；覆盖冻结后的独立 Wide 顺序及四种 Battery 电源组合。\n- MenuBarLayoutProbe：PASS；全部 16 种模块组合、128 次 Settings/Dashboard 循环收敛。\n- MonitoringScheduleProbe：PASS。\n- SystemMetricsProbe：PASS（沙箱外读取真实网络接口）。\n- App Store Debug/Release 签名构建：PASS。\n- Debug/Release `codesign --verify --deep --strict`：PASS；两者 entitlement 均仅包含 `com.apple.security.app-sandbox=true`。\n- Direct override Debug 构建：PASS。\n- `plutil -lint` 与 `git diff --check`：PASS。\n- 代码提交 `5721634` 已推送至 `origin/codex/app-store`。\n\n## 范围外\n\n最终 UI 人工观察仍由 QA/PO 后续执行；本次没有把人工观察伪造为 PASS，也未上传 App Store Connect。\n",
+      "id" : "JRN-20260827-015",
+      "stage" : "in_progress",
+      "status" : "info",
+      "summary" : "修复独立布局回归与类型化电池电源状态",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T08:15:39Z"
+    },
+    {
+      "authorRole" : "dev",
+      "detailsMd" : "【自动推进】\n- 当前流程采用 Agent-first 默认执行契约。\n- 在权限允许、前置满足时，`transition request` 会直接完成状态推进，不再等待 Sage 中间审批。\n\n【结果】\n- 从：in_progress\n- 到：qa\n- 下一交接：sage",
+      "id" : "JRN-20260827-016",
+      "stage" : "qa",
+      "status" : "info",
+      "summary" : "DEV 已推进流转：in_progress -> qa",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T08:15:47Z"
     }
   ]
 }

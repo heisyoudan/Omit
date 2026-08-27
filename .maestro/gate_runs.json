@@ -309,6 +309,34 @@
       "taskId" : "TASK-DEV-005",
       "timestamp" : "2026-08-27T07:56:12Z",
       "verdictOutcome" : "FAIL"
+    },
+    {
+      "canReturnToQA" : true,
+      "checks" : [
+        {
+          "key" : "mock_check",
+          "message" : "模拟检查通过",
+          "result" : "pass"
+        },
+        {
+          "key" : "build_check",
+          "message" : "Xcode 构建通过",
+          "result" : "pass"
+        },
+        {
+          "key" : "journal_exists",
+          "message" : "已存在日志",
+          "result" : "pass"
+        }
+      ],
+      "closeReady" : false,
+      "gateProfile" : "default_dev_gate",
+      "id" : "RUN-20260827-005",
+      "stage" : "in_progress",
+      "status" : "pass",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T08:15:43Z",
+      "verdictOutcome" : "FAIL"
     }
   ]
 }
