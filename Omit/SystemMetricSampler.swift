@@ -190,11 +190,17 @@ actor SystemMetricSampler {
               maxCapacity > 0 else { return .unavailable }
         let percent = min(max(Int((Double(capacity) / Double(maxCapacity)) * 100), 0), 100)
         let isCharging = (info[kIOPSIsChargingKey] as? Bool) == true
-        let isConnectedToExternalPower = (info[kIOPSPowerSourceStateKey] as? String) == kIOPSACPowerValue
+        let providingSourceType = IOPSGetProvidingPowerSourceType(snapshot)?.takeUnretainedValue() as String?
+        let providingSource: BatteryProvidingSource
+        switch providingSourceType {
+        case kIOPSACPowerValue: providingSource = .externalPower
+        case kIOPSBatteryPowerValue: providingSource = .battery
+        default: providingSource = .unknown
+        }
         let powerState = BatteryPowerState.resolve(
             percent: percent,
             isCharging: isCharging,
-            isConnectedToExternalPower: isConnectedToExternalPower
+            providingSource: providingSource
         )
         return .available(value: "\(percent)%", powerState: powerState)
     }

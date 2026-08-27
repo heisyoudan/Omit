@@ -46,10 +46,11 @@ struct AppStoreDashboardProbe {
     }
 
     private static func verifyBatteryPowerPresentation() {
-        expect(BatteryPowerState.resolve(percent: 100, isCharging: false, isConnectedToExternalPower: false) == .onBattery, "100% on battery is not reported as fully charged")
-        expect(BatteryPowerState.resolve(percent: 100, isCharging: false, isConnectedToExternalPower: true) == .fullyCharged, "100% on external power is fully charged")
-        expect(BatteryPowerState.resolve(percent: 72, isCharging: true, isConnectedToExternalPower: true) == .charging, "active charging is reported as charging")
-        expect(BatteryPowerState.resolve(percent: 72, isCharging: false, isConnectedToExternalPower: true) == .externalPower, "external power without charging has a distinct state")
+        expect(BatteryPowerState.resolve(percent: 100, isCharging: false, providingSource: .battery) == .onBattery, "100% on battery is not reported as fully charged")
+        expect(BatteryPowerState.resolve(percent: 100, isCharging: false, providingSource: .externalPower) == .fullyCharged, "100% on global AC power is fully charged")
+        expect(BatteryPowerState.resolve(percent: 72, isCharging: true, providingSource: .externalPower) == .charging, "active charging on global AC power is reported as charging")
+        expect(BatteryPowerState.resolve(percent: 72, isCharging: false, providingSource: .externalPower) == .externalPower, "global AC power overrides a battery description that reports not charging")
+        expect(BatteryPowerState.resolve(percent: 72, isCharging: false, providingSource: .unknown) == .onBattery, "unknown global source fails closed")
     }
 
     private static func verifyAllLayoutCombinations() {

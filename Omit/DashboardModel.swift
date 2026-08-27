@@ -79,9 +79,9 @@ nonisolated enum BatteryPowerState: String, Equatable, Sendable {
     static func resolve(
         percent: Int,
         isCharging: Bool,
-        isConnectedToExternalPower: Bool
+        providingSource: BatteryProvidingSource
     ) -> BatteryPowerState {
-        guard isConnectedToExternalPower else { return .onBattery }
+        guard providingSource == .externalPower else { return .onBattery }
         if isCharging { return .charging }
         return percent >= 100 ? .fullyCharged : .externalPower
     }
@@ -89,6 +89,12 @@ nonisolated enum BatteryPowerState: String, Equatable, Sendable {
     var usesExternalPower: Bool {
         self != .onBattery
     }
+}
+
+nonisolated enum BatteryProvidingSource: String, Equatable, Sendable {
+    case battery
+    case externalPower
+    case unknown
 }
 
 nonisolated struct DashboardModulePreferences: Equatable, Sendable {
