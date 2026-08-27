@@ -171,6 +171,23 @@
       "taskId" : "TASK-DEV-003",
       "timestamp" : "2026-08-27T05:31:29Z",
       "toState" : "closing"
+    },
+    {
+      "checks" : {
+        "gateRunId" : "RUN-20260827-002",
+        "journalExists" : true,
+        "latestGatePassed" : true
+      },
+      "fromState" : "in_progress",
+      "id" : "TRN-20260827-002",
+      "requestedByRole" : "design",
+      "resolvedAt" : "2026-08-27T06:31:35Z",
+      "resolvedByRole" : "design",
+      "stage" : "in_progress",
+      "status" : "approved",
+      "taskId" : "TASK-STORE-001",
+      "timestamp" : "2026-08-27T06:31:35Z",
+      "toState" : "closing"
     }
   ]
 }

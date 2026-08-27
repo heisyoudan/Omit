@@ -259,6 +259,36 @@
       "summary" : "Sage 已发布并启动任务",
       "taskId" : "TASK-STORE-001",
       "timestamp" : "2026-08-27T06:22:33Z"
+    },
+    {
+      "authorRole" : "design",
+      "detailsMd" : "已在 doc/app-store/ 建立 PO 可直接审核的 README、METADATA、SCREENSHOT_STORYBOARD 与 ASSET_CHECKLIST。Metadata 覆盖 zh-Hans/en-US/ja 的 Name、Subtitle、Promotional Text、Description、Keywords、What’s New 草稿；按 Apple 官方当前限制核对字符数与 Keywords UTF-8 bytes，全部 PASS。正式文案只描述 Memory、Storage、CPU、Battery、Network、模块显示与 System/Light/Dark，不包含 Trash、Full Disk Access、GitHub Direct、温度、性能提升或隐私承诺。截图 storyboard 定义三语言 3 张首发序列、2880x1800 规格、安全区、固定 fixture 数值、主题、模块、标题、副标题、取景与命名。Settings 截图明确等待 TASK-REL-001 移除 Trash；Thermal metadata 与第 4 张截图明确 BLOCKED，只有五态、本地化、App Store capability、fixture 与 gate 全部完成后才可解锁。无 SwiftUI、采样、Sandbox、entitlements 或构建配置改动。",
+      "id" : "JRN-20260827-008",
+      "stage" : "in_progress",
+      "status" : "info",
+      "summary" : "完成三语言 App Store 文案与截图叙事交付包",
+      "taskId" : "TASK-STORE-001",
+      "timestamp" : "2026-08-27T06:31:22Z"
+    },
+    {
+      "authorRole" : "design",
+      "detailsMd" : "【自动推进】\n- 当前流程采用 Agent-first 默认执行契约。\n- 在权限允许、前置满足时，`transition request` 会直接完成状态推进，不再等待 Sage 中间审批。\n\n【结果】\n- 从：in_progress\n- 到：closing\n- 下一交接：sage",
+      "id" : "JRN-20260827-009",
+      "stage" : "closing",
+      "status" : "info",
+      "summary" : "DESIGN 已推进流转：in_progress -> closing",
+      "taskId" : "TASK-STORE-001",
+      "timestamp" : "2026-08-27T06:31:35Z"
+    },
+    {
+      "authorRole" : "sage",
+      "detailsMd" : "Sage 最终复核通过：三语 metadata、截图 storyboard、素材清单和审核入口完整；Apple 官方字段与截图规格核对一致；内容未包含 Trash、Full Disk Access、虚构温度或未交付 Thermal，BLOCKED 条件清晰。Gate RUN-20260827-002 通过。",
+      "id" : "JRN-20260827-010",
+      "stage" : "done",
+      "status" : "success",
+      "summary" : "Sage 已关闭任务",
+      "taskId" : "TASK-STORE-001",
+      "timestamp" : "2026-08-27T06:36:37Z"
     }
   ]
 }

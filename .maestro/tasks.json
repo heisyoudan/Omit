@@ -193,13 +193,13 @@
       "dependsOn" : [
 
       ],
-      "execState" : "in_progress",
+      "execState" : "done",
       "gateProfile" : "default_dev_gate",
       "id" : "TASK-STORE-001",
       "issueRefs" : [
 
       ],
-      "ownerRole" : "design",
+      "ownerRole" : "sage",
       "planState" : "planned",
       "priority" : "p0",
       "summary" : "为 Omit 的 Mac App Store 首次上架准备准确、克制且可本地化的商品页文案、截图叙事与素材制作规范。",
