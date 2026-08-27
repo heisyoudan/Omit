@@ -70,4 +70,8 @@ nonisolated struct MonitoringLifecycle: Equatable, Sendable {
     func accepts(_ token: Token) -> Bool {
         isRunning && token.generation == generation
     }
+
+    #if DEBUG
+    var debugGeneration: UInt64 { generation }
+    #endif
 }

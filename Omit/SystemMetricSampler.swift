@@ -38,6 +38,19 @@ actor SystemMetricSampler {
     private var cpuCalculator = CPUUsageCalculator()
     private var networkCalculator = NetworkRateCalculator()
 
+    #if DEBUG
+    private var debugTraceSink = DebugMetricTraceSink.fromEnvironment()
+    private var debugSequence: UInt64 = 0
+    private var debugInFlightCount = 0
+    private var debugGeneration: UInt64 = 0
+    private var debugCPUTrace: DebugCPUTrace?
+    private var debugMemoryTrace: DebugMemoryTrace?
+    private var debugStorageTrace: DebugStorageTrace?
+    private var debugNetworkTrace: DebugNetworkTrace?
+    private var debugBatteryTrace: DebugBatteryTrace?
+    private var debugThermalTrace: DebugThermalTrace?
+    #endif
+
     init(
         capabilities: ProductCapabilities = .current,
         trashAccessService: TrashAccessService = TrashAccessService()
@@ -51,23 +64,66 @@ actor SystemMetricSampler {
         byteFormatter = formatter
     }
 
-    func resetBaselines() {
+    func resetBaselines() async {
         cpuCalculator = CPUUsageCalculator()
         networkCalculator = NetworkRateCalculator()
+        #if DEBUG
+        await emitDebugLifecycleMarker("reset")
+        #endif
     }
 
-    func sampleBatteryState() -> BatteryState {
-        sampleBattery()
+    func sampleBatteryState() async -> BatteryState {
+        #if DEBUG
+        let debugContext = beginDebugSample(groupName: "batteryEvent")
+        #endif
+        let state = sampleBattery()
+        #if DEBUG
+        await finishDebugSample(debugContext)
+        #endif
+        return state
     }
+
+    #if DEBUG
+    func configureDebugTrace(_ sink: DebugMetricTraceSink?, generation: UInt64 = 0) {
+        debugTraceSink = sink
+        debugGeneration = generation
+    }
+
+    func updateDebugGeneration(_ generation: UInt64) {
+        debugGeneration = generation
+    }
+
+    func emitDebugLifecycleMarker(_ marker: String) async {
+        guard let debugTraceSink else { return }
+        debugSequence &+= 1
+        let now = ProcessInfo.processInfo.systemUptime
+        await debugTraceSink.emit(DebugMetricTraceRecord(
+            event: "lifecycle",
+            marker: marker,
+            sequence: debugSequence,
+            startUptime: now,
+            endUptime: now,
+            inFlightCount: debugInFlightCount,
+            generation: debugGeneration
+        ))
+    }
+    #endif
 
     func sample(_ group: MonitorGroup) async -> MonitorProjection {
-        switch group {
+        #if DEBUG
+        let debugContext = beginDebugSample(groupName: debugGroupName(group))
+        #endif
+        let projection: MonitorProjection = switch group {
         case .fast: .fast(sampleFast())
         case .memory: .memory(sampleMemory())
         case .slow: .slow(sampleSlow())
         case .trash:
             .trash(capabilities.supportsTrash ? await trashAccessService.scan() : .unauthorized)
         }
+        #if DEBUG
+        await finishDebugSample(debugContext)
+        #endif
+        return projection
     }
 
     func authorizeTrash(at selectedURL: URL) async -> TrashState {
@@ -99,15 +155,37 @@ actor SystemMetricSampler {
         }
 
         let network: NetworkState
-        if let rates = networkCalculator.sample(networkSampler.sample(uptime: ProcessInfo.processInfo.systemUptime)) {
+        let networkCounter = networkSampler.sample(uptime: ProcessInfo.processInfo.systemUptime)
+        #if DEBUG
+        let networkResetReason = debugNetworkResetReason(previous: networkCalculator.previous, current: networkCounter)
+        #endif
+        let networkRates = networkCalculator.sample(networkCounter)
+        if let rates = networkRates {
             network = .available(download: formatRate(rates.downloadBytesPerSecond), upload: formatRate(rates.uploadBytesPerSecond))
         } else {
             network = .unavailable
         }
+        let rawThermalState = ProcessInfo.processInfo.thermalState
+        let mappedThermalState = ThermalState.map(rawThermalState)
+        #if DEBUG
+        debugNetworkTrace = DebugNetworkTrace(
+            interfaceName: networkCounter?.interfaceName,
+            receivedBytes: networkCounter?.receivedBytes,
+            transmittedBytes: networkCounter?.transmittedBytes,
+            counterUptime: networkCounter?.uptime,
+            calculatedDownloadBytesPerSecond: networkRates?.downloadBytesPerSecond,
+            calculatedUploadBytesPerSecond: networkRates?.uploadBytesPerSecond,
+            baselineResetReason: networkResetReason
+        )
+        debugThermalTrace = DebugThermalTrace(
+            rawState: debugThermalName(rawThermalState),
+            mappedState: mappedThermalState.rawValue
+        )
+        #endif
         return FastProjection(
             cpu: cpu,
             network: network,
-            thermal: ThermalState.map(ProcessInfo.processInfo.thermalState),
+            thermal: mappedThermalState,
             failures: failures
         )
     }
@@ -120,15 +198,40 @@ actor SystemMetricSampler {
                 host_statistics64(mach_host_self(), HOST_VM_INFO64, $0, &size)
             }
         }
-        guard result == KERN_SUCCESS else { return .failure(.kernel(metric: .memory, code: result)) }
+        guard result == KERN_SUCCESS else {
+            #if DEBUG
+            debugMemoryTrace = DebugMemoryTrace(
+                activePages: UInt64(stats.active_count), inactivePages: UInt64(stats.inactive_count),
+                speculativePages: UInt64(stats.speculative_count), wiredPages: UInt64(stats.wire_count),
+                compressedPages: UInt64(stats.compressor_page_count), purgeablePages: UInt64(stats.purgeable_count),
+                externalPages: UInt64(stats.external_page_count), pageSize: UInt64(getpagesize()),
+                physicalMemory: ProcessInfo.processInfo.physicalMemory,
+                calculatedUsedBytes: nil, calculatedActiveBytes: nil, calculatedFraction: nil,
+                error: String(describing: MetricSamplingError.kernel(metric: .memory, code: result))
+            )
+            #endif
+            return .failure(.kernel(metric: .memory, code: result))
+        }
 
         let pageSize = UInt64(getpagesize())
-        let usage = MemoryUsageCalculator.calculate(MemoryCounters(
+        let counters = MemoryCounters(
             active: bytes(stats.active_count, pageSize: pageSize), inactive: bytes(stats.inactive_count, pageSize: pageSize),
             speculative: bytes(stats.speculative_count, pageSize: pageSize), wired: bytes(stats.wire_count, pageSize: pageSize),
             compressed: bytes(stats.compressor_page_count, pageSize: pageSize), purgeable: bytes(stats.purgeable_count, pageSize: pageSize),
             external: bytes(stats.external_page_count, pageSize: pageSize), total: ProcessInfo.processInfo.physicalMemory
-        ))
+        )
+        let usage = MemoryUsageCalculator.calculate(counters)
+        #if DEBUG
+        debugMemoryTrace = DebugMemoryTrace(
+            activePages: UInt64(stats.active_count), inactivePages: UInt64(stats.inactive_count),
+            speculativePages: UInt64(stats.speculative_count), wiredPages: UInt64(stats.wire_count),
+            compressedPages: UInt64(stats.compressor_page_count), purgeablePages: UInt64(stats.purgeable_count),
+            externalPages: UInt64(stats.external_page_count), pageSize: pageSize,
+            physicalMemory: counters.total,
+            calculatedUsedBytes: usage.used, calculatedActiveBytes: usage.active,
+            calculatedFraction: usage.fractionUsed, error: nil
+        )
+        #endif
         return .success(MemoryProjection(
             used: byteFormatter.string(fromByteCount: Int64(usage.used)), total: byteFormatter.string(fromByteCount: Int64(usage.total)),
             active: byteFormatter.string(fromByteCount: Int64(usage.active)), fractionUsed: usage.fractionUsed
@@ -141,6 +244,12 @@ actor SystemMetricSampler {
         var count: mach_msg_type_number_t = 0
         let result = host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO, &numCPUs, &cpuInfo, &count)
         guard result == KERN_SUCCESS, let cpuInfo, numCPUs > 0, count >= numCPUs * natural_t(CPU_STATE_MAX) else {
+            #if DEBUG
+            debugCPUTrace = DebugCPUTrace(
+                ticks: [], calculatedFraction: nil, availability: "unavailable",
+                error: String(describing: MetricSamplingError.kernel(metric: .cpu, code: result))
+            )
+            #endif
             return .failure(.kernel(metric: .cpu, code: result))
         }
         defer {
@@ -153,7 +262,21 @@ actor SystemMetricSampler {
                 nice: unsignedTick(cpuInfo[offset + Int(CPU_STATE_NICE)]), idle: unsignedTick(cpuInfo[offset + Int(CPU_STATE_IDLE)])
             )
         }
-        guard let usage = cpuCalculator.sample(ticks) else { return .success(.unavailable) }
+        guard let usage = cpuCalculator.sample(ticks) else {
+            #if DEBUG
+            debugCPUTrace = DebugCPUTrace(
+                ticks: ticks.map { DebugCPUTicks(user: $0.user, system: $0.system, nice: $0.nice, idle: $0.idle) }, calculatedFraction: nil,
+                availability: "unavailable", error: nil
+            )
+            #endif
+            return .success(.unavailable)
+        }
+        #if DEBUG
+        debugCPUTrace = DebugCPUTrace(
+            ticks: ticks.map { DebugCPUTicks(user: $0.user, system: $0.system, nice: $0.nice, idle: $0.idle) }, calculatedFraction: usage,
+            availability: "available", error: nil
+        )
+        #endif
         return .success(.available(String(format: "%.0f%%", usage * 100)))
     }
 
@@ -169,14 +292,50 @@ actor SystemMetricSampler {
 
     private func sampleStorage() -> Result<StorageProjection, MetricSamplingError> {
         do {
-            let values = try URL(fileURLWithPath: "/").resourceValues(forKeys: [.volumeTotalCapacityKey, .volumeAvailableCapacityKey])
+            let values = try URL(fileURLWithPath: "/").resourceValues(forKeys: [
+                .volumeIdentifierKey,
+                .volumeTotalCapacityKey,
+                .volumeAvailableCapacityKey,
+                .volumeAvailableCapacityForImportantUsageKey,
+                .volumeAvailableCapacityForOpportunisticUsageKey
+            ])
             guard let capacity = values.volumeTotalCapacity, let available = values.volumeAvailableCapacity,
-                  capacity > 0, available >= 0, available <= capacity else { return .failure(.invalidStorageCapacity) }
+                  capacity > 0, available >= 0, available <= capacity else {
+                #if DEBUG
+                debugStorageTrace = DebugStorageTrace(
+                    volumeIdentifier: values.volumeIdentifier.map { String(describing: $0) },
+                    totalCapacity: values.volumeTotalCapacity.map(Int64.init),
+                    availableCapacity: values.volumeAvailableCapacity.map(Int64.init),
+                    importantUsageCapacity: values.volumeAvailableCapacityForImportantUsage,
+                    opportunisticUsageCapacity: values.volumeAvailableCapacityForOpportunisticUsage,
+                    calculatedFraction: nil,
+                    error: String(describing: MetricSamplingError.invalidStorageCapacity)
+                )
+                #endif
+                return .failure(.invalidStorageCapacity)
+            }
+            let fractionUsed = min(max(Double(capacity - available) / Double(capacity), 0), 1)
+            #if DEBUG
+            debugStorageTrace = DebugStorageTrace(
+                volumeIdentifier: values.volumeIdentifier.map { String(describing: $0) },
+                totalCapacity: Int64(capacity), availableCapacity: Int64(available),
+                importantUsageCapacity: values.volumeAvailableCapacityForImportantUsage,
+                opportunisticUsageCapacity: values.volumeAvailableCapacityForOpportunisticUsage,
+                calculatedFraction: fractionUsed, error: nil
+            )
+            #endif
             return .success(StorageProjection(
                 available: byteFormatter.string(fromByteCount: Int64(available)),
-                fractionUsed: min(max(Double(capacity - available) / Double(capacity), 0), 1)
+                fractionUsed: fractionUsed
             ))
         } catch {
+            #if DEBUG
+            debugStorageTrace = DebugStorageTrace(
+                volumeIdentifier: nil, totalCapacity: nil, availableCapacity: nil,
+                importantUsageCapacity: nil, opportunisticUsageCapacity: nil,
+                calculatedFraction: nil, error: String(describing: error)
+            )
+            #endif
             return .failure(.storage(String(describing: error)))
         }
     }
@@ -188,10 +347,29 @@ actor SystemMetricSampler {
             guard let description = IOPSGetPowerSourceDescription(snapshot, source)?.takeUnretainedValue() as? [String: Any] else { return false }
             return description[kIOPSTypeKey] as? String == kIOPSInternalBatteryType
         }
-        guard let internalBattery else { return .noBattery }
+        guard let internalBattery else {
+            #if DEBUG
+            debugBatteryTrace = DebugBatteryTrace(
+                batteryPresent: false, providingPowerSourceType: nil,
+                currentCapacity: nil, maxCapacity: nil, isCharging: nil,
+                mappedState: "noBattery"
+            )
+            #endif
+            return .noBattery
+        }
         guard let info = IOPSGetPowerSourceDescription(snapshot, internalBattery)?.takeUnretainedValue() as? [String: Any],
               let capacity = info[kIOPSCurrentCapacityKey] as? Int, let maxCapacity = info[kIOPSMaxCapacityKey] as? Int,
-              maxCapacity > 0 else { return .unavailable }
+              maxCapacity > 0 else {
+            #if DEBUG
+            debugBatteryTrace = DebugBatteryTrace(
+                batteryPresent: true,
+                providingPowerSourceType: IOPSGetProvidingPowerSourceType(snapshot)?.takeUnretainedValue() as String?,
+                currentCapacity: nil, maxCapacity: nil, isCharging: nil,
+                mappedState: "unavailable"
+            )
+            #endif
+            return .unavailable
+        }
         let percent = min(max(Int((Double(capacity) / Double(maxCapacity)) * 100), 0), 100)
         let isCharging = (info[kIOPSIsChargingKey] as? Bool) == true
         let providingSourceType = IOPSGetProvidingPowerSourceType(snapshot)?.takeUnretainedValue() as String?
@@ -206,8 +384,110 @@ actor SystemMetricSampler {
             isCharging: isCharging,
             providingSource: providingSource
         )
+        #if DEBUG
+        debugBatteryTrace = DebugBatteryTrace(
+            batteryPresent: true, providingPowerSourceType: providingSourceType,
+            currentCapacity: capacity, maxCapacity: maxCapacity,
+            isCharging: isCharging, mappedState: powerState.rawValue
+        )
+        #endif
         return .available(value: "\(percent)%", powerState: powerState)
     }
+
+    #if DEBUG
+    private struct DebugSampleContext: Sendable {
+        let sequence: UInt64
+        let groupName: String
+        let wallClockUnix: TimeInterval
+        let startUptime: TimeInterval
+        let inFlightCount: Int
+    }
+
+    private func beginDebugSample(groupName: String) -> DebugSampleContext? {
+        guard debugTraceSink != nil else { return nil }
+        debugSequence &+= 1
+        debugInFlightCount += 1
+        debugCPUTrace = nil
+        debugMemoryTrace = nil
+        debugStorageTrace = nil
+        debugNetworkTrace = nil
+        debugBatteryTrace = nil
+        debugThermalTrace = nil
+        return DebugSampleContext(
+            sequence: debugSequence,
+            groupName: groupName,
+            wallClockUnix: Date().timeIntervalSince1970,
+            startUptime: ProcessInfo.processInfo.systemUptime,
+            inFlightCount: debugInFlightCount
+        )
+    }
+
+    private func finishDebugSample(_ context: DebugSampleContext?) async {
+        guard let context else { return }
+        debugInFlightCount = max(debugInFlightCount - 1, 0)
+        guard let debugTraceSink else { return }
+        let payloads: (
+            cpu: DebugCPUTrace?, memory: DebugMemoryTrace?, storage: DebugStorageTrace?,
+            network: DebugNetworkTrace?, battery: DebugBatteryTrace?, thermal: DebugThermalTrace?
+        ) = switch context.groupName {
+        case "fast": (debugCPUTrace, nil, nil, debugNetworkTrace, nil, debugThermalTrace)
+        case "memory": (nil, debugMemoryTrace, nil, nil, nil, nil)
+        case "slow": (nil, nil, debugStorageTrace, nil, debugBatteryTrace, nil)
+        case "batteryEvent": (nil, nil, nil, nil, debugBatteryTrace, nil)
+        default: (nil, nil, nil, nil, nil, nil)
+        }
+        await debugTraceSink.emit(DebugMetricTraceRecord(
+            event: "sample",
+            sequence: context.sequence,
+            group: context.groupName,
+            wallClockUnix: context.wallClockUnix,
+            startUptime: context.startUptime,
+            endUptime: ProcessInfo.processInfo.systemUptime,
+            inFlightCount: context.inFlightCount,
+            generation: debugGeneration,
+            cpu: payloads.cpu,
+            memory: payloads.memory,
+            storage: payloads.storage,
+            network: payloads.network,
+            battery: payloads.battery,
+            thermal: payloads.thermal
+        ))
+    }
+
+    private func debugGroupName(_ group: MonitorGroup) -> String {
+        switch group {
+        case .fast: "fast"
+        case .memory: "memory"
+        case .slow: "slow"
+        case .trash: "trash"
+        }
+    }
+
+    private func debugNetworkResetReason(
+        previous: NetworkCounterSample?,
+        current: NetworkCounterSample?
+    ) -> String? {
+        guard let current else { return "disconnect" }
+        guard let previous else { return "firstSample" }
+        guard previous.interfaceName == current.interfaceName else { return "interfaceSwitch" }
+        guard current.receivedBytes >= previous.receivedBytes,
+              current.transmittedBytes >= previous.transmittedBytes else { return "counterReset" }
+        let interval = current.uptime - previous.uptime
+        guard interval > 0 else { return "invalidInterval" }
+        guard interval <= networkCalculator.maximumInterval else { return "sleepGap" }
+        return nil
+    }
+
+    private func debugThermalName(_ state: ProcessInfo.ThermalState) -> String {
+        switch state {
+        case .nominal: "nominal"
+        case .fair: "fair"
+        case .serious: "serious"
+        case .critical: "critical"
+        @unknown default: "unknown"
+        }
+    }
+    #endif
 
     private func bytes(_ pages: natural_t, pageSize: UInt64) -> UInt64 {
         let (value, overflow) = UInt64(pages).multipliedReportingOverflow(by: pageSize)

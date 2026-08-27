@@ -110,8 +110,15 @@ final class SystemMonitor: ObservableObject {
         guard monitoringTask == nil, let token = lifecycle.start() else { return }
         let sampler = sampler
         let cadence = cadence
+        #if DEBUG
+        let generation = lifecycle.debugGeneration
+        #endif
 
         monitoringTask = Task { [weak self, sampler] in
+            #if DEBUG
+            await sampler.updateDebugGeneration(generation)
+            await sampler.emitDebugLifecycleMarker("monitoringStart")
+            #endif
             await sampler.resetBaselines()
             var planner = MonitorSchedulePlanner(cadence: cadence)
 
@@ -139,6 +146,14 @@ final class SystemMonitor: ObservableObject {
         lifecycle.stop()
         monitoringTask?.cancel()
         monitoringTask = nil
+        #if DEBUG
+        let sampler = sampler
+        let generation = lifecycle.debugGeneration
+        Task {
+            await sampler.updateDebugGeneration(generation)
+            await sampler.emitDebugLifecycleMarker("monitoringStop")
+        }
+        #endif
     }
 
     private func apply(_ projection: MonitorProjection) {
@@ -189,7 +204,13 @@ final class SystemMonitor: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Task { @MainActor [weak self] in self?.cancelMonitoringTask() }
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                #if DEBUG
+                await self.sampler.emitDebugLifecycleMarker("willSleep")
+                #endif
+                self.cancelMonitoringTask()
+            }
         }
         wakeObserver = center.addObserver(
             forName: NSWorkspace.didWakeNotification,
@@ -198,6 +219,9 @@ final class SystemMonitor: ObservableObject {
         ) { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self, self.wantsMonitoring else { return }
+                #if DEBUG
+                await self.sampler.emitDebugLifecycleMarker("didWake")
+                #endif
                 self.launchMonitoringTaskIfNeeded()
             }
         }

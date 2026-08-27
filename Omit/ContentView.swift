@@ -105,10 +105,14 @@ struct ContentView: View {
     @AppStorage("languageRaw") private var languageRaw = Language.chinese.rawValue
     @AppStorage("appearancePreference") private var appearanceRaw = AppAppearance.system.rawValue
     @State private var showSettings = false
+    #if DEBUG
+    @StateObject private var debugDriver = DebugDashboardDriver()
+    @State private var showDebugPanel = false
+    #endif
 
     private var language: Language { Language(rawValue: languageRaw) ?? .chinese }
     private var appearance: AppAppearance { AppAppearance(rawValue: appearanceRaw) ?? .system }
-    private var dashboardState: OmitDashboardState {
+    private var liveDashboardState: OmitDashboardState {
         let cpuValue: String?
         switch monitor.cpuState {
         case .unavailable: cpuValue = nil
@@ -154,9 +158,25 @@ struct ContentView: View {
             downloadValue: downloadValue, uploadValue: uploadValue, thermalState: monitor.thermalState, trash: trash
         )
     }
+    private var dashboardState: OmitDashboardState {
+        #if DEBUG
+        if debugDriver.isEnabled { return debugDriver.dashboardState }
+        #endif
+        return liveDashboardState
+    }
     private var visibleModules: Set<OmitModule> {
         let hasBattery: Bool
+        #if DEBUG
+        if debugDriver.isEnabled {
+            hasBattery = debugDriver.hasBattery
+        } else if case .noBattery = monitor.batteryState {
+            hasBattery = false
+        } else {
+            hasBattery = true
+        }
+        #else
         if case .noBattery = monitor.batteryState { hasBattery = false } else { hasBattery = true }
+        #endif
         return DashboardModuleSelection.visibleModules(
             preferences: DashboardModulePreferences(
                 showCPU: showCPU,
@@ -183,11 +203,49 @@ struct ContentView: View {
             showSettings: showSettings,
             languageRaw: $languageRaw,
             appearanceRaw: $appearanceRaw,
-            onAuthorizeTrash: monitor.authorizeTrash,
-            onClearTrash: monitor.clearTrash
+            onAuthorizeTrash: {
+                #if DEBUG
+                guard !debugDriver.isEnabled else { return }
+                #endif
+                monitor.authorizeTrash()
+            },
+            onClearTrash: {
+                #if DEBUG
+                guard !debugDriver.isEnabled else { return }
+                #endif
+                monitor.clearTrash()
+            }
         ) {
             showSettings.toggle()
         }
+        #if DEBUG
+        .overlay(alignment: .topTrailing) {
+            Button {
+                if showDebugPanel {
+                    showDebugPanel = false
+                } else {
+                    debugDriver.enable()
+                    showDebugPanel = true
+                }
+            } label: {
+                Image(systemName: debugDriver.isEnabled ? "wrench.and.screwdriver.fill" : "wrench.and.screwdriver")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(debugDriver.isEnabled ? .orange : .secondary)
+                    .frame(width: 28, height: 28)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Debug State Driver")
+            .padding(.top, 20)
+            .padding(.trailing, 54)
+            .popover(isPresented: $showDebugPanel, arrowEdge: .top) {
+                DebugDashboardPanel(driver: debugDriver) {
+                    debugDriver.restore()
+                    showDebugPanel = false
+                }
+            }
+        }
+        #endif
         .onAppear { monitor.startMonitoring() }
         .onDisappear { monitor.stopMonitoring() }
     }
