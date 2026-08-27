@@ -188,6 +188,23 @@
       "taskId" : "TASK-STORE-001",
       "timestamp" : "2026-08-27T06:31:35Z",
       "toState" : "closing"
+    },
+    {
+      "checks" : {
+        "gateRunId" : "RUN-20260827-003",
+        "journalExists" : true,
+        "latestGatePassed" : true
+      },
+      "fromState" : "in_progress",
+      "id" : "TRN-20260827-003",
+      "requestedByRole" : "dev",
+      "resolvedAt" : "2026-08-27T06:50:56Z",
+      "resolvedByRole" : "dev",
+      "stage" : "in_progress",
+      "status" : "approved",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T06:50:56Z",
+      "toState" : "qa"
     }
   ]
 }

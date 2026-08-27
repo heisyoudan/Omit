@@ -299,6 +299,26 @@
       "summary" : "Sage 已发布并启动任务",
       "taskId" : "TASK-DEV-005",
       "timestamp" : "2026-08-27T06:37:25Z"
+    },
+    {
+      "authorRole" : "dev",
+      "detailsMd" : "## 根因与实现范围\n\n原 Dashboard 将 CPU、Battery、Network、Trash 固定写入同一运行时 UI，发行渠道没有显式能力模型；Thermal State 尚未接入；二列 `LazyVGrid` 不能表达三卡 Wide 优先规则，也缺少覆盖全部组合的确定性真相层。\n\n本次以最小独立模型完成发行能力、Thermal 映射和布局规划，不修改 CPU、内存、磁盘、网络计算公式。\n\n## 发行能力分线\n\n- 新增 `ProductVariant` 与 `ProductCapabilities`，显式描述 App Store 与 Direct 的 Dashboard/Settings 模块集合。\n- App Store Debug/Release 构建配置均定义 `OMIT_APP_STORE`，`ProductCapabilities.current` 由编译条件决定，不读取 DEBUG、不做运行时环境猜测。\n- App Store 使用独立 `Omit-AppStore.entitlements`，仅保留 `com.apple.security.app-sandbox`。\n- App Store Dashboard、Settings 与默认模块集合均排除 Trash；授权和清空入口不可达，Sampler/Monitor 也按 capability fail closed，不启动 Trash 授权或删除。\n- Direct 模型继续包含 Trash；Direct 覆盖构建与原有 `TrashAccessProbe` 均通过，现有 bookmark、扫描和隔离删除路径未被破坏。\n\n## Thermal State 与 Battery\n\n- 新增类型化 `ThermalState`: nominal、fair、serious、critical、unavailable。\n- 数据直接映射 `ProcessInfo.processInfo.thermalState`，未读取、推断或显示温度，未使用私有 API。\n- Thermal 随 fast projection 投影到 `SystemMonitor`，提供英文、简体中文、日文可独立理解的状态文字；颜色仅作为辅助。\n- Battery 只有明确 `.noBattery` 时从 Dashboard 隐藏；`.unavailable` 仍显示 Battery 卡和“不可用”文字。\n\n## 确定性布局与 fixtures\n\n- 新增纯函数 `StatusCardLayoutPlanner`：4 卡为 2+2；3 卡为 Wide+2 且 Wide 优先 Network、Battery、CPU、Thermal；2 卡为一行双列；1 卡为 Wide；0 卡无状态卡。\n- 行和模块使用确定性 identity；UI 不使用 `fixedSize`、Geometry/Preference 反馈或模块切换动画驱动窗口高度。\n- `MenuBarLayoutProbe` 覆盖全部 16 种状态模块组合，跨三种外观反复切换 Settings/Dashboard 128 次，并验证尺寸有限、受限且可回到基线。\n- 新增 `StoreHeroLight`、`StoreHeroDark`、`StoreAppearanceSettings` Preview fixture；三者使用 App Store capability，不含 Trash。\n- 新增 Thermal 全五状态 fixture，并覆盖中、英、日文投影。\n\n## 自动验证结果\n\n- `AppStoreDashboardProbe`（`OMIT_APP_STORE`）: PASS。\n- `AppStoreDashboardProbe`（Direct 编译）: PASS。\n- 能力矩阵、Thermal 映射、Battery noBattery/unavailable、全部 16 种布局: PASS。\n- `MenuBarLayoutProbe`: PASS，128 次 Settings/Dashboard 循环收敛。\n- `MonitoringScheduleProbe`: PASS，刷新与取消生命周期回归通过。\n- `SystemMetricsProbe`: PASS，既有指标计算与网络采样回归通过。\n- `TrashAccessProbe`: PASS，只使用隔离 fixture，未访问或清空真实 Trash。\n- App Store Debug 签名构建: PASS。\n- App Store Release 签名构建: PASS。\n- 两个签名产物 `codesign --verify --deep --strict`: PASS；entitlements 均仅含 App Sandbox。\n- Direct 覆盖 Debug 构建: PASS。\n- `plutil -lint` 与 `git diff --check`: PASS。\n- 代码提交：`b926326`，已推送 `codex/app-store`。\n\n## QA Observe\n\n自动探针已证明布局真相层和窗口内容尺寸收敛。QA 仍应通过 `StoreHeroLight`、`StoreHeroDark`、`StoreAppearanceSettings` 与 Thermal fixtures 检查最终投影，并在真实 MenuBarExtra 中快速切换模块和 Settings/Dashboard，观察是否存在约束异常、彩虹球或卡死。该人类观察未在 Dev journal 中伪造 PASS。\n\n未上传 App Store Connect，未制作或修改最终商店截图与 metadata 文案。\n",
+      "id" : "JRN-20260827-012",
+      "stage" : "in_progress",
+      "status" : "info",
+      "summary" : "完成 App Store 能力分线、Thermal State、确定性卡片布局与截图 fixtures",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T06:50:44Z"
+    },
+    {
+      "authorRole" : "dev",
+      "detailsMd" : "【自动推进】\n- 当前流程采用 Agent-first 默认执行契约。\n- 在权限允许、前置满足时，`transition request` 会直接完成状态推进，不再等待 Sage 中间审批。\n\n【结果】\n- 从：in_progress\n- 到：qa\n- 下一交接：sage",
+      "id" : "JRN-20260827-013",
+      "stage" : "qa",
+      "status" : "info",
+      "summary" : "DEV 已推进流转：in_progress -> qa",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T06:50:56Z"
     }
   ]
 }
