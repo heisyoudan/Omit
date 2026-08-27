@@ -240,6 +240,41 @@
       "taskId" : "TASK-DEV-005",
       "timestamp" : "2026-08-27T08:15:47Z",
       "toState" : "qa"
+    },
+    {
+      "checks" : {
+        "gateRunId" : "RUN-20260827-006",
+        "journalExists" : true,
+        "latestGatePassed" : false
+      },
+      "fromState" : "qa",
+      "id" : "TRN-20260827-006",
+      "rejectedReason" : "QA 实机确认插电状态误报：系统全局 IOPS providing source 与 pmset 均为 AC Power，但实现从 InternalBattery 描述读取 Power Source State=Battery Power，错误投影为 On Battery。请改用全局供电源真相，并增加 AC 全局源与电池放电组合的适配层回归。",
+      "requestedByRole" : "qa",
+      "resolvedAt" : "2026-08-27T08:27:06Z",
+      "resolvedByRole" : "qa",
+      "stage" : "qa",
+      "status" : "approved",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T08:27:06Z",
+      "toState" : "in_progress"
+    },
+    {
+      "checks" : {
+        "gateRunId" : "RUN-20260827-007",
+        "journalExists" : true,
+        "latestGatePassed" : true
+      },
+      "fromState" : "in_progress",
+      "id" : "TRN-20260827-007",
+      "requestedByRole" : "dev",
+      "resolvedAt" : "2026-08-27T08:30:05Z",
+      "resolvedByRole" : "dev",
+      "stage" : "in_progress",
+      "status" : "approved",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T08:30:05Z",
+      "toState" : "qa"
     }
   ]
 }

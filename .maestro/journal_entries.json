@@ -349,6 +349,36 @@
       "summary" : "DEV 已推进流转：in_progress -> qa",
       "taskId" : "TASK-DEV-005",
       "timestamp" : "2026-08-27T08:15:47Z"
+    },
+    {
+      "authorRole" : "qa",
+      "detailsMd" : "[原子回退]\n- from: qa\n- to: in_progress\n- byRole: qa\n- reason: QA 实机确认插电状态误报：系统全局 IOPS providing source 与 pmset 均为 AC Power，但实现从 InternalBattery 描述读取 Power Source State=Battery Power，错误投影为 On Battery。请改用全局供电源真相，并增加 AC 全局源与电池放电组合的适配层回归。\n- handoffCommand: maestro task context TASK-DEV-005 --role dev",
+      "id" : "JRN-20260827-017",
+      "stage" : "in_progress",
+      "status" : "warning",
+      "summary" : "QA 已带理由回退：qa -> in_progress",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T08:27:06Z"
+    },
+    {
+      "authorRole" : "dev",
+      "detailsMd" : "## 根因\n\n上一版从 InternalBattery 自身 description 的 `kIOPSPowerSourceStateKey` 判断整机供电来源。实机上即使整机由 AC Power 供电，电池 description 仍可能报告 Battery Power 且未充电，因此被错误投影为 On Battery。\n\n## 最小修复\n\n- 改用 `IOPSGetProvidingPowerSourceType(snapshot)` 读取整机当前全局供电源。\n- 新增 `BatteryProvidingSource` 适配层，将全局来源类型化为 battery、externalPower、unknown。\n- 电池自身 description 只继续提供容量与 `isCharging`；再与全局供电源组合得到 Charging、Fully Charged、Power Adapter 或 On Battery。\n- unknown 全局来源 fail closed 为 On Battery。\n- 未修改其他指标采样、UI 视觉、能力矩阵或 entitlement。\n\n## 回归验证\n\n- AppStoreDashboardProbe（App Store 与 Direct）：PASS。\n- 新增适配层组合断言：全局 AC + 电池未充电 + 72% => Power Adapter；全局 AC + charging => Charging；全局 AC + 100% => Fully Charged；Battery/unknown => On Battery。\n- App Store Debug/Release 签名构建：PASS。\n- Debug/Release `codesign --verify --deep --strict`：PASS。\n- `git diff --check`：PASS。\n- 代码提交 `dbca8f1` 已推送至 `origin/codex/app-store`。\n\n## 范围外\n\n最终 UI 实机投影由 QA/PO 复验；本次未伪造人工观察 PASS，未上传 App Store Connect。\n",
+      "id" : "JRN-20260827-018",
+      "stage" : "in_progress",
+      "status" : "info",
+      "summary" : "改用 IOKit 全局供电源修复插电状态误报",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T08:30:01Z"
+    },
+    {
+      "authorRole" : "dev",
+      "detailsMd" : "【自动推进】\n- 当前流程采用 Agent-first 默认执行契约。\n- 在权限允许、前置满足时，`transition request` 会直接完成状态推进，不再等待 Sage 中间审批。\n\n【结果】\n- 从：in_progress\n- 到：qa\n- 下一交接：sage",
+      "id" : "JRN-20260827-019",
+      "stage" : "qa",
+      "status" : "info",
+      "summary" : "DEV 已推进流转：in_progress -> qa",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T08:30:05Z"
     }
   ]
 }

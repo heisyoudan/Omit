@@ -337,6 +337,58 @@
       "taskId" : "TASK-DEV-005",
       "timestamp" : "2026-08-27T08:15:43Z",
       "verdictOutcome" : "FAIL"
+    },
+    {
+      "canReturnToQA" : false,
+      "checks" : [
+        {
+          "detailsMd" : "## Truth\n\n- PO 在真实 MenuBarExtra 观察到：插入电源后 Battery 卡仍显示“使用电池”。\n- 同时读取系统真相：`pmset -g batt` 明确输出 `Now drawing from 'AC Power'`。\n- `IOPSGetProvidingPowerSourceType(IOPSCopyPowerSourcesInfo())` 同样返回 `AC Power`。\n- 但 InternalBattery 的 `IOPSGetPowerSourceDescription` 在当前“插电但电池放电”状态下返回 `Power Source State = Battery Power`、`Is Charging = 0`。\n- 当前 `SystemMetricSampler.sampleBattery()` 使用 InternalBattery 描述中的 `kIOPSPowerSourceStateKey` 判断是否连接外部电源，因此得到 false，并投影为 `.onBattery`。\n- 现有 BatteryPowerState probe 只手工传入 `isConnectedToExternalPower=true/false`，验证了纯函数，却没有验证 IOKit 适配层选择了正确真相源。\n- 其余复测结果保持：App Store/Direct capability、独立 Wide 合同、16 种布局、128 次切换、Debug/Release 签名构建、App Store Sandbox entitlement、Direct 构建、调度、系统指标与隔离 Trash 均 PASS。\n\n## Projection\n\n- 当前 UI 文案正确投影了错误的 `.onBattery` 内部状态，因此 Projection 与真实系统供电状态不一致。\n- “插电但暂不充电/电池放电”是稳定且真实的 macOS 状态，必须显示 Power Adapter 或等价外部供电文案，不能显示 On Battery。\n\n## Observe\n\n- FAIL：真实机器插电时显示“使用电池”。\n- 本次人类观察直接证明最终产品状态错误，不能由纯函数自动探针替代。\n\n## Final Verdict\n\nFAIL。回退 Dev。\n\n修复要求：\n1. 外部供电真相改为同一 IOPS 快照的全局 providing power source，例如 `IOPSGetProvidingPowerSourceType(snapshot)`，不要从 InternalBattery 的 `Power Source State` 推断整机供电源。\n2. 继续使用 InternalBattery 的 `Is Charging` 与容量区分 Charging、Fully Charged、Power Adapter。\n3. 增加可注入的 IOKit 适配层回归，覆盖“全局 AC Power + 电池描述 Battery Power + IsCharging=false”的真实组合，期望为 externalPower；测试不得只验证手工布尔输入的纯函数。\n4. 修复后重新构建、推送并交接 QA；真实插拔电源 Observe 必须复测。\n",
+          "key" : "qa_verdict_exists",
+          "message" : "已找到结构化 QA 最终测试裁定",
+          "result" : "pass"
+        },
+        {
+          "key" : "evidence_exists",
+          "message" : "已找到任务备注",
+          "result" : "pass"
+        }
+      ],
+      "closeReady" : false,
+      "gateProfile" : "default_qa_gate",
+      "id" : "RUN-20260827-006",
+      "stage" : "qa",
+      "status" : "pass",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T08:26:59Z",
+      "verdictOutcome" : "FAIL"
+    },
+    {
+      "canReturnToQA" : true,
+      "checks" : [
+        {
+          "key" : "mock_check",
+          "message" : "模拟检查通过",
+          "result" : "pass"
+        },
+        {
+          "key" : "build_check",
+          "message" : "Xcode 构建通过",
+          "result" : "pass"
+        },
+        {
+          "key" : "journal_exists",
+          "message" : "已存在日志",
+          "result" : "pass"
+        }
+      ],
+      "closeReady" : false,
+      "gateProfile" : "default_dev_gate",
+      "id" : "RUN-20260827-007",
+      "stage" : "in_progress",
+      "status" : "pass",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T08:30:05Z",
+      "verdictOutcome" : "FAIL"
     }
   ]
 }
