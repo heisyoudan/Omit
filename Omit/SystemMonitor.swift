@@ -13,11 +13,13 @@ final class SystemMonitor: ObservableObject {
     @Published private(set) var cpuState: CPUState = .unavailable
     @Published private(set) var batteryState: BatteryState = .unavailable
     @Published private(set) var networkState: NetworkState = .unavailable
+    @Published private(set) var thermalState: ThermalState = .unavailable
     @Published private(set) var trashState: TrashState = .unauthorized
     @Published private(set) var trashClearReport: TrashClearReport?
     @Published private(set) var samplingFailures: [MetricKind: MetricSamplingError] = [:]
 
     private let sampler: SystemMetricSampler
+    private let capabilities: ProductCapabilities
     private let cadence: MonitorCadence
     private var monitoringTask: Task<Void, Never>?
     private var trashOperationTask: Task<Void, Never>?
@@ -27,10 +29,12 @@ final class SystemMonitor: ObservableObject {
     private var wakeObserver: NSObjectProtocol?
 
     init(
-        sampler: SystemMetricSampler = SystemMetricSampler(),
+        capabilities: ProductCapabilities = .current,
+        sampler: SystemMetricSampler? = nil,
         cadence: MonitorCadence = .production
     ) {
-        self.sampler = sampler
+        self.capabilities = capabilities
+        self.sampler = sampler ?? SystemMetricSampler(capabilities: capabilities)
         self.cadence = cadence
         observeWorkspacePowerEvents()
     }
@@ -53,6 +57,7 @@ final class SystemMonitor: ObservableObject {
     }
 
     func authorizeTrash() {
+        guard capabilities.supportsTrash else { return }
         guard trashOperationTask == nil else { return }
         trashState = .scanning
         let sampler = sampler
@@ -72,6 +77,7 @@ final class SystemMonitor: ObservableObject {
     }
 
     func clearTrash() {
+        guard capabilities.supportsTrash else { return }
         guard trashOperationTask == nil else { return }
         trashState = .scanning
         trashClearReport = nil
@@ -132,7 +138,8 @@ final class SystemMonitor: ObservableObject {
         case .fast(let snapshot):
             cpuState = snapshot.cpu
             networkState = snapshot.network
-            replaceFailures(for: [.cpu, .network], with: snapshot.failures)
+            thermalState = snapshot.thermal
+            replaceFailures(for: [.cpu, .network, .thermal], with: snapshot.failures)
 
         case .memory(let result):
             switch result {

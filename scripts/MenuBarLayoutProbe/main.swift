@@ -10,17 +10,22 @@ private final class LayoutStressDriver: ObservableObject {
     @Published var showCPU = true
     @Published var showBattery = true
     @Published var showNetwork = true
-    @Published var showTrash = true
+    @Published var showThermal = true
     @Published var languageRaw = Language.english.rawValue
     @Published var appearanceRaw = AppAppearance.system.rawValue
 
     var visibleModules: Set<OmitModule> {
-        var result = Set<OmitModule>()
-        if showCPU { result.insert(.cpu) }
-        if showBattery { result.insert(.battery) }
-        if showNetwork { result.insert(.network) }
-        if showTrash { result.insert(.trash) }
-        return result
+        DashboardModuleSelection.visibleModules(
+            preferences: DashboardModulePreferences(
+                showCPU: showCPU,
+                showBattery: showBattery,
+                showNetwork: showNetwork,
+                showThermal: showThermal,
+                showTrash: false
+            ),
+            hasBattery: true,
+            capabilities: .appStore
+        )
     }
 }
 
@@ -35,6 +40,7 @@ private struct LayoutStressView: View {
             dashboardState: .standard,
             language: Language(rawValue: driver.languageRaw) ?? .english,
             appearance: AppAppearance(rawValue: driver.appearanceRaw) ?? .system,
+            capabilities: .appStore,
             visibleModules: driver.visibleModules,
             showMemory: driver.showMemory,
             showStorage: driver.showStorage,
@@ -67,20 +73,24 @@ struct MenuBarLayoutProbe {
         await settle(window)
         let baseline = hostingView.fittingSize
 
-        for iteration in 0 ..< 80 {
-            driver.showSettings = true
-            driver.showMemory = iteration.isMultiple(of: 2)
-            driver.showStorage = iteration.isMultiple(of: 3)
-            driver.showCPU = iteration.isMultiple(of: 4)
-            driver.showBattery = iteration.isMultiple(of: 5)
-            driver.showNetwork = iteration.isMultiple(of: 6)
-            driver.showTrash = iteration.isMultiple(of: 7)
-            driver.appearanceRaw = AppAppearance.allCases[iteration % AppAppearance.allCases.count].rawValue
-            await settle(window)
+        var iteration = 0
+        for cycle in 0 ..< 8 {
+            for mask in 0 ..< 16 {
+                driver.showSettings = true
+                driver.showMemory = (cycle + mask).isMultiple(of: 2)
+                driver.showStorage = (cycle + mask).isMultiple(of: 3)
+                driver.showCPU = mask & 1 != 0
+                driver.showBattery = mask & 2 != 0
+                driver.showNetwork = mask & 4 != 0
+                driver.showThermal = mask & 8 != 0
+                driver.appearanceRaw = AppAppearance.allCases[iteration % AppAppearance.allCases.count].rawValue
+                await settle(window)
 
-            driver.showSettings = false
-            await settle(window)
-            validate(hostingView.fittingSize, iteration: iteration)
+                driver.showSettings = false
+                await settle(window)
+                validate(hostingView.fittingSize, iteration: iteration)
+                iteration += 1
+            }
         }
 
         driver.showMemory = true
@@ -88,14 +98,14 @@ struct MenuBarLayoutProbe {
         driver.showCPU = true
         driver.showBattery = true
         driver.showNetwork = true
-        driver.showTrash = true
+        driver.showThermal = true
         driver.appearanceRaw = AppAppearance.system.rawValue
         await settle(window)
         let restored = hostingView.fittingSize
         expect(abs(restored.width - baseline.width) < 1 && abs(restored.height - baseline.height) < 1, "layout returns to its baseline size")
 
         window.close()
-        print("MenuBarLayoutProbe: PASS — 80 settings/dashboard cycles and 480 module mutations converged")
+        print("MenuBarLayoutProbe: PASS — all 16 module combinations across 128 settings/dashboard cycles converged")
     }
 
     @MainActor

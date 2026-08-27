@@ -33,6 +33,11 @@ struct OmitLang {
         "CPU": [.english: "CPU", .chinese: "CPU", .japanese: "CPU"],
         "BATTERY": [.english: "Battery", .chinese: "电池", .japanese: "バッテリー"],
         "NETWORK": [.english: "Network", .chinese: "网络", .japanese: "ネットワーク"],
+        "THERMAL": [.english: "Thermal State", .chinese: "热状态", .japanese: "熱状態"],
+        "THERMAL_NOMINAL": [.english: "Nominal", .chinese: "正常", .japanese: "正常"],
+        "THERMAL_FAIR": [.english: "Fair", .chinese: "轻微升温", .japanese: "やや高温"],
+        "THERMAL_SERIOUS": [.english: "Serious", .chinese: "严重升温", .japanese: "高温"],
+        "THERMAL_CRITICAL": [.english: "Critical", .chinese: "临界高温", .japanese: "危険な高温"],
         "TRASH": [.english: "Trash", .chinese: "废纸篓", .japanese: "ゴミ箱"],
         "USED": [.english: "Used", .chinese: "已用", .japanese: "使用済み"],
         "AVAILABLE_SPACE": [.english: "Available Space", .chinese: "可用空间", .japanese: "空き容量"],
@@ -64,7 +69,6 @@ struct OmitLang {
     static func get(_ key: String, lang: Language) -> String { strings[key]?[lang] ?? key }
 }
 
-enum OmitModule: String, CaseIterable { case cpu, battery, network, trash }
 enum TrashPresentation: Equatable { case unauthorized, empty, content(String), scanning, error(String) }
 
 struct OmitDashboardState {
@@ -78,11 +82,12 @@ struct OmitDashboardState {
     var batteryIsCharging: Bool
     var downloadValue: String
     var uploadValue: String
+    var thermalState: ThermalState
     var trash: TrashPresentation
     var updatedLabel: String
 
-    static let standard = OmitDashboardState(memoryUsed: "13.8 GB", memoryTotal: "17.2 GB", memoryPercent: 0.80, storageAvailable: "219.8 GB", storageUsedPercent: 0.56, cpuValue: "24%", batteryValue: "100%", batteryIsCharging: true, downloadValue: "3 KB/s", uploadValue: "1 KB/s", trash: .content("1.4 GB"), updatedLabel: "Updated just now")
-    static let unavailable = OmitDashboardState(memoryUsed: "13.8 GB", memoryTotal: "17.2 GB", memoryPercent: 0.80, storageAvailable: "219.8 GB", storageUsedPercent: 0.56, cpuValue: nil, batteryValue: nil, batteryIsCharging: false, downloadValue: "—", uploadValue: "—", trash: .error("Unable to scan"), updatedLabel: "Updated just now")
+    static let standard = OmitDashboardState(memoryUsed: "13.8 GB", memoryTotal: "17.2 GB", memoryPercent: 0.80, storageAvailable: "219.8 GB", storageUsedPercent: 0.56, cpuValue: "24%", batteryValue: "100%", batteryIsCharging: true, downloadValue: "3 KB/s", uploadValue: "1 KB/s", thermalState: .nominal, trash: .content("1.4 GB"), updatedLabel: "Updated just now")
+    static let unavailable = OmitDashboardState(memoryUsed: "13.8 GB", memoryTotal: "17.2 GB", memoryPercent: 0.80, storageAvailable: "219.8 GB", storageUsedPercent: 0.56, cpuValue: nil, batteryValue: nil, batteryIsCharging: false, downloadValue: "—", uploadValue: "—", thermalState: .unavailable, trash: .error("Unable to scan"), updatedLabel: "Updated just now")
 }
 
 struct ContentView: View {
@@ -93,6 +98,7 @@ struct ContentView: View {
     @AppStorage("showCPU") private var showCPU = true
     @AppStorage("showBattery") private var showBattery = true
     @AppStorage("showNetwork") private var showNetwork = true
+    @AppStorage("showThermal") private var showThermal = true
     @AppStorage("showTrash") private var showTrash = true
     @AppStorage("languageRaw") private var languageRaw = Language.chinese.rawValue
     @AppStorage("appearancePreference") private var appearanceRaw = AppAppearance.system.rawValue
@@ -143,15 +149,24 @@ struct ContentView: View {
             storageAvailable: monitor.storageFreeString, storageUsedPercent: monitor.storageUsedPercent,
             cpuValue: cpuValue,
             batteryValue: batteryValue, batteryIsCharging: batteryIsCharging,
-            downloadValue: downloadValue, uploadValue: uploadValue, trash: trash,
+            downloadValue: downloadValue, uploadValue: uploadValue, thermalState: monitor.thermalState, trash: trash,
             updatedLabel: OmitLang.get("UPDATED", lang: language)
         )
     }
     private var visibleModules: Set<OmitModule> {
-        var modules = Set<OmitModule>()
-        if showCPU { modules.insert(.cpu) }; if showBattery { modules.insert(.battery) }
-        if showNetwork { modules.insert(.network) }; if showTrash { modules.insert(.trash) }
-        return modules
+        let hasBattery: Bool
+        if case .noBattery = monitor.batteryState { hasBattery = false } else { hasBattery = true }
+        return DashboardModuleSelection.visibleModules(
+            preferences: DashboardModulePreferences(
+                showCPU: showCPU,
+                showBattery: showBattery,
+                showNetwork: showNetwork,
+                showThermal: showThermal,
+                showTrash: showTrash
+            ),
+            hasBattery: hasBattery,
+            capabilities: .current
+        )
     }
 
     var body: some View {
@@ -160,6 +175,7 @@ struct ContentView: View {
             dashboardState: dashboardState,
             language: language,
             appearance: appearance,
+            capabilities: .current,
             visibleModules: visibleModules,
             showMemory: showMemory,
             showStorage: showStorage,
@@ -181,6 +197,7 @@ struct OmitPanelContent: View {
     let dashboardState: OmitDashboardState
     let language: Language
     let appearance: AppAppearance
+    let capabilities: ProductCapabilities
     let visibleModules: Set<OmitModule>
     let showMemory: Bool
     let showStorage: Bool
@@ -196,7 +213,7 @@ struct OmitPanelContent: View {
             VStack(spacing: 16) {
                 OmitHeader(isShowingSettings: showSettings, onSettings: onSettings)
                 if showSettings {
-                    SettingsView(launchManager: launchManager, languageRaw: $languageRaw, appearanceRaw: $appearanceRaw)
+                    SettingsView(launchManager: launchManager, capabilities: capabilities, languageRaw: $languageRaw, appearanceRaw: $appearanceRaw)
                 } else {
                     OmitDashboardView(
                         state: dashboardState,
@@ -300,12 +317,30 @@ struct OmitDashboardView: View {
             if showStorage {
                 PrimaryMetricCard(title: OmitLang.get("STORAGE", lang: language), value: state.storageAvailable, supportingValue: OmitLang.get("AVAILABLE_SPACE", lang: language), percentLabel: "\(Int((state.storageUsedPercent * 100).rounded()))% \(OmitLang.get("USED", lang: language))", percent: state.storageUsedPercent, icon: "internaldrive", accent: .indigo)
             }
-            let modules = OmitModule.allCases.filter(visibleModules.contains)
-            if modules.isEmpty && !showMemory && !showStorage {
+            let rows = StatusCardLayoutPlanner.rows(for: visibleModules)
+            let showsTrash = visibleModules.contains(.trash)
+            if rows.isEmpty && !showsTrash && !showMemory && !showStorage {
                 Text(OmitLang.get("ZEN_MODE", lang: language)).font(.system(size: 11, weight: .medium)).foregroundStyle(.tertiary).frame(maxWidth: .infinity, minHeight: 96)
-            } else if !modules.isEmpty {
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible())], spacing: 12) {
-                    ForEach(modules, id: \.self) { secondaryCard(for: $0) }
+            } else {
+                ForEach(rows) { row in
+                    switch row.style {
+                    case .wide:
+                        if let module = row.modules.first {
+                            secondaryCard(for: module)
+                                .frame(maxWidth: .infinity)
+                        }
+                    case .pair:
+                        HStack(spacing: 12) {
+                            ForEach(row.modules) { module in
+                                secondaryCard(for: module)
+                                    .frame(maxWidth: .infinity)
+                            }
+                        }
+                    }
+                }
+                if showsTrash {
+                    TrashCard(status: state.trash, language: language, onAuthorize: onAuthorizeTrash, onClear: onClearTrash)
+                        .frame(maxWidth: .infinity)
                 }
             }
             Text(state.updatedLabel).font(.system(size: 10, weight: .medium)).foregroundStyle(.tertiary).frame(maxWidth: .infinity).padding(.top, 2)
@@ -316,9 +351,39 @@ struct OmitDashboardView: View {
         case .cpu:
             CompactMetricCard(title: OmitLang.get("CPU", lang: language), value: state.cpuValue ?? "—", supportingValue: state.cpuValue == nil ? OmitLang.get("UNAVAILABLE", lang: language) : nil, icon: "cpu", accent: .blue)
         case .battery:
-            CompactMetricCard(title: OmitLang.get("BATTERY", lang: language), value: state.batteryValue ?? "—", supportingValue: state.batteryValue == nil ? OmitLang.get("NO_BATTERY", lang: language) : OmitLang.get(state.batteryIsCharging ? "CHARGING" : "ON_BATTERY", lang: language), icon: state.batteryIsCharging ? "battery.100.bolt" : "battery.100", accent: .green)
+            CompactMetricCard(title: OmitLang.get("BATTERY", lang: language), value: state.batteryValue ?? "—", supportingValue: state.batteryValue == nil ? OmitLang.get("UNAVAILABLE", lang: language) : OmitLang.get(state.batteryIsCharging ? "CHARGING" : "ON_BATTERY", lang: language), icon: state.batteryIsCharging ? "battery.100.bolt" : "battery.100", accent: .green)
         case .network: NetworkCard(state: state, language: language)
+        case .thermal:
+            CompactMetricCard(
+                title: OmitLang.get("THERMAL", lang: language),
+                value: thermalLabel,
+                supportingValue: nil,
+                icon: "thermometer.medium",
+                accent: thermalAccent
+            )
         case .trash: TrashCard(status: state.trash, language: language, onAuthorize: onAuthorizeTrash, onClear: onClearTrash)
+        }
+    }
+
+    private var thermalLabel: String {
+        let key: String
+        switch state.thermalState {
+        case .nominal: key = "THERMAL_NOMINAL"
+        case .fair: key = "THERMAL_FAIR"
+        case .serious: key = "THERMAL_SERIOUS"
+        case .critical: key = "THERMAL_CRITICAL"
+        case .unavailable: key = "UNAVAILABLE"
+        }
+        return OmitLang.get(key, lang: language)
+    }
+
+    private var thermalAccent: Color {
+        switch state.thermalState {
+        case .nominal: .green
+        case .fair: .yellow
+        case .serious: .orange
+        case .critical: .red
+        case .unavailable: .secondary
         }
     }
 }
@@ -343,7 +408,7 @@ struct PrimaryMetricCard: View {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(title).font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary).lineLimit(2)
                     Spacer(minLength: 4)
-                    Text(percentLabel).font(.system(size: 14, weight: .bold, design: .rounded)).foregroundStyle(accent).fixedSize(horizontal: true, vertical: false)
+                    Text(percentLabel).font(.system(size: 14, weight: .bold, design: .rounded)).foregroundStyle(accent).lineLimit(1)
                 }
                 Text(value).font(.system(size: 20, weight: .bold, design: .rounded)).foregroundStyle(.primary).lineLimit(1).minimumScaleFactor(0.82)
                 Text(supportingValue).font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary).lineLimit(2)
@@ -459,11 +524,13 @@ struct CompactActionButtonStyle: ButtonStyle {
 
 struct SettingsView: View {
     @ObservedObject var launchManager: LaunchManager
+    let capabilities: ProductCapabilities
     @AppStorage("showMemory") private var showMemory = true
     @AppStorage("showStorage") private var showStorage = true
     @AppStorage("showCPU") private var showCPU = true
     @AppStorage("showBattery") private var showBattery = true
     @AppStorage("showNetwork") private var showNetwork = true
+    @AppStorage("showThermal") private var showThermal = true
     @AppStorage("showTrash") private var showTrash = true
     @Binding var languageRaw: String
     @Binding var appearanceRaw: String
@@ -479,7 +546,11 @@ struct SettingsView: View {
                 SettingsToggleRow(title: OmitLang.get("CPU", lang: language), icon: "cpu", isOn: $showCPU); SettingsDivider()
                 SettingsToggleRow(title: OmitLang.get("BATTERY", lang: language), icon: "battery.100", isOn: $showBattery); SettingsDivider()
                 SettingsToggleRow(title: OmitLang.get("NETWORK", lang: language), icon: "wifi", isOn: $showNetwork); SettingsDivider()
-                SettingsToggleRow(title: OmitLang.get("TRASH", lang: language), icon: "trash", isOn: $showTrash)
+                SettingsToggleRow(title: OmitLang.get("THERMAL", lang: language), icon: "thermometer.medium", isOn: $showThermal)
+                if capabilities.settingsModules.contains(.trash) {
+                    SettingsDivider()
+                    SettingsToggleRow(title: OmitLang.get("TRASH", lang: language), icon: "trash", isOn: $showTrash)
+                }
             }.modifier(CardSurface())
             SettingsSectionTitle(OmitLang.get("PREFERENCES", lang: language))
             VStack(spacing: 0) {
@@ -530,18 +601,49 @@ struct SettingsToggleRow: View {
 struct SettingsDivider: View { var body: some View { Divider().padding(.leading, 12) } }
 
 private struct DashboardPreview: View {
-    let state: OmitDashboardState; let language: Language; let colorScheme: ColorScheme
+    let state: OmitDashboardState
+    let language: Language
+    let colorScheme: ColorScheme
+    let capabilities: ProductCapabilities
     var body: some View {
-        OmitPanelSurface { VStack(spacing: 16) { OmitHeader(isShowingSettings: false, onSettings: {}); OmitDashboardView(state: state, language: language, visibleModules: Set(OmitModule.allCases), showMemory: true, showStorage: true, onAuthorizeTrash: {}, onClearTrash: {}) } }.preferredColorScheme(colorScheme)
+        OmitPanelSurface { VStack(spacing: 16) { OmitHeader(isShowingSettings: false, onSettings: {}); OmitDashboardView(state: state, language: language, visibleModules: capabilities.dashboardModules, showMemory: true, showStorage: true, onAuthorizeTrash: {}, onClearTrash: {}) } }.preferredColorScheme(colorScheme)
     }
 }
 private struct SettingsPreview: View {
     let colorScheme: ColorScheme
+    let capabilities: ProductCapabilities
     @State private var languageRaw = Language.english.rawValue
     @State private var appearanceRaw = AppAppearance.system.rawValue
     @StateObject private var launchManager = LaunchManager()
     var body: some View {
-        OmitPanelSurface { VStack(spacing: 16) { OmitHeader(isShowingSettings: true, onSettings: {}); SettingsView(launchManager: launchManager, languageRaw: $languageRaw, appearanceRaw: $appearanceRaw) } }.preferredColorScheme(colorScheme)
+        OmitPanelSurface { VStack(spacing: 16) { OmitHeader(isShowingSettings: true, onSettings: {}); SettingsView(launchManager: launchManager, capabilities: capabilities, languageRaw: $languageRaw, appearanceRaw: $appearanceRaw) } }.preferredColorScheme(colorScheme)
+    }
+}
+
+private struct ThermalFixturePreview: View {
+    let thermalState: ThermalState
+    let language: Language
+    let colorScheme: ColorScheme
+
+    private var fixtureState: OmitDashboardState {
+        var fixture = OmitDashboardState.standard
+        fixture.thermalState = thermalState
+        return fixture
+    }
+
+    var body: some View {
+        OmitPanelSurface {
+            OmitDashboardView(
+                state: fixtureState,
+                language: language,
+                visibleModules: [.thermal],
+                showMemory: false,
+                showStorage: false,
+                onAuthorizeTrash: {},
+                onClearTrash: {}
+            )
+        }
+        .preferredColorScheme(colorScheme)
     }
 }
 
@@ -564,14 +666,18 @@ struct Omit_Previews: PreviewProvider {
 
     static var previews: some View {
         Group {
-            DashboardPreview(state: .standard, language: .english, colorScheme: .light).previewDisplayName("Main — Light")
-            DashboardPreview(state: .standard, language: .english, colorScheme: .dark).previewDisplayName("Main — Dark")
-            SettingsPreview(colorScheme: .light).previewDisplayName("Settings — Light / System")
-            SettingsPreview(colorScheme: .dark).previewDisplayName("Settings — Dark / System")
-            DashboardPreview(state: unauthorizedState, language: .japanese, colorScheme: .light).previewDisplayName("Trash — Unauthorized / Japanese")
-            DashboardPreview(state: emptyTrashState, language: .english, colorScheme: .light).previewDisplayName("Trash — Empty")
-            DashboardPreview(state: scanningTrashState, language: .english, colorScheme: .dark).previewDisplayName("Trash — Scanning")
-            DashboardPreview(state: .unavailable, language: .english, colorScheme: .dark).previewDisplayName("Unavailable Metrics")
+            DashboardPreview(state: .standard, language: .english, colorScheme: .light, capabilities: .appStore).previewDisplayName("StoreHeroLight")
+            DashboardPreview(state: .standard, language: .english, colorScheme: .dark, capabilities: .appStore).previewDisplayName("StoreHeroDark")
+            SettingsPreview(colorScheme: .light, capabilities: .appStore).previewDisplayName("StoreAppearanceSettings")
+            ThermalFixturePreview(thermalState: .nominal, language: .english, colorScheme: .light).previewDisplayName("Thermal — Nominal / English")
+            ThermalFixturePreview(thermalState: .fair, language: .chinese, colorScheme: .light).previewDisplayName("Thermal — Fair / Chinese")
+            ThermalFixturePreview(thermalState: .serious, language: .japanese, colorScheme: .dark).previewDisplayName("Thermal — Serious / Japanese")
+            ThermalFixturePreview(thermalState: .critical, language: .english, colorScheme: .dark).previewDisplayName("Thermal — Critical")
+            ThermalFixturePreview(thermalState: .unavailable, language: .english, colorScheme: .dark).previewDisplayName("Thermal — Unavailable")
+            DashboardPreview(state: unauthorizedState, language: .japanese, colorScheme: .light, capabilities: .direct).previewDisplayName("Trash — Unauthorized / Japanese")
+            DashboardPreview(state: emptyTrashState, language: .english, colorScheme: .light, capabilities: .direct).previewDisplayName("Trash — Empty")
+            DashboardPreview(state: scanningTrashState, language: .english, colorScheme: .dark, capabilities: .direct).previewDisplayName("Trash — Scanning")
+            DashboardPreview(state: .unavailable, language: .english, colorScheme: .dark, capabilities: .appStore).previewDisplayName("Unavailable Metrics")
             OmitPanelSurface {
                 TrashCard(status: .content("1.4 GB"), language: .english, initiallyConfirming: true, onAuthorize: {}, onClear: {}).frame(width: 130)
             }

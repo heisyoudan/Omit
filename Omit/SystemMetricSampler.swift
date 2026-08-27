@@ -5,7 +5,7 @@ import IOKit.ps
 nonisolated enum CPUState: Equatable, Sendable { case unavailable, available(String) }
 nonisolated enum BatteryState: Equatable, Sendable { case noBattery, unavailable, available(value: String, isCharging: Bool) }
 nonisolated enum NetworkState: Equatable, Sendable { case unavailable, available(download: String, upload: String) }
-nonisolated enum MetricKind: Hashable, Sendable { case cpu, memory, network, battery, storage, trash }
+nonisolated enum MetricKind: Hashable, Sendable { case cpu, memory, network, thermal, battery, storage, trash }
 nonisolated enum MetricSamplingError: Error, Equatable, Sendable {
     case kernel(metric: MetricKind, code: Int32)
     case storage(String)
@@ -15,7 +15,10 @@ nonisolated enum MetricSamplingError: Error, Equatable, Sendable {
 nonisolated struct MemoryProjection: Sendable { let used, total, active: String; let fractionUsed: Double }
 nonisolated struct StorageProjection: Sendable { let available: String; let fractionUsed: Double }
 nonisolated struct FastProjection: Sendable {
-    let cpu: CPUState; let network: NetworkState; let failures: [MetricKind: MetricSamplingError]
+    let cpu: CPUState
+    let network: NetworkState
+    let thermal: ThermalState
+    let failures: [MetricKind: MetricSamplingError]
 }
 nonisolated struct SlowProjection: Sendable {
     let battery: BatteryState; let storage: StorageProjection?; let failures: [MetricKind: MetricSamplingError]
@@ -28,13 +31,18 @@ nonisolated enum MonitorProjection: Sendable {
 }
 
 actor SystemMetricSampler {
+    private let capabilities: ProductCapabilities
     private let networkSampler: NetworkCounterSampler
     private let trashAccessService: TrashAccessService
     private let byteFormatter: ByteCountFormatter
     private var cpuCalculator = CPUUsageCalculator()
     private var networkCalculator = NetworkRateCalculator()
 
-    init(trashAccessService: TrashAccessService = TrashAccessService()) {
+    init(
+        capabilities: ProductCapabilities = .current,
+        trashAccessService: TrashAccessService = TrashAccessService()
+    ) {
+        self.capabilities = capabilities
         self.networkSampler = NetworkCounterSampler()
         self.trashAccessService = trashAccessService
         let formatter = ByteCountFormatter()
@@ -53,20 +61,29 @@ actor SystemMetricSampler {
         case .fast: .fast(sampleFast())
         case .memory: .memory(sampleMemory())
         case .slow: .slow(sampleSlow())
-        case .trash: .trash(await trashAccessService.scan())
+        case .trash:
+            .trash(capabilities.supportsTrash ? await trashAccessService.scan() : .unauthorized)
         }
     }
 
     func authorizeTrash(at selectedURL: URL) async -> TrashState {
-        await trashAccessService.authorize(selectedURL: selectedURL)
+        guard capabilities.supportsTrash else { return .unauthorized }
+        return await trashAccessService.authorize(selectedURL: selectedURL)
     }
 
     func trashAuthorizationCancelled() async -> TrashState {
-        await trashAccessService.authorizationCancelled()
+        guard capabilities.supportsTrash else { return .unauthorized }
+        return await trashAccessService.authorizationCancelled()
     }
 
     func clearTrash() async -> TrashClearReport {
-        await trashAccessService.clear()
+        guard capabilities.supportsTrash else {
+            return TrashClearReport(
+                deletedItemNames: [],
+                failures: [TrashItemFailure(itemName: "Trash", message: "Unavailable in this product variant")]
+            )
+        }
+        return await trashAccessService.clear()
     }
 
     private func sampleFast() -> FastProjection {
@@ -83,7 +100,12 @@ actor SystemMetricSampler {
         } else {
             network = .unavailable
         }
-        return FastProjection(cpu: cpu, network: network, failures: failures)
+        return FastProjection(
+            cpu: cpu,
+            network: network,
+            thermal: ThermalState.map(ProcessInfo.processInfo.thermalState),
+            failures: failures
+        )
     }
 
     private func sampleMemory() -> Result<MemoryProjection, MetricSamplingError> {
