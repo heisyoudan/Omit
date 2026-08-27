@@ -6,6 +6,7 @@ struct AppStoreDashboardProbe {
         verifyCapabilityMatrix()
         verifyThermalMapping()
         verifyBatteryVisibility()
+        verifyBatteryPowerPresentation()
         verifyAllLayoutCombinations()
         print("AppStoreDashboardProbe: PASS — capability, Thermal, battery visibility, and all 16 layouts")
     }
@@ -44,6 +45,13 @@ struct AppStoreDashboardProbe {
         expect(noBatteryHidden.isEmpty, "explicit noBattery hides Battery")
     }
 
+    private static func verifyBatteryPowerPresentation() {
+        expect(BatteryPowerState.resolve(percent: 100, isCharging: false, isConnectedToExternalPower: false) == .onBattery, "100% on battery is not reported as fully charged")
+        expect(BatteryPowerState.resolve(percent: 100, isCharging: false, isConnectedToExternalPower: true) == .fullyCharged, "100% on external power is fully charged")
+        expect(BatteryPowerState.resolve(percent: 72, isCharging: true, isConnectedToExternalPower: true) == .charging, "active charging is reported as charging")
+        expect(BatteryPowerState.resolve(percent: 72, isCharging: false, isConnectedToExternalPower: true) == .externalPower, "external power without charging has a distinct state")
+    }
+
     private static func verifyAllLayoutCombinations() {
         let modules = StatusCardLayoutPlanner.statusOrder
         for mask in 0 ..< 16 {
@@ -61,7 +69,8 @@ struct AppStoreDashboardProbe {
             case 2: expect(rows.map(\.style) == [.pair], "2 cards -> pair")
             case 3:
                 expect(rows.map(\.style) == [.wide, .pair], "3 cards -> wide above pair")
-                let expectedWide = StatusCardLayoutPlanner.widePriority.first(where: visible.contains)
+                let contractWidePriority: [OmitModule] = [.network, .thermal, .battery, .cpu]
+                let expectedWide = contractWidePriority.first(where: visible.contains)
                 expect(rows.first?.modules.first == expectedWide, "3-card wide priority")
             case 4: expect(rows.map(\.style) == [.pair, .pair], "4 cards -> 2+2")
             default: fail("unexpected card count")

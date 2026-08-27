@@ -3,7 +3,7 @@ import Foundation
 import IOKit.ps
 
 nonisolated enum CPUState: Equatable, Sendable { case unavailable, available(String) }
-nonisolated enum BatteryState: Equatable, Sendable { case noBattery, unavailable, available(value: String, isCharging: Bool) }
+nonisolated enum BatteryState: Equatable, Sendable { case noBattery, unavailable, available(value: String, powerState: BatteryPowerState) }
 nonisolated enum NetworkState: Equatable, Sendable { case unavailable, available(download: String, upload: String) }
 nonisolated enum MetricKind: Hashable, Sendable { case cpu, memory, network, thermal, battery, storage, trash }
 nonisolated enum MetricSamplingError: Error, Equatable, Sendable {
@@ -189,7 +189,14 @@ actor SystemMetricSampler {
               let capacity = info[kIOPSCurrentCapacityKey] as? Int, let maxCapacity = info[kIOPSMaxCapacityKey] as? Int,
               maxCapacity > 0 else { return .unavailable }
         let percent = min(max(Int((Double(capacity) / Double(maxCapacity)) * 100), 0), 100)
-        return .available(value: "\(percent)%", isCharging: (info[kIOPSIsChargingKey] as? Bool) == true)
+        let isCharging = (info[kIOPSIsChargingKey] as? Bool) == true
+        let isConnectedToExternalPower = (info[kIOPSPowerSourceStateKey] as? String) == kIOPSACPowerValue
+        let powerState = BatteryPowerState.resolve(
+            percent: percent,
+            isCharging: isCharging,
+            isConnectedToExternalPower: isConnectedToExternalPower
+        )
+        return .available(value: "\(percent)%", powerState: powerState)
     }
 
     private func bytes(_ pages: natural_t, pageSize: UInt64) -> UInt64 {

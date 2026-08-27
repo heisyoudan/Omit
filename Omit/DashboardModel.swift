@@ -70,6 +70,27 @@ nonisolated enum ThermalState: String, CaseIterable, Equatable, Sendable {
     }
 }
 
+nonisolated enum BatteryPowerState: String, Equatable, Sendable {
+    case onBattery
+    case charging
+    case fullyCharged
+    case externalPower
+
+    static func resolve(
+        percent: Int,
+        isCharging: Bool,
+        isConnectedToExternalPower: Bool
+    ) -> BatteryPowerState {
+        guard isConnectedToExternalPower else { return .onBattery }
+        if isCharging { return .charging }
+        return percent >= 100 ? .fullyCharged : .externalPower
+    }
+
+    var usesExternalPower: Bool {
+        self != .onBattery
+    }
+}
+
 nonisolated struct DashboardModulePreferences: Equatable, Sendable {
     let showCPU: Bool
     let showBattery: Bool
@@ -110,7 +131,7 @@ nonisolated struct StatusCardRow: Equatable, Identifiable, Sendable {
 
 nonisolated enum StatusCardLayoutPlanner {
     static let statusOrder: [OmitModule] = [.cpu, .battery, .network, .thermal]
-    static let widePriority: [OmitModule] = [.network, .battery, .cpu, .thermal]
+    static let widePriority: [OmitModule] = [.network, .thermal, .battery, .cpu]
 
     static func rows(for visibleModules: Set<OmitModule>) -> [StatusCardRow] {
         let modules = statusOrder.filter(visibleModules.contains)
