@@ -56,6 +56,10 @@ actor SystemMetricSampler {
         networkCalculator = NetworkRateCalculator()
     }
 
+    func sampleBatteryState() -> BatteryState {
+        sampleBattery()
+    }
+
     func sample(_ group: MonitorGroup) async -> MonitorProjection {
         switch group {
         case .fast: .fast(sampleFast())

@@ -1,6 +1,7 @@
 import AppKit
 import Combine
 import Foundation
+import IOKit.ps
 
 @MainActor
 final class SystemMonitor: ObservableObject {
@@ -23,10 +24,12 @@ final class SystemMonitor: ObservableObject {
     private let cadence: MonitorCadence
     private var monitoringTask: Task<Void, Never>?
     private var trashOperationTask: Task<Void, Never>?
+    private var powerSourceRefreshTask: Task<Void, Never>?
     private var lifecycle = MonitoringLifecycle()
     private var wantsMonitoring = false
     private var sleepObserver: NSObjectProtocol?
     private var wakeObserver: NSObjectProtocol?
+    private var powerSourceRunLoopSource: CFRunLoopSource?
 
     init(
         capabilities: ProductCapabilities = .current,
@@ -37,13 +40,18 @@ final class SystemMonitor: ObservableObject {
         self.sampler = sampler ?? SystemMetricSampler(capabilities: capabilities)
         self.cadence = cadence
         observeWorkspacePowerEvents()
+        observePowerSourceChanges()
     }
 
     deinit {
         monitoringTask?.cancel()
         trashOperationTask?.cancel()
+        powerSourceRefreshTask?.cancel()
         if let sleepObserver { NSWorkspace.shared.notificationCenter.removeObserver(sleepObserver) }
         if let wakeObserver { NSWorkspace.shared.notificationCenter.removeObserver(wakeObserver) }
+        if let powerSourceRunLoopSource {
+            CFRunLoopRemoveSource(CFRunLoopGetMain(), powerSourceRunLoopSource, .commonModes)
+        }
     }
 
     func startMonitoring() {
@@ -192,6 +200,34 @@ final class SystemMonitor: ObservableObject {
                 guard let self, self.wantsMonitoring else { return }
                 self.launchMonitoringTaskIfNeeded()
             }
+        }
+    }
+
+    private func observePowerSourceChanges() {
+        let context = Unmanaged.passUnretained(self).toOpaque()
+        guard let unmanagedSource = IOPSNotificationCreateRunLoopSource({ context in
+            guard let context else { return }
+            let monitor = Unmanaged<SystemMonitor>.fromOpaque(context).takeUnretainedValue()
+            Task { @MainActor [weak monitor] in
+                monitor?.refreshBatteryFromPowerSourceEvent()
+            }
+        }, context) else { return }
+
+        let source = unmanagedSource.takeRetainedValue()
+        powerSourceRunLoopSource = source
+        CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
+    }
+
+    private func refreshBatteryFromPowerSourceEvent() {
+        guard wantsMonitoring else { return }
+        powerSourceRefreshTask?.cancel()
+        let sampler = sampler
+        powerSourceRefreshTask = Task { [weak self, sampler] in
+            let state = await sampler.sampleBatteryState()
+            guard !Task.isCancelled else { return }
+            self?.batteryState = state
+            self?.samplingFailures[.battery] = nil
+            self?.powerSourceRefreshTask = nil
         }
     }
 }
