@@ -409,6 +409,36 @@
       "summary" : "Sage 已发布并启动任务",
       "taskId" : "TASK-QA-001",
       "timestamp" : "2026-08-27T15:37:19Z"
+    },
+    {
+      "authorRole" : "qa",
+      "detailsMd" : "[原子回退]\n- from: qa\n- to: in_progress\n- byRole: qa\n- reason: QA 无法在不复用生产 Calculator 的前提下完成独立差分：当前仅暴露格式化投影，缺少同步 CPU ticks、VM counters、存储原始容量、主接口 64 位 RX/TX 与时间戳、Battery IOKit 原始字段、Thermal 原始枚举，以及 sequence/in-flight/sleep-wake/reset markers。请按 NTE-20260828-003 增加 Debug/test-only JSONL 原始快照与 600 秒生命周期 driver；无需修改产品公式、UI、Trash 权限或 Release 能力。\n- handoffCommand: maestro task context TASK-QA-001 --role dev",
+      "id" : "JRN-20260828-004",
+      "stage" : "in_progress",
+      "status" : "warning",
+      "summary" : "QA 已带理由回退：qa -> in_progress",
+      "taskId" : "TASK-QA-001",
+      "timestamp" : "2026-08-27T15:42:10Z"
+    },
+    {
+      "authorRole" : "dev",
+      "detailsMd" : "## 根因与修复\n\nQA 指出的证据缺口成立：生产 Sampler 只返回格式化投影，旧探针又直接调用生产 Calculator，无法建立同步且独立的差分证据。本次未改变任何产品公式；仅在 `#if DEBUG` 下为每个采样组输出 JSONL 原始快照，包含 sequence、wall/monotonic start/end、in-flight、generation，以及 CPU 每核 ticks、VM 页计数、Storage 各容量、Network 路由接口 64 位计数与 reset reason、IOKit 全局供电源、电池事实和 Thermal 原始/映射状态。监控 start/stop/reset 与真实 willSleep/didWake 均有 lifecycle marker。\n\n新增 `MetricTraceDriver`，默认运行 600 秒，也支持短时和 fixtures-only；真实采样不包含 Trash。确定性 fixtures 覆盖 CPU baseline/有效 delta/回退/非法快照、VM、Network 首次/有效/断网/接口切换/计数器重置/休眠间隔、noBattery/unavailable、电池真值表及全部 Thermal 状态。另增不导入 Omit 生产实现的 Python oracle，直接从原始计数独立计算并验证 22 个 fixture。\n\n## PO 新增 Debug 面板\n\n按 PO 追加需求增加 Debug-only 扳手按钮和原生 popover。打开即进入手动投影，可实时调整 Memory、Storage、CPU 可用性/占用、Battery 缺失/不可用/使用电池/充电/满电/适配器、Network 可用性/上下行、Thermal 五态及 Trash 纯展示状态；Restore Live 立即切回持续运行的真实采样。手动模式下 Trash 授权与清空动作被拦截，不访问文件系统。Release 不包含按钮、面板或驱动能力。该需求已单独记录为 NTE-20260828-005。\n\n## 验证\n\n- Debug App Store 签名构建：PASS。\n- Release App Store 签名构建：PASS。\n- Debug/Release codesign deep strict：PASS。\n- Release binary strings 审查：不含 OMIT_DEBUG_METRICS_JSONL、Debug State Driver、driverStart：PASS。\n- MetricTraceDriver 编译：PASS；fixtures-only 输出 22 条合法 JSONL。\n- 独立 raw-counter oracle：PASS（未导入或调用生产 Calculator）。\n- 2 秒 live 驱动：start/reset/end、fast/memory/slow 原始快照：PASS；沙箱环境 Network 明确记录 disconnect。\n- MonitoringScheduleProbe：PASS。\n- AppStoreDashboardProbe：PASS。\n- SystemMetricsProbe：PASS（沙箱外只读读取 en0 64 位计数）。\n- git diff --check：PASS。\n\n## QA 观察边界\n\n本轮未伪造实际睡眠/唤醒事件；600 秒驱动已注册 NSWorkspace willSleep/didWake 并在 wake 后 reset baseline，QA 可在长跑期间执行真实 sleep/wake 并据 marker 做独立生命周期裁定。Debug popover 的最终 MenuBarExtra 人工视觉和交互观察同样留给 QA/PO。未修改 Release UI、指标公式、Trash 权限/删除实现或 entitlement。",
+      "id" : "JRN-20260828-005",
+      "stage" : "in_progress",
+      "status" : "info",
+      "summary" : "新增 Debug 原始指标 JSONL、600 秒驱动及手动状态面板",
+      "taskId" : "TASK-QA-001",
+      "timestamp" : "2026-08-27T16:00:20Z"
+    },
+    {
+      "authorRole" : "dev",
+      "detailsMd" : "【自动推进】\n- 当前流程采用 Agent-first 默认执行契约。\n- 在权限允许、前置满足时，`transition request` 会直接完成状态推进，不再等待 Sage 中间审批。\n\n【结果】\n- 从：in_progress\n- 到：qa\n- 下一交接：sage",
+      "id" : "JRN-20260828-006",
+      "stage" : "qa",
+      "status" : "info",
+      "summary" : "DEV 已推进流转：in_progress -> qa",
+      "taskId" : "TASK-QA-001",
+      "timestamp" : "2026-08-27T16:00:44Z"
     }
   ]
 }

@@ -116,6 +116,33 @@
       "taskId" : "TASK-DEV-005",
       "timestamp" : "2026-08-27T15:32:46Z",
       "type" : "test_verdict"
+    },
+    {
+      "authorRole" : "qa",
+      "detailsMd" : "# QA Dev Support Request for TASK-QA-001\n\n## Blocking gap\n- Existing SystemMetricSampler projections expose rounded/formatted values but not the synchronized raw inputs needed for an independent differential oracle.\n- Existing SystemMetricsProbe calls production MemoryUsageCalculator, CPUUsageCalculator, NetworkRateCalculator and NetworkCounterSampler; it is a regression probe, not an independent expected-value probe.\n- No timestamp/sequence/in-flight evidence exists to prove 10-minute freshness, non-reentrancy, or actual sleep/wake recovery.\n\n## Required test-only output\n- Emit JSONL snapshots without changing release UI or product semantics.\n- CPU: monotonic timestamp, per-core user/system/nice/idle ticks, unrounded calculated fraction, availability/error.\n- Memory: all VM counters used by the product, page size, physical memory, unrounded used/active/fraction.\n- Storage: root volume identity, total capacity, ordinary available capacity, important/opportunistic capacity when available, unrounded fraction.\n- Network: routed primary interface, 64-bit RX/TX counters, monotonic timestamp, unrounded download/upload rates, and baseline-reset reason for first sample/disconnect/interface switch/sleep gap/counter reset.\n- Battery: IOKit global providing-source type, capacity/max capacity, isCharging, battery presence, mapped typed state.\n- Thermal: raw ProcessInfo thermal enum and mapped typed state.\n- Lifecycle: sample sequence, group, start/end timestamps, in-flight count/generation, willSleep/didWake/reset markers.\n\n## Required driver\n- A Debug/test-only CLI or harness that can run at least 600 seconds and write the JSONL stream without importing the independent QA oracle.\n- Deterministic injection points for invalid CPU snapshot/counter rollback, VM fixtures, network disconnect/interface switch/counter reset/sleep gap, noBattery/unavailable, all Thermal enums, and the Battery truth table.\n- Actual sleep/wake markers must remain observable so QA can distinguish real recovery from a synthetic fixture.\n\n## Must not change\n- Do not change metric formulas, approved UI, Trash permissions, release entitlements, or use private APIs.\n- The independent QA oracle will consume raw snapshots and hard-code the acceptance thresholds; it must not call production calculators.\n",
+      "id" : "NTE-20260828-003",
+      "summary" : "QA 需要 Dev 提供独立差分所需的原始快照与生命周期测试出口",
+      "taskId" : "TASK-QA-001",
+      "timestamp" : "2026-08-27T15:41:51Z",
+      "type" : "general"
+    },
+    {
+      "authorRole" : "qa",
+      "detailsMd" : "# QA Verdict for TASK-QA-001\n\n## Delivery Surface\n- logic\n\n## Truth\n- What was proven: the current repository does not provide an independent, synchronized raw-data surface capable of satisfying the published differential-accuracy contract.\n- Evidence: SystemMetricSampler returns formatted CPU/network/memory/storage projections and hides source timestamps/raw counters; SystemMetricsProbe directly invokes production calculators and therefore cannot serve as the independent oracle required by acceptance. No sequence, in-flight, freshness, sleep/wake, or reset-reason trace is emitted.\n- Result: FAIL\n\n## Projection\n- What the UI or output should project: NOT_REQUIRED; this task is logic-only.\n- Evidence: none required.\n- Result: NOT_REQUIRED\n\n## Observe\n- What was actually observed: NOT_REQUIRED.\n- Evidence: logic-only contract excludes PO numerical judgment.\n- Result: NOT_REQUIRED\n- Which final verdict this Observe evidence supports: no human Observe is part of this verdict.\n\n## Final Verdict\n- FAIL\n- Blocking reason: required independent differential evidence cannot be produced without reusing production calculators or guessing synchronization; doing either would violate the task acceptance contract.\n- Next routing: rollback qa to in_progress. Dev should implement the test-only raw snapshot and lifecycle driver specified in NTE-20260828-003, without changing product formulas or UI.\n",
+      "id" : "NTE-20260828-004",
+      "summary" : "QA FAIL：缺少独立差分所需的同步原始快照与生命周期证据出口",
+      "taskId" : "TASK-QA-001",
+      "timestamp" : "2026-08-27T15:42:03Z",
+      "type" : "test_verdict"
+    },
+    {
+      "authorRole" : "dev",
+      "detailsMd" : "PO 于 2026-08-28 追加：Debug 构建提供小型状态驱动按钮与弹出面板，覆盖内存、磁盘、CPU 可用性/占用、电池存在性/充电/满电/外接电源、网络可用性/上下行、全部温度等级及 Trash 纯显示状态；调整后立即投影到现有卡片。Restore Live 切回持续运行的真实采样。实现严格位于 #if DEBUG；手动 Trash 投影禁止触发真实授权或删除；Release 不包含入口或能力。",
+      "id" : "NTE-20260828-005",
+      "summary" : "PO 新增 Debug 手动状态面板需求",
+      "taskId" : "TASK-QA-001",
+      "timestamp" : "2026-08-27T15:58:43Z",
+      "type" : "general"
     }
   ]
 }

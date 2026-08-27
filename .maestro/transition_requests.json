@@ -292,6 +292,41 @@
       "taskId" : "TASK-DEV-005",
       "timestamp" : "2026-08-27T15:32:57Z",
       "toState" : "closing"
+    },
+    {
+      "checks" : {
+        "gateRunId" : "",
+        "journalExists" : true,
+        "latestGatePassed" : false
+      },
+      "fromState" : "qa",
+      "id" : "TRN-20260828-002",
+      "rejectedReason" : "QA 无法在不复用生产 Calculator 的前提下完成独立差分：当前仅暴露格式化投影，缺少同步 CPU ticks、VM counters、存储原始容量、主接口 64 位 RX/TX 与时间戳、Battery IOKit 原始字段、Thermal 原始枚举，以及 sequence/in-flight/sleep-wake/reset markers。请按 NTE-20260828-003 增加 Debug/test-only JSONL 原始快照与 600 秒生命周期 driver；无需修改产品公式、UI、Trash 权限或 Release 能力。",
+      "requestedByRole" : "qa",
+      "resolvedAt" : "2026-08-27T15:42:10Z",
+      "resolvedByRole" : "qa",
+      "stage" : "qa",
+      "status" : "approved",
+      "taskId" : "TASK-QA-001",
+      "timestamp" : "2026-08-27T15:42:10Z",
+      "toState" : "in_progress"
+    },
+    {
+      "checks" : {
+        "gateRunId" : "RUN-20260828-003",
+        "journalExists" : true,
+        "latestGatePassed" : true
+      },
+      "fromState" : "in_progress",
+      "id" : "TRN-20260828-003",
+      "requestedByRole" : "dev",
+      "resolvedAt" : "2026-08-27T16:00:44Z",
+      "resolvedByRole" : "dev",
+      "stage" : "in_progress",
+      "status" : "approved",
+      "taskId" : "TASK-QA-001",
+      "timestamp" : "2026-08-27T16:00:44Z",
+      "toState" : "qa"
     }
   ]
 }
