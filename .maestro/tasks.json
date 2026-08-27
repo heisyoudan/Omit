@@ -208,6 +208,46 @@
       ],
       "taskType" : "visual_ui",
       "title" : "创作 Mac App Store 商品页内容与截图叙事"
+    },
+    {
+      "acceptanceCriteria" : [
+        "发行能力由明确的构建配置、scheme/target setting 或等价编译期产品配置决定，不使用 DEBUG 判断或运行时猜测；App Store 与 Direct 能力矩阵可自动测试。",
+        "App Store 构建中 Dashboard、Settings、本地化可见入口和默认模块均不包含 Trash、授权或清空动作；其他指标不受影响。",
+        "Direct capability 仍能表达 Trash，现有授权、扫描和隔离删除实现不得被 App Store 改造意外破坏。",
+        "新增类型化 ThermalState：nominal、fair、serious、critical、unavailable；由 macOS 系统热状态映射，不显示或推断摄氏温度。",
+        "Thermal 状态具有简体中文、英文、日文文案；文字本身可理解，颜色仅为辅助；提供全部状态 fixture。",
+        "无电池设备只在明确 noBattery 时隐藏 Battery；临时 unavailable 仍显示不可用状态，避免采样失败导致布局跳动。",
+        "CPU、Battery、Network、Thermal 遵循 4→2+2、3→1+2、2→2、1→1、0→none；三卡 Wide 优先为 Network、Battery、CPU、Thermal，Wide 行始终位于双列上方。",
+        "布局使用稳定 identity，不通过 fixedSize、Geometry/Preference 反馈或模块切换动画驱动 MenuBarExtra 窗口高度；自动探针覆盖全部 16 种模块组合和反复 Settings/Dashboard 切换。",
+        "实现 StoreHeroLight、StoreHeroDark、StoreAppearanceSettings 或等价稳定截图 fixture；App Store fixture 不含 Trash，Thermal 未纳入首发三图时仍可独立复现。",
+        "App Store Debug/Release 构建、能力矩阵、Thermal 映射、布局排列、刷新/取消回归探针通过；真实 MenuBarExtra 中切换模块无约束异常、彩虹球或卡死。"
+      ],
+      "boundaries" : [
+        "不读取、显示或虚构真实温度，不接入私有温度 API。",
+        "不执行真实 Trash 删除，不扩大 Direct 版权限，不引入 privileged helper。",
+        "不上传 App Store Connect，不制作或修改最终商店截图与 metadata 文案。",
+        "不修改 CPU、内存、磁盘、网络现有计算公式和接口策略。"
+      ],
+      "currentAction" : "先建立可测试的 App Store/Direct capability 模型并让 App Store Dashboard 与 Settings 不生成 Trash；再以类型化状态接入 ProcessInfo 系统 Thermal State，最后将 CPU、Battery、Network、Thermal 改为确定性 4/3/2/1/0 行布局并补齐商店截图 fixtures。",
+      "deliverySurface" : "ui",
+      "dependsOn" : [
+
+      ],
+      "execState" : "in_progress",
+      "gateProfile" : "default_dev_gate",
+      "id" : "TASK-DEV-005",
+      "issueRefs" : [
+
+      ],
+      "ownerRole" : "dev",
+      "planState" : "planned",
+      "priority" : "p0",
+      "summary" : "为 App Store 发行变体建立显式能力配置，彻底移除 Trash 产品入口，接入 macOS 系统 Thermal State，并实现不会触发布局反馈环的自适应状态卡排列。",
+      "tags" : [
+
+      ],
+      "taskType" : "integration",
+      "title" : "完成 App Store Dashboard 能力分线与 Thermal State"
     }
   ]
 }
