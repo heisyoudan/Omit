@@ -89,6 +89,15 @@
       "taskId" : "TASK-DEV-005",
       "timestamp" : "2026-08-27T08:26:52Z",
       "type" : "test_verdict"
+    },
+    {
+      "authorRole" : "dev",
+      "detailsMd" : "## PO 追加需求\n\nPO 要求：当 Omit 面板保持打开时，插入或拔出电源后 Battery 卡片应实时刷新，不需要关闭并重新打开面板；实现应采用系统事件通知，避免高频轮询和额外性能消耗。\n\n## 修改内容\n\n- 在 `SystemMonitor` 中通过 `IOPSNotificationCreateRunLoopSource` 注册 macOS 电源源变化事件，并挂载到主 RunLoop common modes。\n- 收到插电、拔电或充电状态变化事件后，仅异步重新采样 Battery，不触发 Storage、CPU、Memory、Network、Thermal 或 Trash 扫描。\n- Battery 状态在 MainActor 更新，SwiftUI 面板保持打开时会立即重新投影 Charging、Fully Charged、Power Adapter 或 On Battery。\n- 连续事件会取消尚未完成的前一次 Battery 刷新，避免重复堆积。\n- 面板未处于监控状态时不执行事件采样；既有 15 秒 slow cadence 保留为兜底。\n- `SystemMonitor` 销毁时取消刷新任务并从主 RunLoop 移除通知源。\n\n## 验证\n\n- App Store Debug 签名构建：PASS。\n- App Store Release 签名构建：PASS。\n- AppStoreDashboardProbe：PASS。\n- Debug/Release `codesign --verify --deep --strict`：PASS。\n- `git diff --check`：PASS。\n- 代码提交：`b08eca1`，已推送 `origin/codex/app-store`。\n\n按 PO 要求，本次只写备注，不执行任务流转。\n",
+      "id" : "NTE-20260827-005",
+      "summary" : "PO 要求面板打开时实时响应电源接入与拔出",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T08:40:21Z",
+      "type" : "general"
     }
   ]
 }
