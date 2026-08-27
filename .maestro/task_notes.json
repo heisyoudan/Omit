@@ -98,6 +98,24 @@
       "taskId" : "TASK-DEV-005",
       "timestamp" : "2026-08-27T08:40:21Z",
       "type" : "general"
+    },
+    {
+      "authorRole" : "qa",
+      "detailsMd" : "# QA Verdict for TASK-DEV-005\n\n## Delivery Surface\n- ui\n\n## Truth\n- What was proven: App Store/Direct capability matrix, Thermal mapping, Battery visibility and providing-source mapping, deterministic 16-combination layout contract, monitoring/cancellation behavior, and Battery-only refresh on macOS power-source events.\n- Evidence: commits b08eca1 and c228b84; AppStoreDashboardProbe PASS; MonitoringScheduleProbe PASS; real pmset/IOPS state on AC power mapped to 100%% Fully Charged; independent Debug build BUILD SUCCEEDED; codesign strict verification PASS; final entitlement contains only App Sandbox; git diff --check PASS.\n- Result: PASS\n\n## Projection\n- What the UI should project: an already-open Battery card updates from Fully Charged/Power Adapter/Charging to On Battery after unplug, and back to the appropriate external-power state after reconnect, without reopening the panel.\n- Evidence: typed BatteryProvidingSource mapping and IOPS power-change callback resample only Battery; automated projection contracts and layout probes PASS.\n- Result: PASS\n\n## Observe\n- What was actually observed: PO kept the same Omit panel open. Plugged at 100%% displayed 已充满; unplugging immediately refreshed the same card to 使用电池. PO reported no perceptible delay.\n- Evidence: PO chat report and two screenshots on 2026-08-28 showing 100%% 已充满 and 100%% 使用电池.\n- Result: PASS\n- Which final verdict this Observe evidence supports: real macOS power-source changes are projected immediately in the open MenuBarExtra without closing or reopening it.\n\n## Final Verdict\n- PASS\n- Blocking reason: none.\n- Next routing: qa -> closing for Sage final review.\n",
+      "id" : "NTE-20260828-001",
+      "summary" : "QA PASS：电源插拔在打开面板中即时刷新，自动化与签名验证通过",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T15:32:28Z",
+      "type" : "test_verdict"
+    },
+    {
+      "authorRole" : "qa",
+      "detailsMd" : "# QA Verdict for TASK-DEV-005\n\n## Delivery Surface\n- ui\n\n## Truth\n- What was proven: App Store/Direct capability matrix, Thermal mapping, Battery visibility and providing-source mapping, deterministic 16-combination layout contract, monitoring/cancellation behavior, and Battery-only refresh on macOS power-source events.\n- Evidence: commits b08eca1 and c228b84; AppStoreDashboardProbe PASS; MonitoringScheduleProbe PASS; real pmset/IOPS state on AC power mapped to 100% Fully Charged; independent Debug build BUILD SUCCEEDED; codesign strict verification PASS; final entitlement contains only App Sandbox; git diff --check PASS.\n- Result: PASS\n\n## Projection\n- What the UI should project: an already-open Battery card updates from Fully Charged/Power Adapter/Charging to On Battery after unplug, and back to the appropriate external-power state after reconnect, without reopening the panel.\n- Evidence: typed BatteryProvidingSource mapping and IOPS power-change callback resample only Battery; automated projection contracts and layout probes PASS.\n- Result: PASS\n\n## Observe\n- What was actually observed: PO kept the same Omit panel open. Plugged at 100% displayed 已充满; unplugging immediately refreshed the same card to 使用电池. PO reported no perceptible delay.\n- Evidence: PO chat report and two screenshots on 2026-08-28 showing 100% 已充满 and 100% 使用电池.\n- Result: PASS\n- Which final verdict this Observe evidence supports: real macOS power-source changes are projected immediately in the open MenuBarExtra without closing or reopening it.\n\n## Final Verdict\n- PASS\n- Blocking reason: none.\n- Next routing: qa -> closing for Sage final review.\n",
+      "id" : "NTE-20260828-002",
+      "summary" : "QA PASS：电源插拔在打开面板中即时刷新，自动化与签名验证通过",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T15:32:46Z",
+      "type" : "test_verdict"
     }
   ]
 }

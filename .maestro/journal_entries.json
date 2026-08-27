@@ -379,6 +379,36 @@
       "summary" : "DEV 已推进流转：in_progress -> qa",
       "taskId" : "TASK-DEV-005",
       "timestamp" : "2026-08-27T08:30:05Z"
+    },
+    {
+      "authorRole" : "qa",
+      "detailsMd" : "【自动推进】\n- 当前流程采用 Agent-first 默认执行契约。\n- 在权限允许、前置满足时，`transition request` 会直接完成状态推进，不再等待 Sage 中间审批。\n\n【结果】\n- 从：qa\n- 到：closing\n- 下一交接：sage",
+      "id" : "JRN-20260828-001",
+      "stage" : "closing",
+      "status" : "info",
+      "summary" : "QA 已完成验证并推进流转：qa -> closing",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T15:32:57Z"
+    },
+    {
+      "authorRole" : "sage",
+      "detailsMd" : "Sage 最终复核通过：QA Gate RUN-20260828-002 已正式 PASS；真实 MenuBarExtra 中电源接入、拔出与恢复均能在打开面板内即时正确投影；App Store/Direct 能力矩阵、Thermal 状态、16 种布局与 128 次切换、调度回归及 Debug 签名构建均通过。UI 规格维持本轮已确认结果，无遗留阻断。",
+      "id" : "JRN-20260828-002",
+      "stage" : "done",
+      "status" : "success",
+      "summary" : "Sage 已关闭任务",
+      "taskId" : "TASK-DEV-005",
+      "timestamp" : "2026-08-27T15:36:32Z"
+    },
+    {
+      "authorRole" : "sage",
+      "detailsMd" : "使用 `task publish` 一步完成发布并自动启动。",
+      "id" : "JRN-20260828-003",
+      "stage" : "qa",
+      "status" : "info",
+      "summary" : "Sage 已发布并启动任务",
+      "taskId" : "TASK-QA-001",
+      "timestamp" : "2026-08-27T15:37:19Z"
     }
   ]
 }
