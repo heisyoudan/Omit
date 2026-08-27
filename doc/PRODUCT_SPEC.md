@@ -1,6 +1,6 @@
 # Omit Product Specification
 
-Last updated: 2026-08-25
+Last updated: 2026-08-27
 Status: current
 
 ## 1. Product position
@@ -9,13 +9,16 @@ Omit is a lightweight macOS menu-bar status app. Its promise is: open the panel,
 
 The product competes through restraint rather than metric count. The main panel must remain a compact status surface, not evolve into a dashboard of charts, per-core tables, process lists, or configuration-heavy diagnostics.
 
-## 2. Release direction
+## 2. Release variants
 
-- Primary distribution target: Mac App Store.
-- App Sandbox is required for the App Store build.
-- CPU, memory, storage, battery, and network remain usable without Trash authorization.
-- Trash is an optional differentiating module. Lack of Trash authorization must never block the rest of the app.
-- Trash access will be validated in a later task through an explicit user-selected folder and a security-scoped bookmark. This specification does not assume that Full Disk Access is the final App Store solution.
+Omit has two distribution variants built from a shared product core:
+
+- **App Store**: sandboxed distribution with Memory, Storage, CPU, Battery, Network, and system Thermal State. It does not scan or clear the user's global Trash.
+- **GitHub Direct**: Developer ID / direct-download distribution for the owner and users who intentionally install it outside the App Store. It may add the global Trash utility and deeper thermal information after their permission and safety models are independently validated.
+
+The variants should share monitoring, localization, appearance, card components, and adaptive layout. Distribution-only capabilities must be selected by an explicit build configuration or product capability, not by Debug assertions or runtime guesswork.
+
+Git branches may track the two release lines, but ordinary shared fixes should land in the common source first. The App Store branch must not contain an enabled global-Trash capability, Trash entitlement promise, or UI entry point.
 
 ## 3. Core user journey
 
@@ -24,7 +27,7 @@ The product competes through restraint rather than metric count. The main panel 
 3. The user can open Settings from the header.
 4. The user can choose System, Light, or Dark appearance; the panel updates immediately and remembers the choice.
 5. Optional modules can be enabled or disabled.
-6. If Trash is not authorized, only the Trash card shows an authorization state.
+6. In GitHub Direct, optional Trash authorization affects only the Trash card. The App Store variant has no global-Trash card.
 
 ## 4. Information contract
 
@@ -65,11 +68,19 @@ The product competes through restraint rather than metric count. The main panel 
 
 ### Trash
 
+- Distribution: GitHub Direct only.
 - States: unauthorized, empty, size available, scanning, error, and clearing confirmation.
 - Authorization is local to the Trash card.
 - The entire card must not be a destructive tap target.
 - Clearing must use a dedicated destructive action and an explicit confirmation.
 - Real authorization, sandbox bookmark access, recursive size calculation, and deletion are deferred to later tasks.
+
+### Thermal State
+
+- App Store shows the system thermal state only; it must not fabricate a temperature.
+- Required states are nominal, fair, serious, critical, and unavailable, localized into user-facing copy.
+- State remains understandable without color; color is supplementary.
+- A numeric temperature is a separate GitHub Direct capability and is not part of the App Store contract.
 
 ## 5. Appearance contract
 
@@ -91,7 +102,12 @@ Requirements:
 - Target panel width: 312 pt unless implementation evidence shows a smaller width is required by `MenuBarExtra`.
 - Header keeps the `Omit.` wordmark and one Settings entry point.
 - Memory and Storage are primary full-width cards.
-- CPU, Battery, Network, and Trash use a two-column secondary grid when enabled.
+- Memory and Storage remain independent full-width Large cards when enabled.
+- CPU, Battery, Network, and Thermal use the shared Adaptive Compact layout: `4 -> 2+2`, `3 -> 1+2`, `2 -> 2`, `1 -> 1`, `0 -> none`.
+- For three Compact cards, the full-width card appears above the pair. Wide priority is Network, Battery, CPU, then Thermal.
+- GitHub Direct places Trash in a dedicated full-width Wide Utility card between Large cards and Adaptive Compact cards. Trash does not participate in Compact parity.
+- A Mac with no battery automatically omits Battery from the dashboard. A temporary unavailable reading remains visible as unavailable and must not cause layout churn.
+- Header, Settings entry, empty-dashboard state, and footer remain stable across module combinations.
 - Minimum text size is 10 pt.
 - Settings control keeps a minimum 28 × 28 pt hit area.
 - Decorative colored status dots are not used unless they communicate a real state.
@@ -109,9 +125,15 @@ Requirements:
 
 - Correct memory semantics, network receive/transmit sampling, no-battery handling, refresh cadence, and error states.
 
-### Phase 3 — Trash sandbox prototype
+### Phase 3 — Distribution split
 
-- Validate folder selection, security-scoped bookmark persistence, relaunch recovery, recursive enumeration, and deletion in a signed sandbox build.
+- Establish explicit App Store and GitHub Direct build capabilities from the shared source.
+- Remove global Trash from the App Store product surface and retain it only for the GitHub Direct line.
+- Add system Thermal State and the deterministic Adaptive Compact layout to both variants.
+
+### Phase 3D — GitHub Direct Trash
+
+- Validate the direct-distribution permission model, recursive enumeration, relaunch behavior, clear confirmation, and fixture-only deletion tests.
 
 ### Phase 4 — App Store readiness
 
@@ -122,4 +144,5 @@ Requirements:
 - Charts, history graphs, per-core CPU, temperatures, fan speed, GPU details, top-process lists, and advanced interface selection.
 - Reproducing Activity Monitor exactly.
 - Requiring Trash permission on first launch.
-- Solving App Store sandbox access during the UI-shell task.
+- Scanning or clearing the global user Trash in the App Store variant.
+- Displaying a fabricated temperature in either variant.

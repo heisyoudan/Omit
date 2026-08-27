@@ -121,13 +121,13 @@
       "dependsOn" : [
 
       ],
-      "execState" : "qa",
-      "gateProfile" : "default_qa_gate",
+      "execState" : "done",
+      "gateProfile" : "default_dev_gate",
       "id" : "TASK-DEV-003",
       "issueRefs" : [
 
       ],
-      "ownerRole" : "qa",
+      "ownerRole" : "sage",
       "planState" : "planned",
       "priority" : "p1",
       "summary" : "将当前所有指标每秒同步运行的单一 Timer 拆为分层刷新与后台采样，避免文件系统和 IOKit 操作阻塞菜单栏 UI。",
@@ -139,54 +139,19 @@
     },
     {
       "acceptanceCriteria" : [
-        "Debug/Release Sandbox 均开启并通过签名构建；工程具有最小必要的 user-selected read/write 与 app-scoped bookmark entitlements。",
-        "用户未授权或取消时，CPU/Memory/Storage/Battery/Network 仍可使用，仅 Trash 卡显示未授权状态。",
-        "用户选择废纸篓后可保存 bookmark，应用重启后恢复访问；bookmark 失效时能重新授权而不崩溃。",
-        "Trash 大小递归统计普通文件并防止符号链接循环，扫描不阻塞主线程且不按每秒执行。",
-        "清空只由独立按钮触发，必须确认，逐项错误可反馈；测试不得在未明确隔离的真实用户废纸篓执行破坏性删除。",
-        "在签名 Sandbox 构建中提交读取、重启恢复和受控测试目录删除的证据；若 ~/.Trash 选择受系统限制，记录可复现证据并停止正式接线。"
+        "App Store 构建中不展示 Trash 卡片、授权入口或清空动作，也不声明全局 Trash 能力。",
+        "App Store 与 GitHub Direct 使用明确构建配置或产品能力区分，不依赖 Debug 条件或运行时猜测。",
+        "PrivacyInfo.xcprivacy、Bundle ID、版本号、版权、最低系统版本、Sandbox 和最小 entitlements 与实际 App Store 功能一致。",
+        "Debug 与 Release/App Store Archive 或等价预归档检查通过，产物中不含启用的全局 Trash 产品入口。",
+        "README 与审核说明明确区分 App Store 和 GitHub Direct，不把 Direct 权限方案描述成 App Store 能力。"
       ],
       "boundaries" : [
-        "不请求或假定 Full Disk Access 是最终方案，除非 Sandbox 原型证据证明标准授权不可行并由 Sage重新裁定。",
-        "不修改 CPU、内存、磁盘、电池或网络采样算法。",
-        "不执行 App Store 上传或提交审核。",
-        "所有删除测试必须使用隔离 fixture；不得清空用户真实废纸篓。"
+        "不上传 App Store Connect，不提交审核。",
+        "不删除 GitHub Direct 分支中的 Trash 实现或隔离安全探针。",
+        "不修改系统指标计算、刷新调度或视觉样式。",
+        "不在本任务实现 Thermal 或新的自适应卡片布局。"
       ],
-      "currentAction" : "先建立签名 Sandbox 原型：使用 NSOpenPanel 让用户明确选择 ~/.Trash，创建并恢复 security-scoped bookmark；四项验证通过后再接入 TrashPresentation 与授权/清空事件出口。",
-      "deliverySurface" : "ui",
-      "dependsOn" : [
-
-      ],
-      "execState" : "qa",
-      "gateProfile" : "default_qa_gate",
-      "id" : "TASK-DEV-004",
-      "issueRefs" : [
-
-      ],
-      "ownerRole" : "qa",
-      "planState" : "planned",
-      "priority" : "p0",
-      "summary" : "在 Mac App Store Sandbox 约束下验证用户废纸篓的显式授权、security-scoped bookmark 持久化、递归统计和安全清空路径。",
-      "tags" : [
-
-      ],
-      "taskType" : "integration",
-      "title" : "实现 App Sandbox 废纸篓授权原型"
-    },
-    {
-      "acceptanceCriteria" : [
-        "PrivacyInfo.xcprivacy 声明实际使用的 Required Reason API 类别和合法原因，不声明未使用的数据收集或跟踪。",
-        "Release 配置具有明确版本号、构建号、版权、最低系统版本和稳定 Bundle ID；README 中未签名安装说明与 App Store 路线被区分。",
-        "生成 Release Archive 或等价预归档证据，验证产物结构、签名配置入口、Sandbox/entitlements 接入点和禁止自更新要求。",
-        "形成上架检查清单：隐私、导出合规、本地化、图标/截图、登录启动、审核备注、废纸篓权限说明与回退方案。",
-        "任务只建立合规与归档基线，不声称在 TASK-DEV-004 完成前已具备最终 App Store 提交条件。"
-      ],
-      "boundaries" : [
-        "不上传 App Store Connect、不提交审核、不创建付费或法律承诺。",
-        "不替代 TASK-DEV-004 的 Sandbox 废纸篓可行性验证。",
-        "不修改监控算法或 UI 视觉设计。"
-      ],
-      "currentAction" : "审计磁盘容量等 Required Reason API、Info.plist/版权/Bundle ID/版本号和 Release 配置，新增准确的 PrivacyInfo.xcprivacy，建立不上传商店的 Archive/preflight 检查清单与自动证据。",
+      "currentAction" : "以 App Store 变体为目标审计工程配置，建立显式发行能力开关或目标配置，移除该变体的 Trash UI、授权入口和相关权限承诺，完成 PrivacyInfo、Release Archive 与自动 preflight 证据。",
       "deliverySurface" : "ui",
       "dependsOn" : [
 
@@ -199,13 +164,13 @@
       ],
       "ownerRole" : "dev",
       "planState" : "planned",
-      "priority" : "p1",
-      "summary" : "补齐 Omit 上架前可独立完成的隐私清单、应用元数据、Release 构建与审核检查基线，为后续 Sandbox 原型结果留出明确接入点。",
+      "priority" : "p0",
+      "summary" : "为 App Store 发行变体建立明确的 Sandbox、隐私清单、元数据与 Archive 基线，并确认产品不包含全局用户 Trash 扫描、授权或清空能力。",
       "tags" : [
 
       ],
       "taskType" : "integration",
-      "title" : "建立 Mac App Store 合规与归档基线"
+      "title" : "建立无全局 Trash 的 Mac App Store 合规与归档基线"
     }
   ]
 }

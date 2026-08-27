@@ -1,6 +1,6 @@
 # Omit Design Contract
 
-Last updated: 2026-08-25
+Last updated: 2026-08-27
 
 This file is the Design role's product-specific UI constraint layer.
 
@@ -19,8 +19,9 @@ Omit should feel quiet, precise, native, and immediately readable. It is a compa
 
 1. Brand and Settings entry.
 2. Memory and Storage as primary cards.
-3. CPU, Battery, Network, and Trash as secondary cards.
-4. Last-update information as quiet footer context.
+3. CPU, Battery, Network, and Thermal as adaptive status cards.
+4. GitHub Direct only: Trash as a full-width utility card between primary resources and adaptive status cards.
+5. Last-update information as quiet footer context.
 
 The panel must be understandable without tooltips. A user should not need to infer whether a percentage means used or available.
 
@@ -31,7 +32,10 @@ The panel must be understandable without tooltips. A user should not need to inf
 - Primary-card spacing: approximately 12 pt.
 - Card corner radius: approximately 16–18 pt with continuous corners.
 - Primary cards use a ring plus a clear value hierarchy.
-- Secondary cards form a balanced two-column grid.
+- Adaptive status cards follow one deterministic rule: `4 -> 2+2`, `3 -> 1+2`, `2 -> 2`, `1 -> 1`, `0 -> none`.
+- With three status cards, the wide row is above the pair. Wide priority is Network, Battery, CPU, then Thermal.
+- The GitHub Direct Trash card is always a full-width Wide Utility card and never participates in status-card parity.
+- Module changes must use stable row identities and must not animate MenuBarExtra window-height negotiation.
 - The header Settings icon remains visually compact but has at least a 28 × 28 pt hit target.
 - Text must not be smaller than 10 pt.
 
@@ -69,6 +73,9 @@ The UI shell and previews must cover:
 - Trash empty.
 - Trash containing data with a dedicated Clear action.
 - Unavailable CPU or Battery data.
+- No-battery hardware with Battery omitted from the dashboard.
+- Thermal nominal, fair, serious, critical, and unavailable states.
+- All Compact-card counts and Wide-priority combinations.
 - Long localized strings without truncating critical values.
 
 Fixtures may supply static values. Design must not invent real monitoring or permission behavior.
@@ -77,7 +84,7 @@ Fixtures may supply static values. Design must not invent real monitoring or per
 
 - Appearance selection applies immediately and clearly indicates the active choice.
 - The Settings entry is the only header action.
-- Trash authorization is a local secondary action.
+- Trash authorization is a GitHub Direct-only local secondary action.
 - Clear Trash is a dedicated destructive action, never a card-wide gesture.
 - A destructive confirmation surface must be represented, but real deletion wiring belongs to Dev.
 - Motion should be short and functional; theme and Settings transitions must not distract from status reading.
@@ -91,6 +98,7 @@ The shell should expose presentation inputs for:
 - CPU value and availability
 - battery value, charge state, and device availability
 - network receive and transmit values
+- system thermal state and availability
 - Trash authorization/status/value and user intents
 - selected appearance preference
 - last-updated label

@@ -157,55 +157,20 @@
     },
     {
       "checks" : {
-        "gateRunId" : "RUN-20260826-004",
+        "gateRunId" : "RUN-20260827-001",
         "journalExists" : true,
         "latestGatePassed" : true
       },
-      "fromState" : "in_progress",
-      "id" : "TRN-20260826-004",
-      "requestedByRole" : "dev",
-      "resolvedAt" : "2026-08-26T01:57:27Z",
-      "resolvedByRole" : "dev",
-      "stage" : "in_progress",
-      "status" : "approved",
-      "taskId" : "TASK-DEV-004",
-      "timestamp" : "2026-08-26T01:57:27Z",
-      "toState" : "qa"
-    },
-    {
-      "checks" : {
-        "gateRunId" : "RUN-20260826-005",
-        "journalExists" : true,
-        "latestGatePassed" : false
-      },
       "fromState" : "qa",
-      "id" : "TRN-20260826-005",
-      "rejectedReason" : "恢复 security-scoped bookmark 后，scan/clear 未重新执行 userTrash 目标校验。QA 隔离 fixture 证明：production .userTrash 策略下，持久化的非 Trash bookmark 可被 clear，哨兵文件被删除。请在所有恢复路径规范化并重验 resolved URL，clear 必须 fail closed，并增加非预期 bookmark 的 scan/clear 拒绝回归。真实授权、重启恢复与 MenuBarExtra Observe 继续延期，未记为 PASS。",
+      "id" : "TRN-20260827-001",
       "requestedByRole" : "qa",
-      "resolvedAt" : "2026-08-26T02:05:52Z",
+      "resolvedAt" : "2026-08-27T05:31:29Z",
       "resolvedByRole" : "qa",
       "stage" : "qa",
       "status" : "approved",
-      "taskId" : "TASK-DEV-004",
-      "timestamp" : "2026-08-26T02:05:52Z",
-      "toState" : "in_progress"
-    },
-    {
-      "checks" : {
-        "gateRunId" : "RUN-20260826-006",
-        "journalExists" : true,
-        "latestGatePassed" : true
-      },
-      "fromState" : "in_progress",
-      "id" : "TRN-20260826-006",
-      "requestedByRole" : "dev",
-      "resolvedAt" : "2026-08-26T04:21:53Z",
-      "resolvedByRole" : "dev",
-      "stage" : "in_progress",
-      "status" : "approved",
-      "taskId" : "TASK-DEV-004",
-      "timestamp" : "2026-08-26T04:21:53Z",
-      "toState" : "qa"
+      "taskId" : "TASK-DEV-003",
+      "timestamp" : "2026-08-27T05:31:29Z",
+      "toState" : "closing"
     }
   ]
 }
