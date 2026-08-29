@@ -312,13 +312,13 @@
       "dependsOn" : [
 
       ],
-      "execState" : "in_progress",
-      "gateProfile" : "default_dev_gate",
+      "execState" : "qa",
+      "gateProfile" : "default_qa_gate",
       "id" : "TASK-DEV-006",
       "issueRefs" : [
 
       ],
-      "ownerRole" : "dev",
+      "ownerRole" : "qa",
       "planState" : "planned",
       "priority" : "p1",
       "summary" : "在不改变已确认半透明卡片体系、面板宽度和系统指标公式的前提下，为 CPU 与 Network 增加仅存在于当前面板会话的原生 SwiftUI Sparkline；以 b0003f0 / codex/ui-before-sparklines 作为可回退 UI 基线。",
