@@ -87,20 +87,8 @@ struct OmitDashboardState {
     var uploadValue: String
     var thermalState: ThermalState
     var trash: TrashPresentation
-    var cpuTrend: [Double] = []
-    var networkDownloadTrend: [Double] = []
-    var networkUploadTrend: [Double] = []
 
-    static let standard = OmitDashboardState(
-        memoryUsed: "13.8 GB", memoryTotal: "17.2 GB", memoryPercent: 0.80,
-        storageAvailable: "219.8 GB", storageUsedPercent: 0.56,
-        cpuValue: "24%", batteryValue: "100%", batteryPowerState: .fullyCharged,
-        downloadValue: "3 KB/s", uploadValue: "1 KB/s", thermalState: .nominal,
-        trash: .content("1.4 GB"),
-        cpuTrend: [0.18, 0.24, 0.21, 0.37, 0.31, 0.46, 0.39, 0.52, 0.34, 0.42],
-        networkDownloadTrend: [4_000, 18_000, 9_000, 31_000, 17_000, 46_000, 22_000, 37_000, 14_000, 29_000],
-        networkUploadTrend: [2_000, 4_000, 3_000, 8_000, 6_000, 11_000, 7_000, 13_000, 5_000, 9_000]
-    )
+    static let standard = OmitDashboardState(memoryUsed: "13.8 GB", memoryTotal: "17.2 GB", memoryPercent: 0.80, storageAvailable: "219.8 GB", storageUsedPercent: 0.56, cpuValue: "24%", batteryValue: "100%", batteryPowerState: .fullyCharged, downloadValue: "3 KB/s", uploadValue: "1 KB/s", thermalState: .nominal, trash: .content("1.4 GB"))
     static let unavailable = OmitDashboardState(memoryUsed: "13.8 GB", memoryTotal: "17.2 GB", memoryPercent: 0.80, storageAvailable: "219.8 GB", storageUsedPercent: 0.56, cpuValue: nil, batteryValue: nil, batteryPowerState: .onBattery, downloadValue: "—", uploadValue: "—", thermalState: .unavailable, trash: .error("Unable to scan"))
 }
 
@@ -128,7 +116,7 @@ struct ContentView: View {
         let cpuValue: String?
         switch monitor.cpuState {
         case .unavailable: cpuValue = nil
-        case .available(let value, _): cpuValue = value
+        case .available(let value): cpuValue = value
         }
 
         let batteryValue: String?
@@ -148,7 +136,7 @@ struct ContentView: View {
         case .unavailable:
             downloadValue = "—"
             uploadValue = "—"
-        case .available(let download, let upload, _, _):
+        case .available(let download, let upload):
             downloadValue = download
             uploadValue = upload
         }
@@ -167,10 +155,7 @@ struct ContentView: View {
             storageAvailable: monitor.storageFreeString, storageUsedPercent: monitor.storageUsedPercent,
             cpuValue: cpuValue,
             batteryValue: batteryValue, batteryPowerState: batteryPowerState,
-            downloadValue: downloadValue, uploadValue: uploadValue, thermalState: monitor.thermalState, trash: trash,
-            cpuTrend: monitor.cpuTrend,
-            networkDownloadTrend: monitor.networkDownloadTrend,
-            networkUploadTrend: monitor.networkUploadTrend
+            downloadValue: downloadValue, uploadValue: uploadValue, thermalState: monitor.thermalState, trash: trash
         )
     }
     private var dashboardState: OmitDashboardState {
@@ -423,7 +408,13 @@ struct OmitDashboardView: View {
     @ViewBuilder private func wideCard(for module: OmitModule) -> some View {
         switch module {
         case .cpu:
-            WideCPUCard(state: state, language: language)
+            WideCompactMetricCard(
+                title: OmitLang.get("CPU", lang: language),
+                value: state.cpuValue ?? "—",
+                supportingValue: state.cpuValue == nil ? OmitLang.get("UNAVAILABLE", lang: language) : OmitLang.get("USAGE", lang: language),
+                icon: "cpu",
+                iconAccent: .blue
+            )
         case .battery:
             WideCompactMetricCard(
                 title: OmitLang.get("BATTERY", lang: language),
@@ -444,7 +435,7 @@ struct OmitDashboardView: View {
     @ViewBuilder private func secondaryCard(for module: OmitModule) -> some View {
         switch module {
         case .cpu:
-            CPUCard(state: state, language: language)
+            CompactMetricCard(title: OmitLang.get("CPU", lang: language), value: state.cpuValue ?? "—", supportingValue: state.cpuValue == nil ? OmitLang.get("UNAVAILABLE", lang: language) : OmitLang.get("USAGE", lang: language), icon: "cpu", iconAccent: .blue)
         case .battery:
             CompactMetricCard(title: OmitLang.get("BATTERY", lang: language), value: state.batteryValue ?? "—", supportingValue: batteryStatusLabel, icon: state.batteryPowerState.usesExternalPower ? "battery.100.bolt" : "battery.100", iconAccent: .green)
         case .network: NetworkCard(state: state, language: language)
@@ -561,7 +552,7 @@ struct CompactMetricCard: View {
                 Text(value).font(.system(size: 19, weight: .bold, design: .rounded)).foregroundStyle(valueColor).lineLimit(1).minimumScaleFactor(0.75)
                 if let supportingValue { Text(supportingValue).font(.system(size: 10, weight: .medium)).foregroundStyle(.tertiary).lineLimit(2) }
             }
-        }.padding(13).frame(maxWidth: .infinity, minHeight: 136, alignment: .topLeading).modifier(CardSurface())
+        }.padding(13).frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading).modifier(CardSurface())
     }
 }
 
@@ -593,110 +584,7 @@ struct WideCompactMetricCard: View {
                 .minimumScaleFactor(0.75)
         }
         .padding(.horizontal, 13)
-        .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
-        .modifier(CardSurface())
-    }
-}
-
-private struct MetricSparklineShape: Shape {
-    let samples: [Double]
-    let maximum: Double
-
-    func path(in rect: CGRect) -> Path {
-        guard samples.count >= 2, maximum.isFinite, maximum > 0 else { return Path() }
-        var path = Path()
-        for (index, sample) in samples.enumerated() {
-            let progress = Double(index) / Double(samples.count - 1)
-            let normalized = min(max(sample / maximum, 0), 1)
-            let point = CGPoint(
-                x: rect.minX + rect.width * progress,
-                y: rect.maxY - rect.height * normalized
-            )
-            if index == 0 { path.move(to: point) } else { path.addLine(to: point) }
-        }
-        return path
-    }
-}
-
-private struct MetricSparkline: View {
-    let samples: [Double]
-    let maximum: Double
-    let color: Color
-
-    var body: some View {
-        ZStack {
-            Color.clear
-            if samples.count >= 2 {
-                MetricSparklineShape(samples: samples, maximum: maximum)
-                    .stroke(color, style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
-            }
-        }
-        .accessibilityHidden(true)
-    }
-}
-
-private struct NetworkSparklines: View {
-    let download: [Double]
-    let upload: [Double]
-
-    var body: some View {
-        let maximum = NetworkTrendScale.sharedMaximum(download: download, upload: upload)
-        ZStack {
-            MetricSparkline(samples: upload, maximum: maximum, color: .orange.opacity(0.38))
-            MetricSparkline(samples: download, maximum: maximum, color: .orange)
-        }
-        .accessibilityHidden(true)
-    }
-}
-
-struct CPUCard: View {
-    let state: OmitDashboardState
-    let language: Language
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                ModuleIcon(icon: "cpu", accent: .blue)
-                Text(OmitLang.get("CPU", lang: language))
-                    .font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(state.cpuValue ?? "—")
-                    .font(.system(size: 19, weight: .bold, design: .rounded))
-                Text(state.cpuValue == nil ? OmitLang.get("UNAVAILABLE", lang: language) : OmitLang.get("USAGE", lang: language))
-                    .font(.system(size: 10, weight: .medium)).foregroundStyle(.tertiary)
-            }
-            MetricSparkline(samples: state.cpuTrend, maximum: 1, color: .blue)
-                .frame(height: 22)
-        }
-        .padding(13)
-        .frame(maxWidth: .infinity, minHeight: 136, alignment: .topLeading)
-        .modifier(CardSurface())
-    }
-}
-
-struct WideCPUCard: View {
-    let state: OmitDashboardState
-    let language: Language
-
-    var body: some View {
-        HStack(spacing: 10) {
-            ModuleIcon(icon: "cpu", accent: .blue)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(OmitLang.get("CPU", lang: language))
-                    .font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
-                Text(state.cpuValue == nil ? OmitLang.get("UNAVAILABLE", lang: language) : OmitLang.get("USAGE", lang: language))
-                    .font(.system(size: 10, weight: .medium)).foregroundStyle(.tertiary)
-            }
-            Spacer(minLength: 8)
-            MetricSparkline(samples: state.cpuTrend, maximum: 1, color: .blue)
-                .frame(width: 76, height: 28)
-            Text(state.cpuValue ?? "—")
-                .font(.system(size: 22, weight: .bold, design: .rounded))
-                .frame(width: 52, alignment: .trailing)
-        }
-        .padding(.horizontal, 13)
-        .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
         .modifier(CardSurface())
     }
 }
@@ -725,7 +613,7 @@ struct ThermalStatusCard: View {
             ThermalStatusIndicator(state: state, language: language)
         }
         .padding(13)
-        .frame(maxWidth: .infinity, minHeight: 136, alignment: .topLeading)
+        .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
         .modifier(CardSurface())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(OmitLang.get("THERMAL", lang: language)), \(ThermalStatusPresentation.label(for: state, language: language))")
@@ -810,7 +698,7 @@ struct WideThermalStatusCard: View {
                 .frame(width: 76, alignment: .leading)
         }
         .padding(.horizontal, 13)
-        .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
         .modifier(CardSurface())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(OmitLang.get("THERMAL", lang: language)), \(ThermalStatusPresentation.label(for: state, language: language))")
@@ -820,13 +708,11 @@ struct WideThermalStatusCard: View {
 struct NetworkCard: View {
     let state: OmitDashboardState; let language: Language
     var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
+        VStack(alignment: .leading, spacing: 9) {
             HStack(spacing: 8) { ModuleIcon(icon: "wifi", accent: .orange); Text(OmitLang.get("NETWORK", lang: language)).font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary).lineLimit(2) }
             NetworkRow(symbol: "arrow.down", value: state.downloadValue)
             NetworkRow(symbol: "arrow.up", value: state.uploadValue)
-            NetworkSparklines(download: state.networkDownloadTrend, upload: state.networkUploadTrend)
-                .frame(height: 22)
-        }.padding(13).frame(maxWidth: .infinity, minHeight: 136, alignment: .topLeading).modifier(CardSurface())
+        }.padding(13).frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading).modifier(CardSurface())
     }
 }
 
@@ -841,17 +727,15 @@ struct WideNetworkCard: View {
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
-            Spacer(minLength: 8)
-            NetworkSparklines(download: state.networkDownloadTrend, upload: state.networkUploadTrend)
-                .frame(width: 62, height: 28)
+            Spacer(minLength: 12)
             VStack(alignment: .leading, spacing: 4) {
                 NetworkRow(symbol: "arrow.down", value: state.downloadValue)
                 NetworkRow(symbol: "arrow.up", value: state.uploadValue)
             }
-            .frame(width: 82, alignment: .leading)
+            .frame(width: 92, alignment: .leading)
         }
         .padding(.horizontal, 13)
-        .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
         .modifier(CardSurface())
     }
 }
@@ -1071,66 +955,6 @@ private struct WideStatusFixturePreview: View {
     }
 }
 
-private enum TrendFixtureKind: String {
-    case justStarted, stable, fluctuating, burst, directional, unavailable, reset
-
-    var state: OmitDashboardState {
-        var state = OmitDashboardState.standard
-        switch self {
-        case .justStarted:
-            state.cpuTrend = [0.24]
-            state.networkDownloadTrend = [3_000]
-            state.networkUploadTrend = [1_000]
-        case .stable:
-            state.cpuTrend = Array(repeating: 0.28, count: 30)
-            state.networkDownloadTrend = Array(repeating: 18_000, count: 30)
-            state.networkUploadTrend = Array(repeating: 5_000, count: 30)
-        case .fluctuating:
-            break
-        case .burst:
-            state.cpuTrend = [0.12, 0.14, 0.16, 0.18, 0.92, 0.44, 0.21, 0.17]
-            state.networkDownloadTrend = [2_000, 3_000, 2_000, 4_000, 240_000, 42_000, 8_000, 3_000]
-            state.networkUploadTrend = [1_000, 1_500, 1_000, 2_000, 28_000, 9_000, 3_000, 1_000]
-        case .directional:
-            state.networkDownloadTrend = [12_000, 42_000, 88_000, 140_000, 96_000, 72_000]
-            state.networkUploadTrend = [1_000, 2_000, 3_000, 4_000, 3_000, 2_000]
-        case .unavailable:
-            state.cpuValue = nil
-            state.downloadValue = "—"
-            state.uploadValue = "—"
-            state.cpuTrend = []
-            state.networkDownloadTrend = []
-            state.networkUploadTrend = []
-        case .reset:
-            state.cpuTrend = []
-            state.networkDownloadTrend = []
-            state.networkUploadTrend = []
-        }
-        return state
-    }
-}
-
-private struct TrendFixturePreview: View {
-    let kind: TrendFixtureKind
-    let modules: Set<OmitModule>
-    let colorScheme: ColorScheme
-
-    var body: some View {
-        OmitPanelSurface {
-            OmitDashboardView(
-                state: kind.state,
-                language: .english,
-                visibleModules: modules,
-                showMemory: false,
-                showStorage: false,
-                onAuthorizeTrash: {},
-                onClearTrash: {}
-            )
-        }
-        .preferredColorScheme(colorScheme)
-    }
-}
-
 struct Omit_Previews: PreviewProvider {
     static var unauthorizedState: OmitDashboardState {
         var state = OmitDashboardState.standard
@@ -1156,13 +980,6 @@ struct Omit_Previews: PreviewProvider {
             WideStatusFixturePreview(module: .cpu, language: .english, colorScheme: .light).previewDisplayName("Wide — CPU")
             WideStatusFixturePreview(module: .battery, language: .chinese, colorScheme: .light).previewDisplayName("Wide — Battery")
             WideStatusFixturePreview(module: .network, language: .english, colorScheme: .dark).previewDisplayName("Wide — Network")
-            TrendFixturePreview(kind: .justStarted, modules: [.cpu, .battery], colorScheme: .light).previewDisplayName("Trend — Just Started / Compact")
-            TrendFixturePreview(kind: .stable, modules: [.cpu], colorScheme: .dark).previewDisplayName("Trend — Stable / CPU Wide")
-            TrendFixturePreview(kind: .fluctuating, modules: [.cpu, .network], colorScheme: .light).previewDisplayName("Trend — Fluctuating / Compact")
-            TrendFixturePreview(kind: .burst, modules: [.network], colorScheme: .light).previewDisplayName("Trend — Burst / Network Wide")
-            TrendFixturePreview(kind: .directional, modules: [.network, .battery], colorScheme: .dark).previewDisplayName("Trend — Download vs Upload")
-            TrendFixturePreview(kind: .unavailable, modules: [.cpu, .network], colorScheme: .dark).previewDisplayName("Trend — Unavailable")
-            TrendFixturePreview(kind: .reset, modules: [.network], colorScheme: .light).previewDisplayName("Trend — Reset / No Line")
             ThermalFixturePreview(thermalState: .nominal, language: .english, colorScheme: .light).previewDisplayName("Thermal — Nominal / English")
             ThermalFixturePreview(thermalState: .fair, language: .chinese, colorScheme: .light).previewDisplayName("Thermal — Fair / Chinese")
             ThermalFixturePreview(thermalState: .serious, language: .japanese, colorScheme: .dark).previewDisplayName("Thermal — Serious / Japanese")
