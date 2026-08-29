@@ -2,9 +2,20 @@ import Darwin
 import Foundation
 import IOKit.ps
 
-nonisolated enum CPUState: Equatable, Sendable { case unavailable, available(String) }
+nonisolated enum CPUState: Equatable, Sendable {
+    case unavailable
+    case available(value: String, fraction: Double)
+}
 nonisolated enum BatteryState: Equatable, Sendable { case noBattery, unavailable, available(value: String, powerState: BatteryPowerState) }
-nonisolated enum NetworkState: Equatable, Sendable { case unavailable, available(download: String, upload: String) }
+nonisolated enum NetworkState: Equatable, Sendable {
+    case unavailable
+    case available(
+        download: String,
+        upload: String,
+        downloadBytesPerSecond: Double,
+        uploadBytesPerSecond: Double
+    )
+}
 nonisolated enum MetricKind: Hashable, Sendable { case cpu, memory, network, thermal, battery, storage, trash }
 nonisolated enum MetricSamplingError: Error, Equatable, Sendable {
     case kernel(metric: MetricKind, code: Int32)
@@ -161,7 +172,12 @@ actor SystemMetricSampler {
         #endif
         let networkRates = networkCalculator.sample(networkCounter)
         if let rates = networkRates {
-            network = .available(download: formatRate(rates.downloadBytesPerSecond), upload: formatRate(rates.uploadBytesPerSecond))
+            network = .available(
+                download: formatRate(rates.downloadBytesPerSecond),
+                upload: formatRate(rates.uploadBytesPerSecond),
+                downloadBytesPerSecond: rates.downloadBytesPerSecond,
+                uploadBytesPerSecond: rates.uploadBytesPerSecond
+            )
         } else {
             network = .unavailable
         }
@@ -277,7 +293,7 @@ actor SystemMetricSampler {
             availability: "available", error: nil
         )
         #endif
-        return .success(.available(String(format: "%.0f%%", usage * 100)))
+        return .success(.available(value: String(format: "%.0f%%", usage * 100), fraction: usage))
     }
 
     private func sampleSlow() -> SlowProjection {

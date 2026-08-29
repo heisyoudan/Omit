@@ -14,6 +14,11 @@ final class DebugDashboardDriver: ObservableObject {
         var id: String { rawValue }
     }
 
+    enum TrendScenario: String, CaseIterable, Identifiable {
+        case justStarted, stable, fluctuating, burst, directional, reset
+        var id: String { rawValue }
+    }
+
     @Published var isEnabled = false
     @Published var memoryUsedGB = 13.8
     @Published var memoryTotalGB = 17.2
@@ -30,6 +35,7 @@ final class DebugDashboardDriver: ObservableObject {
     @Published var thermalState = ThermalState.nominal
     @Published var trashScenario = TrashScenario.content
     @Published var trashValue = "1.4 GB"
+    @Published var trendScenario = TrendScenario.fluctuating
 
     var hasBattery: Bool { batteryScenario != .noBattery }
 
@@ -48,6 +54,7 @@ final class DebugDashboardDriver: ObservableObject {
         case .scanning: .scanning
         case .error: .error("Debug scan error")
         }
+        let trends = trendFixture
         return OmitDashboardState(
             memoryUsed: decimalGB(memoryUsedGB),
             memoryTotal: decimalGB(memoryTotalGB),
@@ -60,7 +67,10 @@ final class DebugDashboardDriver: ObservableObject {
             downloadValue: networkAvailable ? rate(downloadKB) : "—",
             uploadValue: networkAvailable ? rate(uploadKB) : "—",
             thermalState: thermalState,
-            trash: trash
+            trash: trash,
+            cpuTrend: cpuAvailable ? trends.cpu : [],
+            networkDownloadTrend: networkAvailable ? trends.download : [],
+            networkUploadTrend: networkAvailable ? trends.upload : []
         )
     }
 
@@ -70,6 +80,29 @@ final class DebugDashboardDriver: ObservableObject {
     private func percent(_ value: Double) -> String { "\(Int(value.rounded()))%" }
     private func decimalGB(_ value: Double) -> String { String(format: "%.1f GB", value) }
     private func rate(_ value: Double) -> String { String(format: value >= 100 ? "%.0f KB/s" : "%.1f KB/s", value) }
+
+    private var trendFixture: (cpu: [Double], download: [Double], upload: [Double]) {
+        switch trendScenario {
+        case .justStarted:
+            ([0.24], [3_000], [1_000])
+        case .stable:
+            (Array(repeating: 0.28, count: 30), Array(repeating: 18_000, count: 30), Array(repeating: 5_000, count: 30))
+        case .fluctuating:
+            ([0.18, 0.24, 0.21, 0.37, 0.31, 0.46, 0.39, 0.52, 0.34, 0.42],
+             [4_000, 18_000, 9_000, 31_000, 17_000, 46_000, 22_000, 37_000, 14_000, 29_000],
+             [2_000, 4_000, 3_000, 8_000, 6_000, 11_000, 7_000, 13_000, 5_000, 9_000])
+        case .burst:
+            ([0.12, 0.14, 0.16, 0.18, 0.92, 0.44, 0.21, 0.17],
+             [2_000, 3_000, 2_000, 4_000, 240_000, 42_000, 8_000, 3_000],
+             [1_000, 1_500, 1_000, 2_000, 28_000, 9_000, 3_000, 1_000])
+        case .directional:
+            ([0.22, 0.27, 0.25, 0.29, 0.31, 0.28],
+             [12_000, 42_000, 88_000, 140_000, 96_000, 72_000],
+             [1_000, 2_000, 3_000, 4_000, 3_000, 2_000])
+        case .reset:
+            ([], [], [])
+        }
+    }
 }
 
 struct DebugDashboardPanel: View {
@@ -91,6 +124,11 @@ struct DebugDashboardPanel: View {
             Divider()
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
+                    debugSection("Trend fixtures") {
+                        Picker("Scenario", selection: $driver.trendScenario) {
+                            ForEach(DebugDashboardDriver.TrendScenario.allCases) { Text($0.rawValue).tag($0) }
+                        }
+                    }
                     debugSection("Memory") {
                         debugSlider("Used", value: $driver.memoryUsedGB, range: 0...128, suffix: "GB")
                         debugSlider("Total", value: $driver.memoryTotalGB, range: 1...128, suffix: "GB")

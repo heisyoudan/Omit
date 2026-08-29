@@ -13,6 +13,7 @@ private final class LayoutStressDriver: ObservableObject {
     @Published var showThermal = true
     @Published var languageRaw = Language.english.rawValue
     @Published var appearanceRaw = AppAppearance.system.rawValue
+    @Published var dashboardState = OmitDashboardState.standard
 
     var visibleModules: Set<OmitModule> {
         DashboardModuleSelection.visibleModules(
@@ -37,7 +38,7 @@ private struct LayoutStressView: View {
     var body: some View {
         OmitPanelContent(
             launchManager: launchManager,
-            dashboardState: .standard,
+            dashboardState: driver.dashboardState,
             language: Language(rawValue: driver.languageRaw) ?? .english,
             appearance: AppAppearance(rawValue: driver.appearanceRaw) ?? .system,
             capabilities: .appStore,
@@ -104,8 +105,22 @@ struct MenuBarLayoutProbe {
         let restored = hostingView.fittingSize
         expect(abs(restored.width - baseline.width) < 1 && abs(restored.height - baseline.height) < 1, "layout returns to its baseline size")
 
+        for sample in 0 ..< 64 {
+            var state = driver.dashboardState
+            state.cpuTrend.append(Double((sample * 17) % 100) / 100)
+            state.networkDownloadTrend.append(Double((sample * 31) % 240) * 1_000)
+            state.networkUploadTrend.append(Double((sample * 11) % 80) * 1_000)
+            state.cpuTrend = Array(state.cpuTrend.suffix(30))
+            state.networkDownloadTrend = Array(state.networkDownloadTrend.suffix(30))
+            state.networkUploadTrend = Array(state.networkUploadTrend.suffix(30))
+            driver.dashboardState = state
+            await settle(window)
+            let updated = hostingView.fittingSize
+            expect(abs(updated.width - restored.width) < 1 && abs(updated.height - restored.height) < 1, "trend redraw keeps fixed fitting size at sample \(sample)")
+        }
+
         window.close()
-        print("MenuBarLayoutProbe: PASS — all 16 module combinations across 128 settings/dashboard cycles converged")
+        print("MenuBarLayoutProbe: PASS — 16 module combinations, 128 settings/dashboard cycles, and 64 trend redraws converged")
     }
 
     @MainActor

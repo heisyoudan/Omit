@@ -14,6 +14,9 @@ final class SystemMonitor: ObservableObject {
     @Published private(set) var cpuState: CPUState = .unavailable
     @Published private(set) var batteryState: BatteryState = .unavailable
     @Published private(set) var networkState: NetworkState = .unavailable
+    @Published private(set) var cpuTrend: [Double] = []
+    @Published private(set) var networkDownloadTrend: [Double] = []
+    @Published private(set) var networkUploadTrend: [Double] = []
     @Published private(set) var thermalState: ThermalState = .unavailable
     @Published private(set) var trashState: TrashState = .unauthorized
     @Published private(set) var trashClearReport: TrashClearReport?
@@ -26,6 +29,7 @@ final class SystemMonitor: ObservableObject {
     private var trashOperationTask: Task<Void, Never>?
     private var powerSourceRefreshTask: Task<Void, Never>?
     private var lifecycle = MonitoringLifecycle()
+    private var trendHistory = MetricTrendHistory(capacity: 30)
     private var wantsMonitoring = false
     private var sleepObserver: NSObjectProtocol?
     private var wakeObserver: NSObjectProtocol?
@@ -108,6 +112,7 @@ final class SystemMonitor: ObservableObject {
 
     private func launchMonitoringTaskIfNeeded() {
         guard monitoringTask == nil, let token = lifecycle.start() else { return }
+        resetTrendHistory()
         let sampler = sampler
         let cadence = cadence
         #if DEBUG
@@ -146,6 +151,7 @@ final class SystemMonitor: ObservableObject {
         lifecycle.stop()
         monitoringTask?.cancel()
         monitoringTask = nil
+        resetTrendHistory()
         #if DEBUG
         let sampler = sampler
         let generation = lifecycle.debugGeneration
@@ -162,6 +168,19 @@ final class SystemMonitor: ObservableObject {
             cpuState = snapshot.cpu
             networkState = snapshot.network
             thermalState = snapshot.thermal
+            switch snapshot.cpu {
+            case .unavailable:
+                trendHistory.recordCPU(nil)
+            case .available(_, let fraction):
+                trendHistory.recordCPU(fraction)
+            }
+            switch snapshot.network {
+            case .unavailable:
+                trendHistory.recordNetwork(download: nil, upload: nil)
+            case .available(_, _, let download, let upload):
+                trendHistory.recordNetwork(download: download, upload: upload)
+            }
+            publishTrendHistory()
             replaceFailures(for: [.cpu, .network, .thermal], with: snapshot.failures)
 
         case .memory(let result):
@@ -188,6 +207,17 @@ final class SystemMonitor: ObservableObject {
             trashState = state
             samplingFailures[.trash] = nil
         }
+    }
+
+    private func resetTrendHistory() {
+        trendHistory.reset()
+        publishTrendHistory()
+    }
+
+    private func publishTrendHistory() {
+        cpuTrend = trendHistory.cpuFractions
+        networkDownloadTrend = trendHistory.networkSamples.map(\.downloadBytesPerSecond)
+        networkUploadTrend = trendHistory.networkSamples.map(\.uploadBytesPerSecond)
     }
 
     private func replaceFailures(
