@@ -469,6 +469,16 @@
       "summary" : "Sage 已关闭任务",
       "taskId" : "TASK-QA-001",
       "timestamp" : "2026-08-29T10:29:24Z"
+    },
+    {
+      "authorRole" : "sage",
+      "detailsMd" : "使用 `task publish` 一步完成发布并自动启动。",
+      "id" : "JRN-20260829-002",
+      "stage" : "in_progress",
+      "status" : "info",
+      "summary" : "Sage 已发布并启动任务",
+      "taskId" : "TASK-DEV-006",
+      "timestamp" : "2026-08-29T10:30:40Z"
     }
   ]
 }

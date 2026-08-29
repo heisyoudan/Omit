@@ -287,6 +287,46 @@
       ],
       "taskType" : "integration",
       "title" : "建立系统监控指标差分准确性基线"
+    },
+    {
+      "acceptanceCriteria" : [
+        "实现只使用 SwiftUI Path、Shape 或等价 Apple 原生绘制能力，不引入第三方图表库；曲线更新不得阻塞主线程或改变系统采样节奏。",
+        "CPUState 与 NetworkState 或等价投影同时携带原始数值和显示文案；任何历史样本不得从百分比或速率字符串反向解析，现有 CPU/网络准确性公式保持不变。",
+        "保存最近 30 个有效的一秒级 CPU 样本，以及相同窗口内独立的 download/upload 原始速率样本；历史有明确容量上限，不写磁盘、不跨面板会话持久化。",
+        "CPU 曲线使用固定 0...1 纵轴；Network 上下行绘制为两条克制细线并共享同一滚动尺度，下载为主橙色、上传为低强调同系色，文字数值继续承担精确读数。",
+        "不足两个有效样本时不伪造曲线；unavailable、网络接口切换、计数器重置、断网、willSleep/didWake、stop/start monitoring 后按语义清空或重新建立基线，不连接跨断点数据且不产生负值或尖峰。",
+        "Compact 与 Wide 的 CPU/Network 卡片均有确定性曲线布局；固定曲线 frame，不使用 Geometry/Preference 高度反馈，不因每秒数据更新改变 MenuBarExtra 窗口尺寸、卡片 identity 或布局顺序。",
+        "保留当前 312pt 面板宽度、ultraThinMaterial 面板、亮色/暗色半透明 CardSurface、Memory/Storage 环形指标、Battery/Thermal 表达和现有顶部单一设置入口；只允许为曲线提供最小必要的固定卡片高度调整。",
+        "曲线无面积填充、发光、网格、坐标、滚动动画或装饰性峰值；遵循 Reduce Motion，曲线本身 accessibilityHidden，现有文字读数与状态标签仍可被辅助技术读取。",
+        "补齐 CPU/Network 的 Preview 或 Debug fixture：刚启动、稳定值、波动、突发峰值、上下行差异、unavailable/重置，并覆盖亮色、暗色、compact、wide；App Store 与 Direct 能力矩阵不受影响。",
+        "自动验证覆盖历史容量、会话清空、无效样本、网络共享尺度、全部 16 种模块组合与反复 Settings/Dashboard 切换；Debug 构建通过后，在真实 MenuBarExtra 打开约 30 秒确认曲线自然更新且卡片无跳动。"
+      ],
+      "boundaries" : [
+        "不修改 CPU、内存、磁盘、网络、电池或 Thermal 的采样公式、接口选择、格式化语义与刷新频率。",
+        "不修改 Trash 权限/删除逻辑、App Store/Direct capability、entitlements、签名或归档配置。",
+        "不把 Memory/Storage 环形进度改成横向进度条，不采用参考图的深蓝不透明背景，不新增齿轮或第二个顶部按钮。",
+        "不持久化、上传或分析历史数据；不加入告警、悬停详情、坐标说明、时间范围选择或完整监控仪表盘能力。"
+      ],
+      "currentAction" : "先将 CPU fraction 与 Network 上下行 bytes/s 作为类型化原始数值随现有格式化文案一起投影，不从字符串反向解析；再在 SystemMonitor 建立有界会话历史，并为 compact/wide CPU 与 Network 卡片实现固定尺寸 Path/Shape 曲线、Preview fixture 和生命周期验证。",
+      "deliverySurface" : "ui",
+      "dependsOn" : [
+
+      ],
+      "execState" : "in_progress",
+      "gateProfile" : "default_dev_gate",
+      "id" : "TASK-DEV-006",
+      "issueRefs" : [
+
+      ],
+      "ownerRole" : "dev",
+      "planState" : "planned",
+      "priority" : "p1",
+      "summary" : "在不改变已确认半透明卡片体系、面板宽度和系统指标公式的前提下，为 CPU 与 Network 增加仅存在于当前面板会话的原生 SwiftUI Sparkline；以 b0003f0 / codex/ui-before-sparklines 作为可回退 UI 基线。",
+      "tags" : [
+
+      ],
+      "taskType" : "feature",
+      "title" : "为 CPU 与 Network 增加原生短期趋势曲线"
     }
   ]
 }
