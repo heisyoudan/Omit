@@ -472,33 +472,13 @@
     },
     {
       "authorRole" : "sage",
-      "detailsMd" : "使用 `task publish` 一步完成发布并自动启动。",
+      "detailsMd" : "PO 在正式 UI 验收前明确取消 Sparkline 方向，要求恢复简洁版本；功能提交 3973f53 已由 3bfa61e 完整 revert，产品代码回到 b0003f0 基线，Debug 构建通过。",
       "id" : "JRN-20260829-002",
-      "stage" : "in_progress",
+      "stage" : "deleted",
       "status" : "info",
-      "summary" : "Sage 已发布并启动任务",
+      "summary" : "Sage 已删除任务",
       "taskId" : "TASK-DEV-006",
-      "timestamp" : "2026-08-29T10:30:40Z"
-    },
-    {
-      "authorRole" : "dev",
-      "detailsMd" : "实现：CPU 与 Network 卡片加入原生 SwiftUI Path 趋势线；CPU 固定 0...1，网络下载/上传共享滚动比例尺，下载橙色、上传同色低强调；不足 2 个有效点不绘线；图表隐藏于辅助功能树且无动画、填充、网格、坐标轴。数据：采样器在既有格式化值旁传递类型化原始 CPU fraction 和 Network bytes/s，不解析显示字符串；每类仅保留当前会话最近 30 个 1 秒样本。生命周期：不可用、无效值、计数器重置、接口切换、断网会清除对应历史；monitor cancel/start 会清除全部历史，因此 stop/start、sleep/wake 不跨会话连线。调试：现有 Debug 设置面板新增启动、稳定、波动、突发、方向差异、重置趋势 fixture；覆盖紧凑/宽卡及明暗外观。自动验证：MetricTrendHistoryProbe PASS；SystemMetricsProbe PASS；MonitoringScheduleProbe PASS；AppStoreDashboardProbe App Store 与 Direct 均 PASS；独立 JSON fixture oracle 22 项 PASS；MenuBarLayoutProbe 覆盖 16 模块组合、128 次设置/仪表盘循环、64 次趋势重绘 PASS；Debug/Release App Store Sandbox 构建 PASS，签名严格校验 PASS；git diff --check PASS。安全与边界：未修改指标公式、采样 cadence、权限、entitlements、Trash 或发布能力；未引入依赖。Observe：已尝试启动 Debug MenuBarExtra，但后台菜单栏应用无可访问普通窗口，无法在无人值守条件下可信完成约 30 秒真实视觉观察；未伪造 PASS。该项留给 QA/PO 在真实 MenuBarExtra 中观察，自动 AppKit 重绘尺寸探针已通过。代码提交 3973f53 已推送 origin/codex/app-store。",
-      "id" : "JRN-20260829-003",
-      "stage" : "in_progress",
-      "status" : "info",
-      "summary" : "完成 CPU 与网络原生短期趋势线及验证",
-      "taskId" : "TASK-DEV-006",
-      "timestamp" : "2026-08-29T10:42:26Z"
-    },
-    {
-      "authorRole" : "dev",
-      "detailsMd" : "【自动推进】\n- 当前流程采用 Agent-first 默认执行契约。\n- 在权限允许、前置满足时，`transition request` 会直接完成状态推进，不再等待 Sage 中间审批。\n\n【结果】\n- 从：in_progress\n- 到：qa\n- 下一交接：sage",
-      "id" : "JRN-20260829-004",
-      "stage" : "qa",
-      "status" : "info",
-      "summary" : "DEV 已推进流转：in_progress -> qa",
-      "taskId" : "TASK-DEV-006",
-      "timestamp" : "2026-08-29T10:42:38Z"
+      "timestamp" : "2026-08-29T10:47:20Z"
     }
   ]
 }
