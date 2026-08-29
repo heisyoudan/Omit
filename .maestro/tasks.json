@@ -287,6 +287,46 @@
       ],
       "taskType" : "integration",
       "title" : "建立系统监控指标差分准确性基线"
+    },
+    {
+      "acceptanceCriteria" : [
+        "在稳定设计规范中记录核心原则：黑白灰表示信息，颜色只表示状态；普通模块不得拥有独立主题色，后续新增普通指标默认继承同一中性色规则。",
+        "Memory、Storage、CPU、Network 的图标、标题、数值、百分比和方向箭头只使用 primary/secondary/tertiary 或等价中性色；移除 mint、blue、indigo、purple、orange 等模块主题色与渐变。",
+        "Memory 与 Storage 移除渐变圆环，改为固定高度的细横向进度条；填充与轨道在亮色/暗色下均为可辨识的中性灰阶，百分比与数值继续通过文字准确表达。",
+        "Battery 的百分比数值保持中性；只有具备状态意义的图标/状态文字可着色：charging、fullyCharged、externalPower 使用绿色，onBattery 与 unavailable 使用中性色，不把绿色当装饰色。",
+        "Thermal 的图标和标题保持中性，状态文字/分段承担语义色：nominal 绿色、fair 黄色、serious 橙色、critical 红色、unavailable 灰色；每种状态仍有文字标签，不能只靠颜色区分。",
+        "继续使用当前 ultraThinMaterial 面板和亮色/暗色半透明 CardSurface；保持 312pt 面板宽度、圆角体系、间距节奏、模块顺序、4/3/2/1/0 行布局和单一设置入口。",
+        "CPU 不显示折线图；Network 不显示历史曲线、面积图、坐标或动画；界面不增加发光、强阴影、彩色背景、第二个顶部按钮或完整 Dashboard 装饰。",
+        "亮色、暗色与 System 跟随均具备足够对比度；普通图标底座使用中性半透明层，卡片与背景层级可辨识但不过度描边，所有文字在中英日下保持不截断。",
+        "提供可稳定复现的 SwiftUI Preview/fixture：App Store 全模块亮色、全模块暗色、Battery 四种供电状态、Thermal 五种状态、模块隐藏后的 wide/pair 布局；预览不依赖真实采样。",
+        "Design 交付包含实际 UI shell 差分和复核截图/Preview 入口；Debug 编译或 Preview 编译通过，真实业务数据绑定、设置持久化与模块开关行为保持原样。"
+      ],
+      "boundaries" : [
+        "Design 只修改视觉 shell、设计 token、Preview/fixture 与稳定设计规范；不修改系统采样、Calculator、原始数据模型、刷新调度或生命周期。",
+        "不修改 App Store/Direct capability、Trash 权限与删除逻辑、entitlements、签名、归档或商品页内容。",
+        "不重新引入 Sparkline，不添加历史数据缓冲、图表依赖、监控告警、悬停详情或新的用户设置。",
+        "不照搬参考图的尺寸、深色不透明背景、扳手按钮或蓝绿模块配色；参考图仅用于单色信息层级和横向进度表达。"
+      ],
+      "currentAction" : "先查看 Maestro Design 规范与当前 ContentView Preview，定义单色 token 和状态色规则；随后只修改 SwiftUI UI shell，将 Memory/Storage 渐变圆环替换为中性细横向进度条，统一普通模块图标与文字颜色，并补齐亮色、暗色和状态 fixture 供 Sage/PO 复核。",
+      "deliverySurface" : "ui",
+      "dependsOn" : [
+
+      ],
+      "execState" : "in_progress",
+      "gateProfile" : "default_dev_gate",
+      "id" : "TASK-DESIGN-001",
+      "issueRefs" : [
+
+      ],
+      "ownerRole" : "design",
+      "planState" : "planned",
+      "priority" : "p1",
+      "summary" : "将 Omit 从模块主题色与渐变装饰收敛为黑白灰信息系统：普通指标保持中性，颜色只表达 Battery 与 Thermal 的真实状态；保留现有半透明材质、紧凑布局和已确认交互。",
+      "tags" : [
+
+      ],
+      "taskType" : "design",
+      "title" : "建立 Omit 单色视觉系统并简化主面板"
     }
   ]
 }
