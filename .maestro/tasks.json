@@ -272,13 +272,13 @@
       "dependsOn" : [
 
       ],
-      "execState" : "qa",
-      "gateProfile" : "default_qa_gate",
+      "execState" : "done",
+      "gateProfile" : "default_dev_gate",
       "id" : "TASK-QA-001",
       "issueRefs" : [
 
       ],
-      "ownerRole" : "qa",
+      "ownerRole" : "sage",
       "planState" : "planned",
       "priority" : "p0",
       "summary" : "以 Apple 公开系统接口和独立系统工具为真相层，对 Omit 的 CPU、内存、磁盘、网络、电池与 Thermal 输出做可重复的差分验证；用户不承担数值正确性判断。",

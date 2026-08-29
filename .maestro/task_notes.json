@@ -143,6 +143,15 @@
       "taskId" : "TASK-QA-001",
       "timestamp" : "2026-08-27T15:58:43Z",
       "type" : "general"
+    },
+    {
+      "authorRole" : "qa",
+      "detailsMd" : "# QA Verdict for TASK-QA-001\n\n## Delivery Surface\n- logic\n\n## Truth\n- What was proven: CPU, memory, root-volume storage, primary-interface network, battery and Thermal outputs satisfy the frozen product semantics against a separately compiled Apple-public-API collector and independent Python oracle; deterministic invalid/reset branches also satisfy their contracts.\n- Evidence: JRN-20260828-007; 22 fixtures PASS; 600.725-second product trace and 600.856-second independent trace; CPU median 0.5046pp/P95 6.8138pp; memory maximum synchronized delta 1.4303pp with exact formula recomputation; disk total delta 0%; network download/upload median errors 2.4405%/2.1616%; pmset and independent IOKit agree with production battery; Thermal mapping exact; real willSleep/didWake/reset chain; no re-entry or stale post-wake sampling.\n- Result: PASS\n\n## Projection\n- What the UI or output should project: no mandatory production UI projection in this logic-only task. The added Debug-only state driver was code/build verified for all metric states, Restore Live, and blocked Trash actions; Release binary exclusion was independently verified.\n- Evidence: fresh Debug/Release builds and strict signing PASS; Release strings and entitlement scan PASS; source review confirms #if DEBUG boundaries and manual Trash action guards.\n- Result: PASS\n\n## Observe\n- What was actually observed: NOT_REQUIRED for the logic-only acceptance contract.\n- Evidence: user performed no numerical judgment; physical sleep/wake was recorded by the automated JSONL lifecycle driver.\n- Result: NOT_REQUIRED\n- Which final verdict this Observe evidence supports: none; the PASS is based on independent truth evidence.\n\n## Final Verdict\n- PASS\n- Blocking reason: none.\n- Next routing: qa -> closing for Sage final review.\n",
+      "id" : "NTE-20260828-006",
+      "summary" : "QA PASS：六项指标独立差分、600 秒长跑与真实 sleep/wake 均满足合同",
+      "taskId" : "TASK-QA-001",
+      "timestamp" : "2026-08-27T16:31:21Z",
+      "type" : "test_verdict"
     }
   ]
 }

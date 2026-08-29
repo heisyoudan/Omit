@@ -439,6 +439,36 @@
       "summary" : "DEV 已推进流转：in_progress -> qa",
       "taskId" : "TASK-QA-001",
       "timestamp" : "2026-08-27T16:00:44Z"
+    },
+    {
+      "authorRole" : "qa",
+      "detailsMd" : "# TASK-QA-001 QA Evidence\n\n## Metric semantics and truth sources\n- CPU: host_processor_info per-core user/system/nice/idle tick deltas, one-second product cadence; first sample, rollback, empty/invalid snapshots are unavailable. Independent thresholds: median absolute delta <=5pp, P95 <=10pp.\n- Memory: HOST_VM_INFO64 page counters; used = active + inactive + speculative + wired + compressed - purgeable - external, clamped to 0...physical. Activity Monitor was not used as a byte-equality oracle.\n- Storage: root-volume URL resource values; product displays ordinary available capacity and used fraction. Important/opportunistic capacities are recorded separately and not conflated with purgeable space. Total-capacity tolerance <=1%.\n- Network: SCDynamicStore routed primary interface plus NET_RT_IFLIST2 64-bit RX/TX counters; independent sustained three-sample windows aligned to product counterUptime; direction-specific tolerance <=10%. Reset reasons cover first sample, disconnect, interface switch, counter reset and sleep gap.\n- Battery: IOKit internal-battery facts plus global providing source, cross-checked with pmset; noBattery/unavailable/onBattery/charging/externalPower/fullyCharged fixtures.\n- Thermal: exact ProcessInfo thermal enum mapping only; no temperature API or Celsius claim.\n\n## Deterministic and regression evidence\n- Debug trace driver compiled independently of the Xcode project.\n- Independent Python oracle validated 22 unique fixture records: PASS.\n- AppStoreDashboardProbe: PASS.\n- MonitoringScheduleProbe: PASS.\n- SystemMetricsProbe outside sandbox: PASS; en0 64-bit counters readable.\n- git diff --check for c228b84..1aa5da3: PASS.\n\n## 600-second live differential evidence\n- Product trace span: 600.725s; 934 total records; fast=578, memory=289, slow=39.\n- Independent truth span: 600.856s; 586 records.\n- CPU median absolute delta: 0.5046pp; P95: 6.8138pp.\n- Memory maximum synchronized fraction delta: 1.4303pp; every product raw formula recomputation exact and 0<=used<=physical.\n- Root volume total-capacity maximum delta: 0%.\n- Network controlled load: 118 download and 89 upload sustained intervals; median relative errors 2.4405% and 2.1616% respectively; no negative rates.\n- Battery final truth: pmset AC Power, 100% charged; production and independent IOKit both map fullyCharged.\n- Thermal live raw/mapped records matched exact enum contract.\n- Re-entry: all samples inFlightCount=1; runtime sequence unique and monotonic.\n- Real lifecycle: driverStart -> reset -> willSleep -> didWake -> reset -> driverEnd; samples continued after wake.\n\n## Build and release isolation\n- Fresh Debug and Release App Store builds: BUILD SUCCEEDED.\n- codesign --verify --deep --strict: PASS for both.\n- Release entitlement: App Sandbox only.\n- Release binary contains none of OMIT_DEBUG_METRICS_JSONL, Debug State Driver, Restore Live, driverStart, DebugMetricTrace or Manual projection active.\n- Debug manual Trash projection blocks authorize/clear callbacks; no real Trash access occurred.\n\n## Evidence hashes\n- fixtures JSONL: 3099abfdae759808e8e9ce5b12257326d7418dec2c67b69dbf2db24b017ffebc\n- product 600s JSONL: 77cee8d6d2194126e9902308330ed3b5a5e090d2f3acfbc4504f882b595d1dc6\n- independent 600s JSONL: 573d5351d8073987575fef1338c2dce842092cdad16a8e596d4afa63c090b937\n- independent collector source: 169f45244e03adea3271ebcb59a898bb350c01eaa2df0ff76980353cf50a79f0\n- independent live oracle source: b955798f89cddb1357e909603aa88ff090f58d451602cf29152b9f04281326e7\n\n## Secondary check\n- Debug popover source path, state mappings, Restore Live action and Release exclusion were code/build verified.\n- Computer Use could not attach to a closed MenuBarExtra window; no interactive popover observation is claimed. This does not replace or weaken the completed logic-only metric verdict.\n",
+      "id" : "JRN-20260828-007",
+      "stage" : "qa",
+      "status" : "info",
+      "summary" : "六项指标独立差分、600 秒长跑及真实 sleep/wake 全部通过",
+      "taskId" : "TASK-QA-001",
+      "timestamp" : "2026-08-27T16:31:04Z"
+    },
+    {
+      "authorRole" : "qa",
+      "detailsMd" : "【自动推进】\n- 当前流程采用 Agent-first 默认执行契约。\n- 在权限允许、前置满足时，`transition request` 会直接完成状态推进，不再等待 Sage 中间审批。\n\n【结果】\n- 从：qa\n- 到：closing\n- 下一交接：sage",
+      "id" : "JRN-20260828-008",
+      "stage" : "closing",
+      "status" : "info",
+      "summary" : "QA 已完成验证并推进流转：qa -> closing",
+      "taskId" : "TASK-QA-001",
+      "timestamp" : "2026-08-27T16:31:33Z"
+    },
+    {
+      "authorRole" : "sage",
+      "detailsMd" : "Sage 最终复核通过：六项系统指标均已由不复用生产 Calculator 的独立差分证据验证；CPU/内存/磁盘/网络/电池/Thermal 满足既定语义与误差合同，600 秒连续采样和真实 sleep/wake 恢复通过。QA Gate RUN-20260828-004 为 PASS，无需 PO 判断底层数值。",
+      "id" : "JRN-20260829-001",
+      "stage" : "done",
+      "status" : "success",
+      "summary" : "Sage 已关闭任务",
+      "taskId" : "TASK-QA-001",
+      "timestamp" : "2026-08-29T10:29:24Z"
     }
   ]
 }
