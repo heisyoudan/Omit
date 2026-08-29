@@ -371,10 +371,10 @@ struct OmitDashboardView: View {
     var body: some View {
         VStack(spacing: 12) {
             if showMemory {
-                PrimaryMetricCard(title: OmitLang.get("MEMORY", lang: language), value: state.memoryUsed, supportingValue: memoryTotalLabel, percentLabel: "\(Int((state.memoryPercent * 100).rounded()))%", percent: state.memoryPercent, icon: "memorychip", accent: .omitMemoryMint, ringEndAccent: .omitMemoryBlueCyan)
+                PrimaryMetricCard(title: OmitLang.get("MEMORY", lang: language), value: state.memoryUsed, supportingValue: memoryTotalLabel, percentLabel: "\(Int((state.memoryPercent * 100).rounded()))%", percent: state.memoryPercent, icon: "memorychip", accent: .omitMemoryCyan, ringEndAccent: .omitMemoryBlue)
             }
             if showStorage {
-                PrimaryMetricCard(title: OmitLang.get("STORAGE", lang: language), value: state.storageAvailable, supportingValue: OmitLang.get("AVAILABLE_SPACE", lang: language), percentLabel: "\(Int((state.storageUsedPercent * 100).rounded()))% \(OmitLang.get("USED", lang: language))", percent: state.storageUsedPercent, icon: "internaldrive", accent: .indigo, ringEndAccent: .purple)
+                PrimaryMetricCard(title: OmitLang.get("STORAGE", lang: language), value: state.storageAvailable, supportingValue: OmitLang.get("AVAILABLE_SPACE", lang: language), percentLabel: "\(Int((state.storageUsedPercent * 100).rounded()))% \(OmitLang.get("USED", lang: language))", percent: state.storageUsedPercent, icon: "internaldrive", accent: .omitStorageIndigo, ringEndAccent: .omitStorageViolet)
             }
             let rows = StatusCardLayoutPlanner.rows(for: visibleModules)
             let showsTrash = visibleModules.contains(.trash)
@@ -420,7 +420,7 @@ struct OmitDashboardView: View {
                 title: OmitLang.get("BATTERY", lang: language),
                 value: state.batteryValue ?? "—",
                 supportingValue: batteryStatusLabel,
-                icon: state.batteryPowerState.usesExternalPower ? "battery.100.bolt" : "battery.100",
+                icon: batteryIcon,
                 iconAccent: .green
             )
         case .network:
@@ -437,7 +437,7 @@ struct OmitDashboardView: View {
         case .cpu:
             CompactMetricCard(title: OmitLang.get("CPU", lang: language), value: state.cpuValue ?? "—", supportingValue: state.cpuValue == nil ? OmitLang.get("UNAVAILABLE", lang: language) : OmitLang.get("USAGE", lang: language), icon: "cpu", iconAccent: .blue)
         case .battery:
-            CompactMetricCard(title: OmitLang.get("BATTERY", lang: language), value: state.batteryValue ?? "—", supportingValue: batteryStatusLabel, icon: state.batteryPowerState.usesExternalPower ? "battery.100.bolt" : "battery.100", iconAccent: .green)
+            CompactMetricCard(title: OmitLang.get("BATTERY", lang: language), value: state.batteryValue ?? "—", supportingValue: batteryStatusLabel, icon: batteryIcon, iconAccent: .green)
         case .network: NetworkCard(state: state, language: language)
         case .thermal:
             ThermalStatusCard(state: state.thermalState, language: language)
@@ -463,12 +463,21 @@ struct OmitDashboardView: View {
         }
         return OmitLang.get(key, lang: language)
     }
+
+    private var batteryIcon: String {
+        state.batteryValue != nil && state.batteryPowerState == .charging
+            ? "battery.100.bolt"
+            : "battery.100"
+    }
 }
 
 private extension Color {
-    static let omitMemoryMint = Color(red: 0.31, green: 0.91, blue: 0.78)
-    static let omitMemoryBlueCyan = Color(red: 0.16, green: 0.57, blue: 0.96)
-    static let omitThermalAmber = Color(red: 0.86, green: 0.66, blue: 0.24)
+    static let omitMemoryCyan = Color(red: 0.30, green: 0.88, blue: 0.82)
+    static let omitMemoryBlue = Color(red: 0.22, green: 0.62, blue: 0.98)
+    static let omitStorageIndigo = Color(red: 0.36, green: 0.39, blue: 0.95)
+    static let omitStorageViolet = Color(red: 0.64, green: 0.35, blue: 0.96)
+    static let omitThermalAmber = Color(red: 0.91, green: 0.67, blue: 0.23)
+    static let omitTrashRose = Color(red: 0.91, green: 0.35, blue: 0.49)
 }
 
 private struct CardSurface: ViewModifier {
@@ -485,6 +494,7 @@ struct PrimaryMetricCard: View {
     let icon: String
     let accent: Color
     let ringEndAccent: Color
+
     var body: some View {
         HStack(spacing: 16) {
             MetricRing(percent: percent, icon: icon, accent: accent, endAccent: ringEndAccent)
@@ -492,12 +502,15 @@ struct PrimaryMetricCard: View {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(title).font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary).lineLimit(2)
                     Spacer(minLength: 4)
-                    Text(percentLabel).font(.system(size: 13, weight: .bold, design: .rounded)).foregroundStyle(accent).lineLimit(1)
+                    Text(percentLabel).font(.system(size: 13, weight: .bold, design: .rounded)).foregroundStyle(.primary).lineLimit(1)
                 }
                 Text(value).font(.system(size: 20, weight: .bold, design: .rounded)).foregroundStyle(.primary).lineLimit(1).minimumScaleFactor(0.82)
                 Text(supportingValue).font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary).lineLimit(2)
             }
-        }.padding(14).frame(maxWidth: .infinity, minHeight: 88, alignment: .leading).modifier(CardSurface())
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: 88, alignment: .leading)
+        .modifier(CardSurface())
     }
 }
 
@@ -506,9 +519,10 @@ struct MetricRing: View {
     let icon: String
     let accent: Color
     let endAccent: Color
+
     var body: some View {
         ZStack {
-            Circle().stroke(accent.opacity(0.12), lineWidth: 7)
+            Circle().stroke(accent.opacity(0.13), lineWidth: 7)
             Circle()
                 .trim(from: 0, to: min(max(percent, 0), 1))
                 .stroke(
@@ -516,8 +530,12 @@ struct MetricRing: View {
                     style: StrokeStyle(lineWidth: 7, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
-            Image(systemName: icon).font(.system(size: 15, weight: .medium)).foregroundStyle(accent)
-        }.frame(width: 58, height: 58).accessibilityHidden(true)
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(accent)
+        }
+        .frame(width: 58, height: 58)
+        .accessibilityHidden(true)
     }
 }
 
@@ -528,6 +546,7 @@ struct CompactMetricCard: View {
     let icon: String
     let iconAccent: Color
     let valueColor: Color
+    let supportingValueColor: Color
 
     init(
         title: String,
@@ -535,7 +554,8 @@ struct CompactMetricCard: View {
         supportingValue: String?,
         icon: String,
         iconAccent: Color,
-        valueColor: Color = .primary
+        valueColor: Color = .primary,
+        supportingValueColor: Color = .secondary.opacity(0.72)
     ) {
         self.title = title
         self.value = value
@@ -543,6 +563,7 @@ struct CompactMetricCard: View {
         self.icon = icon
         self.iconAccent = iconAccent
         self.valueColor = valueColor
+        self.supportingValueColor = supportingValueColor
     }
 
     var body: some View {
@@ -550,7 +571,7 @@ struct CompactMetricCard: View {
             HStack(spacing: 8) { ModuleIcon(icon: icon, accent: iconAccent); Text(title).font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary).lineLimit(2) }
             VStack(alignment: .leading, spacing: 2) {
                 Text(value).font(.system(size: 19, weight: .bold, design: .rounded)).foregroundStyle(valueColor).lineLimit(1).minimumScaleFactor(0.75)
-                if let supportingValue { Text(supportingValue).font(.system(size: 10, weight: .medium)).foregroundStyle(.tertiary).lineLimit(2) }
+                if let supportingValue { Text(supportingValue).font(.system(size: 10, weight: .medium)).foregroundStyle(supportingValueColor).lineLimit(2) }
             }
         }.padding(13).frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading).modifier(CardSurface())
     }
@@ -562,6 +583,23 @@ struct WideCompactMetricCard: View {
     let supportingValue: String
     let icon: String
     let iconAccent: Color
+    let supportingValueColor: Color
+
+    init(
+        title: String,
+        value: String,
+        supportingValue: String,
+        icon: String,
+        iconAccent: Color,
+        supportingValueColor: Color = .secondary.opacity(0.72)
+    ) {
+        self.title = title
+        self.value = value
+        self.supportingValue = supportingValue
+        self.icon = icon
+        self.iconAccent = iconAccent
+        self.supportingValueColor = supportingValueColor
+    }
 
     var body: some View {
         HStack(spacing: 10) {
@@ -573,7 +611,7 @@ struct WideCompactMetricCard: View {
                     .lineLimit(1)
                 Text(supportingValue)
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(supportingValueColor)
                     .lineLimit(1)
             }
             Spacer(minLength: 12)
@@ -645,13 +683,14 @@ private enum ThermalStatusPresentation {
 
     static func color(for state: ThermalState) -> Color {
         switch state {
-        case .nominal: .green
+        case .nominal: .primary
         case .fair: .yellow
         case .serious: .orange
         case .critical: .red
         case .unavailable: .secondary
         }
     }
+
 }
 
 private struct ThermalStatusIndicator: View {
@@ -676,9 +715,10 @@ private struct ThermalStatusIndicator: View {
     }
 
     private func segmentColor(at index: Int) -> Color {
-        index < ThermalStatusPresentation.activeLevels(for: state)
-            ? ThermalStatusPresentation.color(for: state)
-            : .secondary.opacity(0.18)
+        guard index < ThermalStatusPresentation.activeLevels(for: state) else {
+            return Color.secondary.opacity(0.18)
+        }
+        return ThermalStatusPresentation.color(for: state).opacity(state == .nominal ? 0.62 : 0.88)
     }
 }
 
@@ -745,7 +785,7 @@ private struct NetworkRow: View {
     let value: String
     var body: some View {
         HStack(spacing: 7) {
-            Image(systemName: symbol).font(.system(size: 11, weight: .bold)).foregroundStyle(.orange).frame(width: 11)
+            Image(systemName: symbol).font(.system(size: 11, weight: .bold)).foregroundStyle(.secondary).frame(width: 11)
             Text(normalizedValue).font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(.primary).lineLimit(1).minimumScaleFactor(0.72)
         }
     }
@@ -766,7 +806,7 @@ struct TrashCard: View {
     }
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
-            HStack(spacing: 8) { ModuleIcon(icon: "trash", accent: .pink); Text(OmitLang.get("TRASH", lang: language)).font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary).lineLimit(2) }
+            HStack(spacing: 8) { ModuleIcon(icon: "trash", accent: .omitTrashRose); Text(OmitLang.get("TRASH", lang: language)).font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary).lineLimit(2) }
             if isConfirming { confirmationContent } else { statusContent }
         }.padding(13).frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading).modifier(CardSurface())
     }
@@ -780,7 +820,7 @@ struct TrashCard: View {
             HStack(alignment: .firstTextBaseline) {
                 Text(value).font(.system(size: 17, weight: .bold, design: .rounded)).lineLimit(1).minimumScaleFactor(0.75)
                 Spacer(minLength: 4)
-                Button(OmitLang.get("CLEAR", lang: language)) { withAnimation(.easeInOut(duration: 0.15)) { isConfirming = true } }.buttonStyle(CompactActionButtonStyle(tint: .pink))
+                Button(OmitLang.get("CLEAR", lang: language)) { withAnimation(.easeInOut(duration: 0.15)) { isConfirming = true } }.buttonStyle(CompactActionButtonStyle(tint: .red))
             }
         case .scanning: Text(OmitLang.get("SCANNING", lang: language)).trashStatusStyle()
         case .error(let message): Text(message).trashStatusStyle()
@@ -791,7 +831,7 @@ struct TrashCard: View {
             Text(OmitLang.get("CONFIRM_CLEAR", lang: language)).font(.system(size: 11, weight: .semibold)).foregroundStyle(.primary).lineLimit(2)
             HStack(spacing: 6) {
                 Button(OmitLang.get("CANCEL", lang: language)) { withAnimation(.easeInOut(duration: 0.15)) { isConfirming = false } }.buttonStyle(CompactActionButtonStyle(tint: .secondary))
-                Button(OmitLang.get("CLEAR", lang: language)) { isConfirming = false; onClear() }.buttonStyle(CompactActionButtonStyle(tint: .pink))
+                Button(OmitLang.get("CLEAR", lang: language)) { isConfirming = false; onClear() }.buttonStyle(CompactActionButtonStyle(tint: .red))
             }
         }
     }
@@ -890,20 +930,69 @@ struct SettingsDivider: View { var body: some View { Divider().padding(.leading,
 private struct DashboardPreview: View {
     let state: OmitDashboardState
     let language: Language
-    let colorScheme: ColorScheme
+    let colorScheme: ColorScheme?
     let capabilities: ProductCapabilities
     var body: some View {
         OmitPanelSurface { VStack(spacing: 16) { OmitHeader(isShowingSettings: false, onSettings: {}); OmitDashboardView(state: state, language: language, visibleModules: capabilities.dashboardModules, showMemory: true, showStorage: true, onAuthorizeTrash: {}, onClearTrash: {}) } }.preferredColorScheme(colorScheme)
     }
 }
 private struct SettingsPreview: View {
-    let colorScheme: ColorScheme
+    let colorScheme: ColorScheme?
     let capabilities: ProductCapabilities
     @State private var languageRaw = Language.english.rawValue
     @State private var appearanceRaw = AppAppearance.system.rawValue
     @StateObject private var launchManager = LaunchManager()
     var body: some View {
         OmitPanelSurface { VStack(spacing: 16) { OmitHeader(isShowingSettings: true, onSettings: {}); SettingsView(launchManager: launchManager, capabilities: capabilities, languageRaw: $languageRaw, appearanceRaw: $appearanceRaw) } }.preferredColorScheme(colorScheme)
+    }
+}
+
+private struct BatteryFixturePreview: View {
+    let powerState: BatteryPowerState
+    let language: Language
+    let colorScheme: ColorScheme
+
+    private var fixtureState: OmitDashboardState {
+        var fixture = OmitDashboardState.standard
+        fixture.batteryPowerState = powerState
+        fixture.batteryValue = powerState == .fullyCharged ? "100%" : "68%"
+        return fixture
+    }
+
+    var body: some View {
+        OmitPanelSurface {
+            OmitDashboardView(
+                state: fixtureState,
+                language: language,
+                visibleModules: [.battery],
+                showMemory: false,
+                showStorage: false,
+                onAuthorizeTrash: {},
+                onClearTrash: {}
+            )
+        }
+        .preferredColorScheme(colorScheme)
+    }
+}
+
+private struct StatusLayoutFixturePreview: View {
+    let visibleModules: Set<OmitModule>
+    let language: Language
+    let colorScheme: ColorScheme
+
+    var body: some View {
+        OmitPanelSurface {
+            OmitDashboardView(
+                state: .standard,
+                language: language,
+                visibleModules: visibleModules,
+                showMemory: false,
+                showStorage: false,
+                onAuthorizeTrash: {},
+                onClearTrash: {}
+            )
+        }
+        .preferredColorScheme(colorScheme)
     }
 }
 
@@ -976,10 +1065,21 @@ struct Omit_Previews: PreviewProvider {
         Group {
             DashboardPreview(state: .standard, language: .english, colorScheme: .light, capabilities: .appStore).previewDisplayName("StoreHeroLight")
             DashboardPreview(state: .standard, language: .english, colorScheme: .dark, capabilities: .appStore).previewDisplayName("StoreHeroDark")
+            DashboardPreview(state: .standard, language: .chinese, colorScheme: nil, capabilities: .appStore).previewDisplayName("StoreHeroSystem")
+            DashboardPreview(state: .standard, language: .japanese, colorScheme: .dark, capabilities: .appStore).previewDisplayName("StoreHeroDark — Japanese")
             SettingsPreview(colorScheme: .light, capabilities: .appStore).previewDisplayName("StoreAppearanceSettings")
+            SettingsPreview(colorScheme: .dark, capabilities: .appStore).previewDisplayName("StoreAppearanceSettings — Dark")
+            SettingsPreview(colorScheme: nil, capabilities: .appStore).previewDisplayName("StoreAppearanceSettings — System")
             WideStatusFixturePreview(module: .cpu, language: .english, colorScheme: .light).previewDisplayName("Wide — CPU")
             WideStatusFixturePreview(module: .battery, language: .chinese, colorScheme: .light).previewDisplayName("Wide — Battery")
             WideStatusFixturePreview(module: .network, language: .english, colorScheme: .dark).previewDisplayName("Wide — Network")
+            BatteryFixturePreview(powerState: .onBattery, language: .english, colorScheme: .light).previewDisplayName("Battery — On Battery")
+            BatteryFixturePreview(powerState: .charging, language: .chinese, colorScheme: .light).previewDisplayName("Battery — Charging")
+            BatteryFixturePreview(powerState: .fullyCharged, language: .japanese, colorScheme: .dark).previewDisplayName("Battery — Fully Charged")
+            BatteryFixturePreview(powerState: .externalPower, language: .english, colorScheme: .dark).previewDisplayName("Battery — External Power")
+            StatusLayoutFixturePreview(visibleModules: [.cpu, .battery], language: .chinese, colorScheme: .light).previewDisplayName("Layout — Pair")
+            StatusLayoutFixturePreview(visibleModules: [.cpu, .battery, .thermal], language: .chinese, colorScheme: .dark).previewDisplayName("Layout — Thermal Wide + Pair")
+            StatusLayoutFixturePreview(visibleModules: [.cpu, .network, .thermal], language: .english, colorScheme: .light).previewDisplayName("Layout — No Battery")
             ThermalFixturePreview(thermalState: .nominal, language: .english, colorScheme: .light).previewDisplayName("Thermal — Nominal / English")
             ThermalFixturePreview(thermalState: .fair, language: .chinese, colorScheme: .light).previewDisplayName("Thermal — Fair / Chinese")
             ThermalFixturePreview(thermalState: .serious, language: .japanese, colorScheme: .dark).previewDisplayName("Thermal — Serious / Japanese")

@@ -1,6 +1,6 @@
 # Omit Design Contract
 
-Last updated: 2026-08-27
+Last updated: 2026-08-29
 
 This file is the Design role's product-specific UI constraint layer.
 
@@ -11,7 +11,8 @@ Priority: `Task > design-ui-shell skill > DESIGN.md`.
 Omit should feel quiet, precise, native, and immediately readable. It is a compact instrument, not a decorative dashboard.
 
 - Preserve the `Omit.` wordmark as the primary brand element.
-- Use one accent color per module, with semantic meaning carried by labels and state rather than decorative dots.
+- Monitoring data stays in the primary white/gray type system; small module accents identify categories without coloring the data itself.
+- Module accents are limited to icons and the Memory/Storage rings: Memory cyan-to-blue, Storage indigo-to-violet, CPU blue, Battery green, Network orange, Thermal amber, and Direct-only Trash rose.
 - Prefer spacing, typography, and contrast to additional borders or effects.
 - Avoid charts, dense legends, gratuitous animation, and competing primary actions.
 
@@ -31,15 +32,16 @@ The panel must be understandable without tooltips. A user should not need to inf
 - Outer padding: approximately 20 pt.
 - Primary-card spacing: approximately 12 pt.
 - Card corner radius: approximately 16–18 pt with continuous corners.
-- Primary cards use a ring plus a clear value hierarchy.
+- Primary cards use a restrained gradient progress ring plus a clear value hierarchy. Percentages remain primary text rather than repeating the ring color.
 - Adaptive status cards follow one deterministic rule: `4 -> 2+2`, `3 -> 1+2`, `2 -> 2`, `1 -> 1`, `0 -> none`.
 - With three status cards, the wide row is above the pair. Wide priority is Network, Thermal, Battery, then CPU. This order is PO-approved and frozen for the App Store dashboard.
 - The GitHub Direct Trash card is always a full-width Wide Utility card and never participates in status-card parity.
 - Module changes must use stable row identities and must not animate MenuBarExtra window-height negotiation.
 - Compact status cards use a tall two-column form; a single or selected three-card module uses the shorter full-width form above the pair.
 - The approved full-width Thermal form is intentionally compact, so Thermal may take the second Wide priority without creating an empty-looking row.
-- Primary Memory and Storage cards retain gradient progress rings. Memory presents estimated used memory as the primary value and physical total as supporting context; Storage presents available space with an explicitly labeled used percentage.
+- Memory and Storage use restrained two-color gradient rings. Memory presents estimated used memory as the primary value and physical total as supporting context; Storage presents available space with an explicitly labeled used percentage.
 - Network uses separate arrow-led receive and transmit values with normalized `B/s`, `KB/s`, `MB/s`, or `GB/s` units; redundant row labels are omitted in the compact shell.
+- CPU and Network remain strictly informational: no sparkline, history curve, area chart, animation, or alert tint.
 - The dashboard has no persistent “updated just now” footer in the frozen shell.
 - The header Settings icon remains visually compact but has at least a 28 × 28 pt hit target.
 - Text must not be smaller than 10 pt.
@@ -55,14 +57,22 @@ Provide observable System, Light, and Dark appearances.
 - Warm-neutral or system-derived translucent background.
 - Dark primary text and restrained secondary text.
 - Cards must remain distinguishable without heavy shadows.
-- Accent rings and icons retain sufficient saturation and contrast.
+- Accent rings and icons retain sufficient contrast while numeric content remains neutral.
 
 ### Dark
 
 - Near-black translucent HUD-like background.
 - Light primary text with subdued secondary text.
 - Cards use subtle lifted surfaces rather than bright borders.
-- Accent colors must not bloom or overpower numeric values.
+- Accent colors must not bloom or overpower primary numeric values.
+
+### Dashboard accent semantics
+
+- Module color identifies the category only: it appears in module icons and the two primary progress rings, never in ordinary numeric values, percentages, titles, Network arrows, or supporting copy.
+- Battery uses a green module icon, while its percentage and status copy remain neutral. Charging changes the battery symbol to its bolt variant; Fully Charged, Power Adapter, On Battery, and Unavailable retain the standard battery symbol.
+- Thermal uses an amber module icon. Nominal segments and label remain neutral; fair, serious, and critical apply yellow, orange, and red respectively to both the active segments and written state label. Unavailable remains gray.
+- Thermal always retains a written state label, so segment count is supplementary rather than the only carrier of meaning.
+- Module icon bases use a low-opacity version of the icon accent. Colored card backgrounds, glow, and decorative data tints are not part of the dashboard system.
 
 Theme switching must not change information hierarchy, dimensions, enabled modules, or content.
 
@@ -80,6 +90,7 @@ The UI shell and previews must cover:
 - Unavailable CPU or Battery data.
 - No-battery hardware with Battery omitted from the dashboard.
 - Thermal nominal, fair, serious, critical, and unavailable states.
+- Battery on-battery, charging, fully charged, external-power, unavailable, and no-battery states.
 - Approved Thermal copy maps those states to concise localized user language (for example Normal / Elevated / Hot / Critical) without showing a numeric temperature.
 - All Compact-card counts and Wide-priority combinations.
 - Long localized strings without truncating critical values.
@@ -107,10 +118,9 @@ The shell should expose presentation inputs for:
 - system thermal state and availability
 - Trash authorization/status/value and user intents
 - selected appearance preference
-- last-updated label
 
 Design owns the shell, state expression, fixtures, and previews. Dev later owns sampling, Sandbox/bookmark authorization, destructive write-back, refresh scheduling, and error recovery.
 
 ## 8. Reference
 
-Use `doc/assets/omit-ui-light-dark-reference.png` for the intended light/dark balance, layout hierarchy, Network rows, and explicit Trash action. Treat it as directional rather than pixel-perfect.
+Use `doc/assets/omit-ui-light-dark-reference.png` for the intended light/dark balance, layout hierarchy, module accent identity, Network rows, and explicit Trash action. Treat it as directional rather than pixel-perfect; its opaque dashboard treatment, extra header controls, and chart decoration are explicitly not implementation targets.
