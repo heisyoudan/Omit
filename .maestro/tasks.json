@@ -313,7 +313,7 @@
       "dependsOn" : [
 
       ],
-      "execState" : "closing",
+      "execState" : "done",
       "gateProfile" : "default_dev_gate",
       "id" : "TASK-DESIGN-002",
       "issueRefs" : [

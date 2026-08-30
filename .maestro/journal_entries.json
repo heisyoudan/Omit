@@ -519,6 +519,16 @@
       "summary" : "DESIGN 已推进流转：in_progress -> closing",
       "taskId" : "TASK-DESIGN-002",
       "timestamp" : "2026-08-30T06:14:21Z"
+    },
+    {
+      "authorRole" : "sage",
+      "detailsMd" : "Sage closing 复核通过：提交 91d36ce 与最终设计合同一致；六模块固定身份色、Memory/Storage 纯色圆环、Thermal 五态灰阶、Network 中性数据与 4/3/2/1/0 布局均已验证。独立 unsigned Debug build 成功，AppStoreDashboardProbe 全 16 组合通过且 Wide 期望独立固化；git diff --check、边界审查、远端提交一致性与 ChatGPT 独立复核均 PASS。未发现需回退问题。",
+      "id" : "JRN-20260830-005",
+      "stage" : "done",
+      "status" : "success",
+      "summary" : "Sage 已关闭任务",
+      "taskId" : "TASK-DESIGN-002",
+      "timestamp" : "2026-08-30T09:47:59Z"
     }
   ]
 }
