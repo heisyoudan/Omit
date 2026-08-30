@@ -290,43 +290,44 @@
     },
     {
       "acceptanceCriteria" : [
-        "在稳定设计规范中记录核心原则：黑白灰表示信息，颜色只表示状态；普通模块不得拥有独立主题色，后续新增普通指标默认继承同一中性色规则。",
-        "Memory、Storage、CPU、Network 的图标、标题、数值、百分比和方向箭头只使用 primary/secondary/tertiary 或等价中性色；移除 mint、blue、indigo、purple、orange 等模块主题色与渐变。",
-        "Memory 与 Storage 移除渐变圆环，改为固定高度的细横向进度条；填充与轨道在亮色/暗色下均为可辨识的中性灰阶，百分比与数值继续通过文字准确表达。",
-        "Battery 的百分比数值保持中性；只有具备状态意义的图标/状态文字可着色：charging、fullyCharged、externalPower 使用绿色，onBattery 与 unavailable 使用中性色，不把绿色当装饰色。",
-        "Thermal 的图标和标题保持中性，状态文字/分段承担语义色：nominal 绿色、fair 黄色、serious 橙色、critical 红色、unavailable 灰色；每种状态仍有文字标签，不能只靠颜色区分。",
-        "继续使用当前 ultraThinMaterial 面板和亮色/暗色半透明 CardSurface；保持 312pt 面板宽度、圆角体系、间距节奏、模块顺序、4/3/2/1/0 行布局和单一设置入口。",
-        "CPU 不显示折线图；Network 不显示历史曲线、面积图、坐标或动画；界面不增加发光、强阴影、彩色背景、第二个顶部按钮或完整 Dashboard 装饰。",
-        "亮色、暗色与 System 跟随均具备足够对比度；普通图标底座使用中性半透明层，卡片与背景层级可辨识但不过度描边，所有文字在中英日下保持不截断。",
-        "提供可稳定复现的 SwiftUI Preview/fixture：App Store 全模块亮色、全模块暗色、Battery 四种供电状态、Thermal 五种状态、模块隐藏后的 wide/pair 布局；预览不依赖真实采样。",
-        "Design 交付包含实际 UI shell 差分和复核截图/Preview 入口；Debug 编译或 Preview 编译通过，真实业务数据绑定、设置持久化与模块开关行为保持原样。"
+        "在 DESIGN.md 固化总原则：颜色只负责模块识别，主数据使用 primary，辅助信息使用 secondary/tertiary；卡片表面保持当前亮色/暗色半透明灰阶，不用颜色表达日常状态变化。",
+        "固定六个模块身份色：Memory Teal、Storage Violet、CPU Blue、Battery Green、Network Cyan、Thermal Yellow；身份色只用于图标 glyph、10%–15% 低透明度图标底座及 Memory/Storage 进度环，不着色标题、数值、百分比、Network 箭头或辅助文字。",
+        "Memory 与 Storage 保留当前圆形进度表达和主卡信息层级；移除 AngularGradient 与双端色，分别改为单一 Teal/Violet 进度环，底轨使用低透明度同色或等价克制轨道；不改为横向进度条。",
+        "CPU 固定 Blue，使用率数值始终为中性色，不随负载变色；Network 从 Orange 改为 Cyan，下载/上传箭头及速率统一使用白灰，不按方向分色。",
+        "Battery 固定 Green 作为模块身份；百分比和状态文案保持白灰；充电、已充满、外接电源、使用电池、低电量/不可用优先通过适当 SF Symbols 与既有本地化文案表达，不新增或改写供电状态业务逻辑。",
+        "Thermal 固定 Yellow 图标；nominal/fair/serious/critical/unavailable 不切换绿黄橙红，状态标签始终 primary/secondary 中性色，四段短条的激活段使用高对比灰白、未激活段使用低透明度灰；只通过激活数量与文字表达程度。",
+        "保持当前 312pt MenuBarExtra、CardSurface、圆角与间距、模块顺序、设置入口和 1+1+2+2 主布局；状态卡仍遵循 4→2+2、3→1+2、2→2、1→1、0→none，三卡 Wide 优先级固定 Network→Thermal→Battery→CPU。",
+        "Wide Compact Card 保持左右结构并明显低于双列 Compact Card；基于当前 312pt 面板比例复核高度，不能机械照搬参考图 100–220pt 数字，也不能让宽卡只是横向拉伸。",
+        "不增加更新时间、右上状态点、历史曲线、Sparkline、面积图、坐标、发光动画、彩色卡片背景、第二个顶部按钮或复杂 Dashboard 装饰；Trash 不属于六个监控模块，保持现有 Direct-only 边界与破坏性操作语义。",
+        "提供确定性 SwiftUI Preview/fixture，至少覆盖 App Store 全模块亮色/暗色/System、Memory/Storage 纯色环、Network/Thermal 固定身份色、Battery 既有供电状态、Thermal 五种状态及 4/3/2/1/0 和 Wide 布局；中英日关键值不截断。",
+        "Debug/Preview 编译通过；最终差分仅涉及 DESIGN.md、SwiftUI 视觉 shell、私有颜色 token 与 Preview/fixture，现有数据绑定、模块开关、AppStorage 与能力隔离保持不变。"
       ],
       "boundaries" : [
-        "Design 只修改视觉 shell、设计 token、Preview/fixture 与稳定设计规范；不修改系统采样、Calculator、原始数据模型、刷新调度或生命周期。",
-        "不修改 App Store/Direct capability、Trash 权限与删除逻辑、entitlements、签名、归档或商品页内容。",
-        "不重新引入 Sparkline，不添加历史数据缓冲、图表依赖、监控告警、悬停详情或新的用户设置。",
-        "不照搬参考图的尺寸、深色不透明背景、扳手按钮或蓝绿模块配色；参考图仅用于单色信息层级和横向进度表达。"
+        "Design 只修改 UI shell、颜色/材质 token、状态投影、布局呈现、DESIGN.md 和 Preview/fixture；不修改 SystemMonitor、Calculator、原始指标模型、采样精度、刷新调度、生命周期或网络计数逻辑。",
+        "不修改 App Store/Direct capability、Trash 权限与清空逻辑、Sandbox、entitlements、签名、归档、商店文案或构建配置。",
+        "不新增历史样本、图表依赖、监控告警、悬停详情、新设置项或持久化键；不改变既有本地化 key 的业务含义。",
+        "以提交 44eaada 作为可回退的中间视觉基线，在其上收敛，不重做已确认的卡片几何和模块布局。"
       ],
-      "currentAction" : "先查看 Maestro Design 规范与当前 ContentView Preview，定义单色 token 和状态色规则；随后只修改 SwiftUI UI shell，将 Memory/Storage 渐变圆环替换为中性细横向进度条，统一普通模块图标与文字颜色，并补齐亮色、暗色和状态 fixture 供 Sage/PO 复核。",
+      "currentAction" : "先阅读 DESIGN.md、design-ui-shell 规范与当前 ContentView.swift/Preview；只修改设计规范和 SwiftUI UI shell，将六个模块的固定身份色、纯色圆环、Thermal 中性状态表达与现有自适应布局落实并提供可复核 Preview。",
       "deliverySurface" : "ui",
       "dependsOn" : [
 
       ],
       "execState" : "in_progress",
       "gateProfile" : "default_dev_gate",
-      "id" : "TASK-DESIGN-001",
+      "id" : "TASK-DESIGN-002",
       "issueRefs" : [
 
       ],
       "ownerRole" : "design",
       "planState" : "planned",
       "priority" : "p1",
-      "summary" : "将 Omit 从模块主题色与渐变装饰收敛为黑白灰信息系统：普通指标保持中性，颜色只表达 Battery 与 Thermal 的真实状态；保留现有半透明材质、紧凑布局和已确认交互。",
+      "summary" : "在已提交的中间版 UI 上完成最终视觉收敛：保留深浅色半透明灰阶卡片与 Memory/Storage 圆环，以固定小面积模块色识别类别，所有主数据和状态文字保持白灰；状态变化只通过文字、图标和结构表达。",
       "tags" : [
 
       ],
       "taskType" : "design",
-      "title" : "建立 Omit 单色视觉系统并简化主面板"
+      "title" : "固化 Omit 灰阶主体与固定模块识别色"
     }
   ]
 }

@@ -482,13 +482,23 @@
     },
     {
       "authorRole" : "sage",
+      "detailsMd" : "PO 于 2026-08-30 确认最终视觉合同：灰阶主体加固定模块识别色、Memory/Storage 保留纯色圆环、Thermal 不随状态换色。旧卡片的全面单色化、横向进度条与 Thermal 语义色验收标准已被正式取代；保留既有 Git 提交作为可回退历史，改由 TASK-DESIGN-002 承接修订。",
+      "id" : "JRN-20260830-001",
+      "stage" : "deleted",
+      "status" : "info",
+      "summary" : "Sage 已删除任务",
+      "taskId" : "TASK-DESIGN-001",
+      "timestamp" : "2026-08-30T05:57:28Z"
+    },
+    {
+      "authorRole" : "sage",
       "detailsMd" : "使用 `task publish` 一步完成发布并自动启动。",
-      "id" : "JRN-20260829-003",
+      "id" : "JRN-20260830-002",
       "stage" : "in_progress",
       "status" : "info",
       "summary" : "Sage 已发布并启动任务",
-      "taskId" : "TASK-DESIGN-001",
-      "timestamp" : "2026-08-29T10:49:32Z"
+      "taskId" : "TASK-DESIGN-002",
+      "timestamp" : "2026-08-30T05:57:53Z"
     }
   ]
 }
