@@ -499,6 +499,26 @@
       "summary" : "Sage 已发布并启动任务",
       "taskId" : "TASK-DESIGN-002",
       "timestamp" : "2026-08-30T05:57:53Z"
+    },
+    {
+      "authorRole" : "design",
+      "detailsMd" : "仅修改 DESIGN.md 与 SwiftUI 视觉 shell：Memory Teal、Storage Violet、CPU Blue、Battery Green、Network Cyan、Thermal Yellow；Memory/Storage 移除 AngularGradient 改为纯色圆环；Thermal 五态仅通过文字与激活段数表达，状态内容保持灰阶；补齐 4/3/2/1/0 布局 Preview。git diff --check、AppStoreDashboardProbe 全 16 布局、App Store Debug build 均通过；未修改采样、状态模型、AppStorage、能力隔离或 Trash 逻辑。",
+      "id" : "JRN-20260830-003",
+      "stage" : "in_progress",
+      "status" : "info",
+      "summary" : "固化六模块身份色、纯色资源圆环与灰阶 Thermal 状态",
+      "taskId" : "TASK-DESIGN-002",
+      "timestamp" : "2026-08-30T06:14:10Z"
+    },
+    {
+      "authorRole" : "design",
+      "detailsMd" : "【自动推进】\n- 当前流程采用 Agent-first 默认执行契约。\n- 在权限允许、前置满足时，`transition request` 会直接完成状态推进，不再等待 Sage 中间审批。\n\n【结果】\n- 从：in_progress\n- 到：closing\n- 下一交接：sage",
+      "id" : "JRN-20260830-004",
+      "stage" : "closing",
+      "status" : "info",
+      "summary" : "DESIGN 已推进流转：in_progress -> closing",
+      "taskId" : "TASK-DESIGN-002",
+      "timestamp" : "2026-08-30T06:14:21Z"
     }
   ]
 }

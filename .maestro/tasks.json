@@ -313,13 +313,13 @@
       "dependsOn" : [
 
       ],
-      "execState" : "in_progress",
+      "execState" : "closing",
       "gateProfile" : "default_dev_gate",
       "id" : "TASK-DESIGN-002",
       "issueRefs" : [
 
       ],
-      "ownerRole" : "design",
+      "ownerRole" : "sage",
       "planState" : "planned",
       "priority" : "p1",
       "summary" : "在已提交的中间版 UI 上完成最终视觉收敛：保留深浅色半透明灰阶卡片与 Memory/Storage 圆环，以固定小面积模块色识别类别，所有主数据和状态文字保持白灰；状态变化只通过文字、图标和结构表达。",

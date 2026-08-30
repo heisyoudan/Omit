@@ -344,6 +344,23 @@
       "taskId" : "TASK-QA-001",
       "timestamp" : "2026-08-27T16:31:33Z",
       "toState" : "closing"
+    },
+    {
+      "checks" : {
+        "gateRunId" : "RUN-20260830-001",
+        "journalExists" : true,
+        "latestGatePassed" : true
+      },
+      "fromState" : "in_progress",
+      "id" : "TRN-20260830-001",
+      "requestedByRole" : "design",
+      "resolvedAt" : "2026-08-30T06:14:21Z",
+      "resolvedByRole" : "design",
+      "stage" : "in_progress",
+      "status" : "approved",
+      "taskId" : "TASK-DESIGN-002",
+      "timestamp" : "2026-08-30T06:14:21Z",
+      "toState" : "closing"
     }
   ]
 }

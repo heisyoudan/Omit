@@ -371,10 +371,10 @@ struct OmitDashboardView: View {
     var body: some View {
         VStack(spacing: 12) {
             if showMemory {
-                PrimaryMetricCard(title: OmitLang.get("MEMORY", lang: language), value: state.memoryUsed, supportingValue: memoryTotalLabel, percentLabel: "\(Int((state.memoryPercent * 100).rounded()))%", percent: state.memoryPercent, icon: "memorychip", accent: .omitMemoryCyan, ringEndAccent: .omitMemoryBlue)
+                PrimaryMetricCard(title: OmitLang.get("MEMORY", lang: language), value: state.memoryUsed, supportingValue: memoryTotalLabel, percentLabel: "\(Int((state.memoryPercent * 100).rounded()))%", percent: state.memoryPercent, icon: "memorychip", accent: .omitMemoryTeal)
             }
             if showStorage {
-                PrimaryMetricCard(title: OmitLang.get("STORAGE", lang: language), value: state.storageAvailable, supportingValue: OmitLang.get("AVAILABLE_SPACE", lang: language), percentLabel: "\(Int((state.storageUsedPercent * 100).rounded()))% \(OmitLang.get("USED", lang: language))", percent: state.storageUsedPercent, icon: "internaldrive", accent: .omitStorageIndigo, ringEndAccent: .omitStorageViolet)
+                PrimaryMetricCard(title: OmitLang.get("STORAGE", lang: language), value: state.storageAvailable, supportingValue: OmitLang.get("AVAILABLE_SPACE", lang: language), percentLabel: "\(Int((state.storageUsedPercent * 100).rounded()))% \(OmitLang.get("USED", lang: language))", percent: state.storageUsedPercent, icon: "internaldrive", accent: .omitStorageViolet)
             }
             let rows = StatusCardLayoutPlanner.rows(for: visibleModules)
             let showsTrash = visibleModules.contains(.trash)
@@ -413,7 +413,7 @@ struct OmitDashboardView: View {
                 value: state.cpuValue ?? "—",
                 supportingValue: state.cpuValue == nil ? OmitLang.get("UNAVAILABLE", lang: language) : OmitLang.get("USAGE", lang: language),
                 icon: "cpu",
-                iconAccent: .blue
+                iconAccent: .omitCPUBlue
             )
         case .battery:
             WideCompactMetricCard(
@@ -421,7 +421,7 @@ struct OmitDashboardView: View {
                 value: state.batteryValue ?? "—",
                 supportingValue: batteryStatusLabel,
                 icon: batteryIcon,
-                iconAccent: .green
+                iconAccent: .omitBatteryGreen
             )
         case .network:
             WideNetworkCard(state: state, language: language)
@@ -435,9 +435,9 @@ struct OmitDashboardView: View {
     @ViewBuilder private func secondaryCard(for module: OmitModule) -> some View {
         switch module {
         case .cpu:
-            CompactMetricCard(title: OmitLang.get("CPU", lang: language), value: state.cpuValue ?? "—", supportingValue: state.cpuValue == nil ? OmitLang.get("UNAVAILABLE", lang: language) : OmitLang.get("USAGE", lang: language), icon: "cpu", iconAccent: .blue)
+            CompactMetricCard(title: OmitLang.get("CPU", lang: language), value: state.cpuValue ?? "—", supportingValue: state.cpuValue == nil ? OmitLang.get("UNAVAILABLE", lang: language) : OmitLang.get("USAGE", lang: language), icon: "cpu", iconAccent: .omitCPUBlue)
         case .battery:
-            CompactMetricCard(title: OmitLang.get("BATTERY", lang: language), value: state.batteryValue ?? "—", supportingValue: batteryStatusLabel, icon: batteryIcon, iconAccent: .green)
+            CompactMetricCard(title: OmitLang.get("BATTERY", lang: language), value: state.batteryValue ?? "—", supportingValue: batteryStatusLabel, icon: batteryIcon, iconAccent: .omitBatteryGreen)
         case .network: NetworkCard(state: state, language: language)
         case .thermal:
             ThermalStatusCard(state: state.thermalState, language: language)
@@ -472,11 +472,12 @@ struct OmitDashboardView: View {
 }
 
 private extension Color {
-    static let omitMemoryCyan = Color(red: 0.30, green: 0.88, blue: 0.82)
-    static let omitMemoryBlue = Color(red: 0.22, green: 0.62, blue: 0.98)
-    static let omitStorageIndigo = Color(red: 0.36, green: 0.39, blue: 0.95)
-    static let omitStorageViolet = Color(red: 0.64, green: 0.35, blue: 0.96)
-    static let omitThermalAmber = Color(red: 0.91, green: 0.67, blue: 0.23)
+    static let omitMemoryTeal = Color(red: 0.20, green: 0.76, blue: 0.70)
+    static let omitStorageViolet = Color(red: 0.58, green: 0.40, blue: 0.94)
+    static let omitCPUBlue = Color(red: 0.25, green: 0.56, blue: 0.96)
+    static let omitBatteryGreen = Color(red: 0.25, green: 0.75, blue: 0.42)
+    static let omitNetworkCyan = Color(red: 0.20, green: 0.72, blue: 0.88)
+    static let omitThermalYellow = Color(red: 0.91, green: 0.73, blue: 0.25)
     static let omitTrashRose = Color(red: 0.91, green: 0.35, blue: 0.49)
 }
 
@@ -493,11 +494,10 @@ struct PrimaryMetricCard: View {
     let percent: Double
     let icon: String
     let accent: Color
-    let ringEndAccent: Color
 
     var body: some View {
         HStack(spacing: 16) {
-            MetricRing(percent: percent, icon: icon, accent: accent, endAccent: ringEndAccent)
+            MetricRing(percent: percent, icon: icon, accent: accent)
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(title).font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary).lineLimit(2)
@@ -518,17 +518,13 @@ struct MetricRing: View {
     let percent: Double
     let icon: String
     let accent: Color
-    let endAccent: Color
 
     var body: some View {
         ZStack {
             Circle().stroke(accent.opacity(0.13), lineWidth: 7)
             Circle()
                 .trim(from: 0, to: min(max(percent, 0), 1))
-                .stroke(
-                    AngularGradient(colors: [accent, endAccent, accent], center: .center),
-                    style: StrokeStyle(lineWidth: 7, lineCap: .round)
-                )
+                .stroke(accent, style: StrokeStyle(lineWidth: 7, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             Image(systemName: icon)
                 .font(.system(size: 15, weight: .medium))
@@ -641,7 +637,7 @@ struct ThermalStatusCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
-                ModuleIcon(icon: "thermometer.medium", accent: .omitThermalAmber)
+                ModuleIcon(icon: "thermometer.medium", accent: .omitThermalYellow)
                 Text(OmitLang.get("THERMAL", lang: language))
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.secondary)
@@ -681,16 +677,6 @@ private enum ThermalStatusPresentation {
         return OmitLang.get(key, lang: language)
     }
 
-    static func color(for state: ThermalState) -> Color {
-        switch state {
-        case .nominal: .primary
-        case .fair: .yellow
-        case .serious: .orange
-        case .critical: .red
-        case .unavailable: .secondary
-        }
-    }
-
 }
 
 private struct ThermalStatusIndicator: View {
@@ -708,17 +694,16 @@ private struct ThermalStatusIndicator: View {
             }
             Text(ThermalStatusPresentation.label(for: state, language: language))
                 .font(.system(size: 15, weight: .bold, design: .rounded))
-                .foregroundStyle(ThermalStatusPresentation.color(for: state))
+                .foregroundStyle(state == .unavailable ? Color.secondary : Color.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.78)
         }
     }
 
     private func segmentColor(at index: Int) -> Color {
-        guard index < ThermalStatusPresentation.activeLevels(for: state) else {
-            return Color.secondary.opacity(0.18)
-        }
-        return ThermalStatusPresentation.color(for: state).opacity(state == .nominal ? 0.62 : 0.88)
+        index < ThermalStatusPresentation.activeLevels(for: state)
+            ? Color.primary.opacity(0.68)
+            : Color.secondary.opacity(0.18)
     }
 }
 
@@ -728,7 +713,7 @@ struct WideThermalStatusCard: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            ModuleIcon(icon: "thermometer.medium", accent: .omitThermalAmber)
+            ModuleIcon(icon: "thermometer.medium", accent: .omitThermalYellow)
             Text(OmitLang.get("THERMAL", lang: language))
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.secondary)
@@ -749,7 +734,7 @@ struct NetworkCard: View {
     let state: OmitDashboardState; let language: Language
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
-            HStack(spacing: 8) { ModuleIcon(icon: "wifi", accent: .orange); Text(OmitLang.get("NETWORK", lang: language)).font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary).lineLimit(2) }
+            HStack(spacing: 8) { ModuleIcon(icon: "wifi", accent: .omitNetworkCyan); Text(OmitLang.get("NETWORK", lang: language)).font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary).lineLimit(2) }
             NetworkRow(symbol: "arrow.down", value: state.downloadValue)
             NetworkRow(symbol: "arrow.up", value: state.uploadValue)
         }.padding(13).frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading).modifier(CardSurface())
@@ -762,7 +747,7 @@ struct WideNetworkCard: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            ModuleIcon(icon: "wifi", accent: .orange)
+            ModuleIcon(icon: "wifi", accent: .omitNetworkCyan)
             Text(OmitLang.get("NETWORK", lang: language))
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.secondary)
@@ -1077,8 +1062,11 @@ struct Omit_Previews: PreviewProvider {
             BatteryFixturePreview(powerState: .charging, language: .chinese, colorScheme: .light).previewDisplayName("Battery — Charging")
             BatteryFixturePreview(powerState: .fullyCharged, language: .japanese, colorScheme: .dark).previewDisplayName("Battery — Fully Charged")
             BatteryFixturePreview(powerState: .externalPower, language: .english, colorScheme: .dark).previewDisplayName("Battery — External Power")
-            StatusLayoutFixturePreview(visibleModules: [.cpu, .battery], language: .chinese, colorScheme: .light).previewDisplayName("Layout — Pair")
-            StatusLayoutFixturePreview(visibleModules: [.cpu, .battery, .thermal], language: .chinese, colorScheme: .dark).previewDisplayName("Layout — Thermal Wide + Pair")
+            StatusLayoutFixturePreview(visibleModules: [.cpu, .battery, .network, .thermal], language: .english, colorScheme: .dark).previewDisplayName("Layout — 4 / Two Pairs")
+            StatusLayoutFixturePreview(visibleModules: [.cpu, .battery, .thermal], language: .chinese, colorScheme: .dark).previewDisplayName("Layout — 3 / Thermal Wide + Pair")
+            StatusLayoutFixturePreview(visibleModules: [.cpu, .battery], language: .chinese, colorScheme: .light).previewDisplayName("Layout — 2 / Pair")
+            StatusLayoutFixturePreview(visibleModules: [.network], language: .english, colorScheme: .dark).previewDisplayName("Layout — 1 / Network Wide")
+            StatusLayoutFixturePreview(visibleModules: [], language: .japanese, colorScheme: .light).previewDisplayName("Layout — 0 / Zen")
             StatusLayoutFixturePreview(visibleModules: [.cpu, .network, .thermal], language: .english, colorScheme: .light).previewDisplayName("Layout — No Battery")
             ThermalFixturePreview(thermalState: .nominal, language: .english, colorScheme: .light).previewDisplayName("Thermal — Nominal / English")
             ThermalFixturePreview(thermalState: .fair, language: .chinese, colorScheme: .light).previewDisplayName("Thermal — Fair / Chinese")
