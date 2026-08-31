@@ -1,7 +1,17 @@
 # Omit Product Specification
 
-Last updated: 2026-08-27
+Last updated: 2026-08-31
 Status: current
+
+### Current distribution decision (2026-08-31)
+
+Active development and App Store submission are paused. The supported GitHub
+community download uses the existing restricted, sandboxed, no-Trash capability
+set (internally selected by `OMIT_APP_STORE`). This is a build capability name,
+not an App Store release. The package is ad-hoc signed and not notarized.
+The two-variant roadmap below is retained for future work; legacy Direct/Trash
+code and branches are not the supported download. See README for installation,
+metric caveats, and the reproducible packaging command.
 
 ## 1. Product position
 
