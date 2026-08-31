@@ -6,6 +6,12 @@
   <a href="#english">English</a> • <a href="#中文">中文</a> • <a href="#日本語">日本語</a>
 </p>
 
+<p align="center">
+  <img src="screenshots/omit-dashboard-dark.png" width="515" alt="Omit dark dashboard showing memory, storage, CPU, battery, network, and thermal state">
+  <br>
+  <sub>Dark appearance · Development screenshot; the diagnostic button is not included in the download.</sub>
+</p>
+
 ## English
 
 **Omit noise. Return to essence.** A free, open-source macOS menu-bar monitor.
