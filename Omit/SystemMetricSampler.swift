@@ -165,8 +165,14 @@ actor SystemMetricSampler {
         } else {
             network = .unavailable
         }
-        let rawThermalState = ProcessInfo.processInfo.thermalState
-        let mappedThermalState = ThermalState.map(rawThermalState)
+        
+        // 读取实际的 SMC 温度数据，而不是系统热状态
+        let thermalReading = SMCTemperatureSensor.readTemperatures()
+        let mappedThermalState = ThermalState.mapFromTemperature(
+            thermalReading.cpuTemperature,
+            systemTemp: thermalReading.systemTemperature
+        )
+        
         #if DEBUG
         debugNetworkTrace = DebugNetworkTrace(
             interfaceName: networkCounter?.interfaceName,
@@ -178,7 +184,7 @@ actor SystemMetricSampler {
             baselineResetReason: networkResetReason
         )
         debugThermalTrace = DebugThermalTrace(
-            rawState: debugThermalName(rawThermalState),
+            rawState: formatTemperatureForDebug(thermalReading.cpuTemperature),
             mappedState: mappedThermalState.rawValue
         )
         #endif
@@ -476,6 +482,13 @@ actor SystemMetricSampler {
         guard interval > 0 else { return "invalidInterval" }
         guard interval <= networkCalculator.maximumInterval else { return "sleepGap" }
         return nil
+    }
+
+    private func formatTemperatureForDebug(_ temperature: Double?) -> String {
+        if let temp = temperature {
+            return String(format: "%.1f°C", temp)
+        }
+        return "unavailable"
     }
 
     private func debugThermalName(_ state: ProcessInfo.ThermalState) -> String {

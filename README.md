@@ -1,7 +1,7 @@
 <p align="center"><img src="resources/icon.png" width="120" alt="Omit icon"></p>
 <h1 align="center">Omit.</h1>
 <p align="center">
-  <a href="https://github.com/heisyoudan/Omit/raw/main/dist/Omit.zip"><strong>📥 Download Omit 1.0.1</strong></a>
+  <a href="https://github.com/heisyoudan/Omit/raw/main/dist/Omit.zip"><strong>📥 Download Omit 1.1.0</strong></a>
   &nbsp;•&nbsp;
   <a href="#english">English</a> • <a href="#中文">中文</a> • <a href="#日本語">日本語</a>
 </p>
@@ -40,7 +40,7 @@ Compare `shasum -a 256 Omit.zip` with [SHA256SUMS](dist/SHA256SUMS) to check dow
 - **CPU:** aggregate utilization over a sampling interval, not a per-process measurement.
 - **Network:** separate receive/transmit rates for the current primary routed interface, not all interfaces combined. Startup, interface changes, disconnects, or counter resets may briefly show `—`.
 - **Battery:** percentage and power-source state; omitted on Macs without a battery.
-- **Thermal:** macOS thermal state, **not degrees Celsius**. Text and segment count indicate severity.
+- **Thermal:** real-time CPU temperature in Celsius (via SMC sensors). Temperature ranges: nominal (< 60°C), fair (60–75°C), serious (75–90°C), critical (≥ 90°C). **v1.1.0+:** now shows actual hardware temperature, not system thermal management state.
 
 Metric, scheduling, capability, and 16-layout checks are available in `scripts/`. These checks do not guarantee coverage of every machine or failure condition. See [metric semantics](doc/PRODUCT_SPEC.md).
 
@@ -79,7 +79,7 @@ The script builds Release, applies an ad-hoc signature with sandbox-only entitle
 
 ### 数据口径与源码
 
-内存是有边界保护的占用估算，不保证与“活动监视器”逐字节一致。磁盘主值为启动卷可用空间，圆环与百分比表示已用空间。CPU 为采样区间内的整机利用率。网络分别读取当前主路由接口的上下行计数，并非所有网卡总和；启动、断网或切换接口时可能短暂显示 `—`。无电池的 Mac 不显示电池卡片。热状态来自 macOS，**不是摄氏温度**。
+内存是有边界保护的占用估算，不保证与"活动监视器"逐字节一致。磁盘主值为启动卷可用空间，圆环与百分比表示已用空间。CPU 为采样区间内的整机利用率。网络分别读取当前主路由接口的上下行计数，并非所有网卡总和；启动、断网或切换接口时可能短暂显示 `—`。无电池的 Mac 不显示电池卡片。**热状态现已显示实际 CPU 温度（℃），通过 SMC 传感器读取。** 温度级别：正常 (< 60°C)、升高 (60–75°C)、较高 (75–90°C)、临界 (≥ 90°C)。**v1.1.0+：** 完全改用硬件温度而非系统热管理状态。
 
 仓库保留指标、调度、能力隔离及 16 种布局的自动检查，但不保证所有机器和异常情况都没有问题。自行编译可打开 `Omit.xcodeproj`；打包使用 `bash scripts/package-github.sh`。默认构建不启用回收站，内部 `OMIT_APP_STORE` 标志只用于选择受限能力，并不代表上架。旧 Direct/Trash 代码仅为未来开发保留。
 

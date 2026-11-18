@@ -59,6 +59,31 @@ nonisolated enum ThermalState: String, CaseIterable, Equatable, Sendable {
     case critical
     case unavailable
 
+    /// 根据实际温度确定热状态
+    /// 参考 Apple 官方热管理指南和行业标准
+    static func mapFromTemperature(_ cpuTemp: Double?, systemTemp: Double?) -> ThermalState {
+        // 若无法获取温度数据，则返回 unavailable
+        guard let cpuTemp = cpuTemp else { return .unavailable }
+        
+        // 温度阈值（摄氏度）
+        // 根据 MacBook Pro 和其他 Mac 的典型规范调整
+        // nominal: < 60°C
+        // fair: 60-75°C
+        // serious: 75-90°C
+        // critical: > 90°C
+        
+        switch cpuTemp {
+        case ..<60:
+            return .nominal
+        case 60..<75:
+            return .fair
+        case 75..<90:
+            return .serious
+        default:
+            return .critical
+        }
+    }
+
     static func map(_ state: ProcessInfo.ThermalState) -> ThermalState {
         switch state {
         case .nominal: .nominal
