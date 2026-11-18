@@ -3,20 +3,14 @@ import Foundation
 import IOKit
 
 /// SMC 温度读取实现
-/// 参考开源项目：Macs Fan Control、Volta、HWSensors
-/// 获取 macOS 系统实际的 CPU/GPU 温度数据
-nonisolated struct SMCTemperatureReading: Equatable, Sendable {
+struct SMCTemperatureReading: Equatable, Sendable {
     let cpuTemperature: Double?
     let gpuTemperature: Double?
     let systemTemperature: Double?
     let timestamp: Date
 }
 
-nonisolated class SMCTemperatureSensor {
-    private static let smcClassName = "AppleSMCDevice"
-
-    /// 读取系统温度数据
-    /// 返回 CPU、GPU 和系统温度（单位：摄氏度）
+class SMCTemperatureSensor {
     static func readTemperatures() -> SMCTemperatureReading {
         let reader = SMCReader()
         return SMCTemperatureReading(
@@ -28,10 +22,10 @@ nonisolated class SMCTemperatureSensor {
     }
 }
 
-private class SMCReader: @unchecked Sendable {
+private class SMCReader {
     private var smcConnection: io_connect_t = IO_OBJECT_NULL
 
-    nonisolated init() {
+    init() {
         openSMCConnection()
     }
 
@@ -39,59 +33,34 @@ private class SMCReader: @unchecked Sendable {
         closeSMCConnection()
     }
 
-    nonisolated func readCPUTemperature() -> Double? {
-        // Apple Silicon (ARM64) 传感器
+    func readCPUTemperature() -> Double? {
         if isAppleSilicon() {
-            if let temp = readSensorValue("CPU_DIE_TEMPERATURE") {
-                return temp
-            }
-            if let temp = readSensorValue("ecore") {
-                return temp
-            }
-            if let temp = readSensorValue("pcore") {
-                return temp
-            }
+            if let temp = readSensorValue("CPU_DIE_TEMPERATURE") { return temp }
+            if let temp = readSensorValue("ecore") { return temp }
+            if let temp = readSensorValue("pcore") { return temp }
         }
         
-        // Intel CPU 温度传感器
-        let intelSensors = ["TC0P", "TP0P", "TP45", "TM0P", "TCAD"]
-        for sensor in intelSensors {
-            if let temp = readSensorValue(sensor) {
-                return temp
-            }
+        for sensor in ["TC0P", "TP0P", "TP45", "TM0P", "TCAD"] {
+            if let temp = readSensorValue(sensor) { return temp }
         }
-        
         return nil
     }
 
-    nonisolated func readGPUTemperature() -> Double? {
-        // Apple Silicon GPU
+    func readGPUTemperature() -> Double? {
         if isAppleSilicon() {
-            if let temp = readSensorValue("GPU_DIE_TEMPERATURE") {
-                return temp
-            }
-            if let temp = readSensorValue("gpu") {
-                return temp
-            }
+            if let temp = readSensorValue("GPU_DIE_TEMPERATURE") { return temp }
+            if let temp = readSensorValue("gpu") { return temp }
         }
         
-        // Intel GPU
-        let gpuSensors = ["TG0P", "Tg0P"]
-        for sensor in gpuSensors {
-            if let temp = readSensorValue(sensor) {
-                return temp
-            }
+        for sensor in ["TG0P", "Tg0P"] {
+            if let temp = readSensorValue(sensor) { return temp }
         }
-        
         return nil
     }
 
-    nonisolated func readSystemTemperature() -> Double? {
-        let systemSensors = ["TA0P", "Ta0P", "Ts0P", "TPCH"]
-        for sensor in systemSensors {
-            if let temp = readSensorValue(sensor) {
-                return temp
-            }
+    func readSystemTemperature() -> Double? {
+        for sensor in ["TA0P", "Ta0P", "Ts0P", "TPCH"] {
+            if let temp = readSensorValue(sensor) { return temp }
         }
         return nil
     }
@@ -113,7 +82,6 @@ private class SMCReader: @unchecked Sendable {
         )
         
         guard status == kIOReturnSuccess else { return nil }
-        
         return decodeSMCValue(&output)
     }
 
@@ -132,8 +100,6 @@ private class SMCReader: @unchecked Sendable {
     }
 
     private func decodeSMCValue(_ param: inout SMCParamStruct) -> Double? {
-        // SMC 返回的温度是 fpe2 格式（Fixed point 2 decimals）
-        // 高字节是整数部分，低字节是小数部分 (0-255)
         let highByte = Int16(bitPattern: UInt16(param.bytes.0) << 8 | UInt16(param.bytes.1))
         let lowByte = param.bytes.2
         
@@ -199,8 +165,6 @@ private class SMCReader: @unchecked Sendable {
     }
 }
 
-/// SMC 参数结构体
-/// 用于与 IOConnectCallStructMethod 通信
 private struct SMCParamStruct {
     var key: UInt32 = 0
     var vers: (UInt8, UInt8, UInt8, UInt8) = (0, 0, 0, 0)
