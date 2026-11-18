@@ -18,10 +18,10 @@
 
 ### Features and project status
 
-- Memory and storage with solid-color rings; CPU, battery, network upload/download, and system thermal state.
+- Memory and storage with solid-color rings; CPU, battery, network upload/download, and real-time CPU temperature.
 - Translucent cards, restrained module colors, and System / Light / Dark appearance.
 - Optional modules, adaptive layouts, English / Chinese / Japanese, and launch-at-login support.
-- **No Trash access or cleaning in this download.** No history charts or numeric temperature.
+- **No Trash access or cleaning in this download.** No history charts.
 
 Active development is on hold. App Store submission is postponed. This GitHub download and source remain available, but no update or support schedule is promised.
 
@@ -62,10 +62,10 @@ The script builds Release, applies an ad-hoc signature with sandbox-only entitle
 
 ### 功能与项目状态
 
-- 内存与磁盘纯色圆环，CPU、电池、网络上下行、系统热状态。
+- 内存与磁盘纯色圆环，CPU、电池、网络上下行、实时 CPU 温度。
 - 半透明卡片、克制的模块识别色，支持跟随系统、亮色和暗色模式。
 - 模块开关、自适应布局、中英日三语和登录时启动。
-- **本次下载不包含回收站访问或清空功能**，不提供历史曲线或具体温度。
+- **本次下载不包含回收站访问或清空功能**，不提供历史曲线。
 
 项目现阶段暂停主动开发，App Store 上架计划暂缓。GitHub 下载和源码继续保留，暂不承诺更新或支持时间。
 
