@@ -86,10 +86,11 @@ struct OmitDashboardState {
     var downloadValue: String
     var uploadValue: String
     var thermalState: ThermalState
+    var thermalValue: String? // 温度数值，例如 "65.5°C"
     var trash: TrashPresentation
 
-    static let standard = OmitDashboardState(memoryUsed: "13.8 GB", memoryTotal: "17.2 GB", memoryPercent: 0.80, storageAvailable: "219.8 GB", storageUsedPercent: 0.56, cpuValue: "24%", batteryValue: "100%", batteryPowerState: .fullyCharged, downloadValue: "3 KB/s", uploadValue: "1 KB/s", thermalState: .nominal, trash: .content("1.4 GB"))
-    static let unavailable = OmitDashboardState(memoryUsed: "13.8 GB", memoryTotal: "17.2 GB", memoryPercent: 0.80, storageAvailable: "219.8 GB", storageUsedPercent: 0.56, cpuValue: nil, batteryValue: nil, batteryPowerState: .onBattery, downloadValue: "—", uploadValue: "—", thermalState: .unavailable, trash: .error("Unable to scan"))
+    static let standard = OmitDashboardState(memoryUsed: "13.8 GB", memoryTotal: "17.2 GB", memoryPercent: 0.80, storageAvailable: "219.8 GB", storageUsedPercent: 0.56, cpuValue: "24%", batteryValue: "100%", batteryPowerState: .fullyCharged, downloadValue: "3 KB/s", uploadValue: "1 KB/s", thermalState: .nominal, thermalValue: "65.5°C", trash: .content("1.4 GB"))
+    static let unavailable = OmitDashboardState(memoryUsed: "13.8 GB", memoryTotal: "17.2 GB", memoryPercent: 0.80, storageAvailable: "219.8 GB", storageUsedPercent: 0.56, cpuValue: nil, batteryValue: nil, batteryPowerState: .onBattery, downloadValue: "—", uploadValue: "—", thermalState: .unavailable, thermalValue: nil, trash: .error("Unable to scan"))
 }
 
 struct ContentView: View {
@@ -150,12 +151,19 @@ struct ContentView: View {
         case .error(let message): trash = .error(message)
         }
 
+        let thermalValue: String?
+        if let temp = monitor.thermalTemperature {
+            thermalValue = String(format: "%.1f°C", temp)
+        } else {
+            thermalValue = nil
+        }
+
         return OmitDashboardState(
             memoryUsed: monitor.memoryUsedString, memoryTotal: monitor.memoryTotalString, memoryPercent: monitor.memoryPercent,
             storageAvailable: monitor.storageFreeString, storageUsedPercent: monitor.storageUsedPercent,
             cpuValue: cpuValue,
             batteryValue: batteryValue, batteryPowerState: batteryPowerState,
-            downloadValue: downloadValue, uploadValue: uploadValue, thermalState: monitor.thermalState, trash: trash
+            downloadValue: downloadValue, uploadValue: uploadValue, thermalState: monitor.thermalState, thermalValue: thermalValue, trash: trash
         )
     }
     private var dashboardState: OmitDashboardState {
@@ -426,7 +434,7 @@ struct OmitDashboardView: View {
         case .network:
             WideNetworkCard(state: state, language: language)
         case .thermal:
-            WideThermalStatusCard(state: state.thermalState, language: language)
+            WideThermalStatusCard(state: state.thermalState, temperature: state.thermalValue, language: language)
         case .trash:
             TrashCard(status: state.trash, language: language, onAuthorize: onAuthorizeTrash, onClear: onClearTrash)
         }
@@ -440,7 +448,7 @@ struct OmitDashboardView: View {
             CompactMetricCard(title: OmitLang.get("BATTERY", lang: language), value: state.batteryValue ?? "—", supportingValue: batteryStatusLabel, icon: batteryIcon, iconAccent: .omitBatteryGreen)
         case .network: NetworkCard(state: state, language: language)
         case .thermal:
-            ThermalStatusCard(state: state.thermalState, language: language)
+            ThermalStatusCard(state: state.thermalState, temperature: state.thermalValue, language: language)
         case .trash: TrashCard(status: state.trash, language: language, onAuthorize: onAuthorizeTrash, onClear: onClearTrash)
         }
     }
@@ -632,6 +640,7 @@ struct ModuleIcon: View {
 
 struct ThermalStatusCard: View {
     let state: ThermalState
+    let temperature: String?
     let language: Language
 
     var body: some View {
@@ -643,14 +652,33 @@ struct ThermalStatusCard: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
-
-            ThermalStatusIndicator(state: state, language: language)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(temperature ?? "—")
+                    .font(.system(size: 19, weight: .bold, design: .rounded))
+                    .foregroundStyle(temperatureColor(for: state))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                Text(ThermalStatusPresentation.label(for: state, language: language))
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.secondary.opacity(0.72))
+                    .lineLimit(2)
+            }
         }
         .padding(13)
         .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
         .modifier(CardSurface())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(OmitLang.get("THERMAL", lang: language)), \(ThermalStatusPresentation.label(for: state, language: language))")
+        .accessibilityLabel("\(OmitLang.get("THERMAL", lang: language)), \(temperature ?? "unavailable")")
+    }
+
+    private func temperatureColor(for state: ThermalState) -> Color {
+        switch state {
+        case .nominal: return Color.green.opacity(0.7)
+        case .fair: return Color.yellow.opacity(0.7)
+        case .serious: return Color.orange.opacity(0.7)
+        case .critical: return Color.red.opacity(0.7)
+        case .unavailable: return Color.secondary.opacity(0.5)
+        }
     }
 }
 
@@ -709,24 +737,44 @@ private struct ThermalStatusIndicator: View {
 
 struct WideThermalStatusCard: View {
     let state: ThermalState
+    let temperature: String?
     let language: Language
 
     var body: some View {
         HStack(spacing: 10) {
             ModuleIcon(icon: "thermometer.medium", accent: .omitThermalYellow)
-            Text(OmitLang.get("THERMAL", lang: language))
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(OmitLang.get("THERMAL", lang: language))
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                Text(ThermalStatusPresentation.label(for: state, language: language))
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.secondary.opacity(0.72))
+                    .lineLimit(1)
+            }
             Spacer(minLength: 12)
-            ThermalStatusIndicator(state: state, language: language)
-                .frame(width: 76, alignment: .leading)
+            Text(temperature ?? "—")
+                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .foregroundStyle(temperatureColor(for: state))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
         }
         .padding(.horizontal, 13)
         .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
         .modifier(CardSurface())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(OmitLang.get("THERMAL", lang: language)), \(ThermalStatusPresentation.label(for: state, language: language))")
+        .accessibilityLabel("\(OmitLang.get("THERMAL", lang: language)), \(temperature ?? "unavailable")")
+    }
+
+    private func temperatureColor(for state: ThermalState) -> Color {
+        switch state {
+        case .nominal: return Color.green.opacity(0.7)
+        case .fair: return Color.yellow.opacity(0.7)
+        case .serious: return Color.orange.opacity(0.7)
+        case .critical: return Color.red.opacity(0.7)
+        case .unavailable: return Color.secondary.opacity(0.5)
+        }
     }
 }
 
@@ -989,6 +1037,8 @@ private struct ThermalFixturePreview: View {
     private var fixtureState: OmitDashboardState {
         var fixture = OmitDashboardState.standard
         fixture.thermalState = thermalState
+        // 根据热状态设置温度数值
+        fixture.thermalValue = temperatureForState(thermalState)
         return fixture
     }
 
@@ -1005,6 +1055,16 @@ private struct ThermalFixturePreview: View {
             )
         }
         .preferredColorScheme(colorScheme)
+    }
+
+    private func temperatureForState(_ state: ThermalState) -> String? {
+        switch state {
+        case .nominal: return "45.2°C"
+        case .fair: return "65.8°C"
+        case .serious: return "82.5°C"
+        case .critical: return "95.0°C"
+        case .unavailable: return nil
+        }
     }
 }
 

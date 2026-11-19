@@ -15,6 +15,7 @@ final class SystemMonitor: ObservableObject {
     @Published private(set) var batteryState: BatteryState = .unavailable
     @Published private(set) var networkState: NetworkState = .unavailable
     @Published private(set) var thermalState: ThermalState = .unavailable
+    @Published private(set) var thermalTemperature: Double? = nil  // 实际温度数值
     @Published private(set) var trashState: TrashState = .unauthorized
     @Published private(set) var trashClearReport: TrashClearReport?
     @Published private(set) var samplingFailures: [MetricKind: MetricSamplingError] = [:]
@@ -162,6 +163,7 @@ final class SystemMonitor: ObservableObject {
             cpuState = snapshot.cpu
             networkState = snapshot.network
             thermalState = snapshot.thermal
+            thermalTemperature = snapshot.thermalTemperature
             replaceFailures(for: [.cpu, .network, .thermal], with: snapshot.failures)
 
         case .memory(let result):

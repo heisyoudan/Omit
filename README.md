@@ -1,7 +1,7 @@
 <p align="center"><img src="resources/icon.png" width="120" alt="Omit icon"></p>
 <h1 align="center">Omit.</h1>
 <p align="center">
-  <a href="https://github.com/heisyoudan/Omit/raw/main/dist/Omit.zip"><strong>📥 Download Omit 1.1.0</strong></a>
+  <a href="https://github.com/heisyoudan/Omit/raw/main/dist/Omit.zip"><strong>📥 Download Omit 1.1.1</strong></a>
   &nbsp;•&nbsp;
   <a href="#english">English</a> • <a href="#中文">中文</a> • <a href="#日本語">日本語</a>
 </p>
@@ -40,7 +40,7 @@ Compare `shasum -a 256 Omit.zip` with [SHA256SUMS](dist/SHA256SUMS) to check dow
 - **CPU:** aggregate utilization over a sampling interval, not a per-process measurement.
 - **Network:** separate receive/transmit rates for the current primary routed interface, not all interfaces combined. Startup, interface changes, disconnects, or counter resets may briefly show `—`.
 - **Battery:** percentage and power-source state; omitted on Macs without a battery.
-- **Thermal:** real-time CPU temperature in Celsius (via SMC sensors). Temperature ranges: nominal (< 60°C), fair (60–75°C), serious (75–90°C), critical (≥ 90°C). **v1.1.0+:** now shows actual hardware temperature, not system thermal management state.
+- **Thermal:** CPU temperature in Celsius via SMC sensors, with macOS thermal-state fallback when a sensor is unavailable. Temperature ranges: nominal (< 60°C), fair (60–75°C), serious (75–90°C), critical (≥ 90°C). **M4 support is locally verified; M1-M3 and Intel support is implemented as fallback and is not yet physically verified.**
 
 Metric, scheduling, capability, and 16-layout checks are available in `scripts/`. These checks do not guarantee coverage of every machine or failure condition. See [metric semantics](doc/PRODUCT_SPEC.md).
 
@@ -54,7 +54,7 @@ With Xcode and its command-line tools installed, reproduce the Universal communi
 bash scripts/package-github.sh
 ```
 
-The script builds Release, applies an ad-hoc signature with sandbox-only entitlements, verifies the bundle, and writes `dist/Omit.zip` plus its checksum. It does not notarize or upload anything.
+The script builds Release, applies an ad-hoc signature with IOKit entitlements required for SMC access, verifies the bundle, and writes `dist/Omit.zip` plus its checksum. It does not notarize or upload anything.
 
 ## 中文
 
@@ -79,7 +79,7 @@ The script builds Release, applies an ad-hoc signature with sandbox-only entitle
 
 ### 数据口径与源码
 
-内存是有边界保护的占用估算，不保证与"活动监视器"逐字节一致。磁盘主值为启动卷可用空间，圆环与百分比表示已用空间。CPU 为采样区间内的整机利用率。网络分别读取当前主路由接口的上下行计数，并非所有网卡总和；启动、断网或切换接口时可能短暂显示 `—`。无电池的 Mac 不显示电池卡片。**热状态现已显示实际 CPU 温度（℃），通过 SMC 传感器读取。** 温度级别：正常 (< 60°C)、升高 (60–75°C)、较高 (75–90°C)、临界 (≥ 90°C)。**v1.1.0+：** 完全改用硬件温度而非系统热管理状态。
+内存是有边界保护的占用估算，不保证与"活动监视器"逐字节一致。磁盘主值为启动卷可用空间，圆环与百分比表示已用空间。CPU 为采样区间内的整机利用率。网络分别读取当前主路由接口的上下行计数，并非所有网卡总和；启动、断网或切换接口时可能短暂显示 `—`。无电池的 Mac 不显示电池卡片。**温度通过 SMC 传感器读取；传感器不可用时保留 macOS 热管理状态作为回退。** 温度级别：正常 (< 60°C)、升高 (60–75°C)、较高 (75–90°C)、临界 (≥ 90°C)。**M4 已在本机验证；M1-M3 与 Intel 为回退实现，目前尚未在实机逐一验证。**
 
 仓库保留指标、调度、能力隔离及 16 种布局的自动检查，但不保证所有机器和异常情况都没有问题。自行编译可打开 `Omit.xcodeproj`；打包使用 `bash scripts/package-github.sh`。默认构建不启用回收站，内部 `OMIT_APP_STORE` 标志只用于选择受限能力，并不代表上架。旧 Direct/Trash 代码仅为未来开发保留。
 
@@ -106,7 +106,7 @@ The script builds Release, applies an ad-hoc signature with sandbox-only entitle
 
 ### 表示値とソースについて
 
-メモリは使用量推定で、アクティビティモニタとの完全一致は保証しません。ストレージの主値は起動ボリュームの空き容量、リングと割合は使用済み容量です。CPU は一定区間の全体使用率です。ネットワークは主ルートインターフェイスの送受信を別々に計測し、全インターフェイスの合計ではありません。起動直後や接続変更時は一時的に `—` になる場合があります。バッテリー非搭載機ではバッテリーカードを表示しません。**熱状態は実際の CPU 温度（℃）を SMC センサー経由で読み取った値です。** 温度レベル：通常 (< 60°C)、上昇 (60–75°C)、高い (75–90°C)、危機的 (≥ 90°C)。**v1.1.0+：** ハードウェア温度を使用し、システム熱管理状態に切り替えられました。
+メモリは使用量推定で、アクティビティモニタとの完全一致は保証しません。ストレージの主値は起動ボリュームの空き容量、リングと割合は使用済み容量です。CPU は一定区間の全体使用率です。ネットワークは主ルートインターフェイスの送受信を別々に計測し、全インターフェイスの合計ではありません。起動直後や接続変更時は一時的に `—` になる場合があります。バッテリー非搭載機ではバッテリーカードを表示しません。**温度は SMC センサーから取得し、センサーが利用できない場合は macOS の熱管理状態を表示します。** 温度レベル：通常 (< 60°C)、上昇 (60–75°C)、高い (75–90°C)、危機的 (≥ 90°C)。**M4 は実機で確認済みです。M1-M3 と Intel はフォールバック実装で、実機検証は未完了です。**
 
 自動検証は `scripts/` にありますが、すべての機種・異常状態を保証するものではありません。ビルドには `Omit.xcodeproj`、パッケージ作成には `bash scripts/package-github.sh` を使用します。デフォルト構成ではゴミ箱機能は無効です。内部の `OMIT_APP_STORE` フラグは機能制限の選択用で、App Store への申請を意味しません。旧 Direct/Trash コードは将来の開発用に残しています。
 

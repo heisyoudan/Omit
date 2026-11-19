@@ -18,6 +18,7 @@ nonisolated struct FastProjection: Sendable {
     let cpu: CPUState
     let network: NetworkState
     let thermal: ThermalState
+    let thermalTemperature: Double?  // 实际温度数值
     let failures: [MetricKind: MetricSamplingError]
 }
 nonisolated struct SlowProjection: Sendable {
@@ -113,6 +114,7 @@ actor SystemMetricSampler {
         #if DEBUG
         let debugContext = beginDebugSample(groupName: debugGroupName(group))
         #endif
+
         let projection: MonitorProjection = switch group {
         case .fast: .fast(sampleFast())
         case .memory: .memory(sampleMemory())
@@ -165,14 +167,19 @@ actor SystemMetricSampler {
         } else {
             network = .unavailable
         }
-        
+
         // 读取实际的 SMC 温度数据，而不是系统热状态
         let thermalReading = SMCTemperatureSensor.readTemperatures()
-        let mappedThermalState = ThermalState.mapFromTemperature(
-            thermalReading.cpuTemperature,
-            systemTemp: thermalReading.systemTemperature
-        )
-        
+        let mappedThermalState: ThermalState
+        if let cpuTemperature = thermalReading.cpuTemperature {
+            mappedThermalState = ThermalState.mapFromTemperature(
+                cpuTemperature,
+                systemTemp: thermalReading.systemTemperature
+            )
+        } else {
+            mappedThermalState = ThermalState.map(ProcessInfo.processInfo.thermalState)
+        }
+
         #if DEBUG
         debugNetworkTrace = DebugNetworkTrace(
             interfaceName: networkCounter?.interfaceName,
@@ -192,6 +199,7 @@ actor SystemMetricSampler {
             cpu: cpu,
             network: network,
             thermal: mappedThermalState,
+            thermalTemperature: thermalReading.cpuTemperature,
             failures: failures
         )
     }

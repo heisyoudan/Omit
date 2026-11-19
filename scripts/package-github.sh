@@ -13,7 +13,7 @@ xcodebuild -quiet -project Omit.xcodeproj -scheme Omit \
   SWIFT_ACTIVE_COMPILATION_CONDITIONS=OMIT_APP_STORE build
 
 package_app="$package_work/DerivedData/Build/Products/Release/Omit.app"
-codesign --force --sign - --entitlements Omit/Omit-AppStore.entitlements "$package_app"
+codesign --force --sign - --entitlements Omit/Omit.entitlements "$package_app"
 codesign --verify --deep --strict "$package_app"
 lipo "$package_app/Contents/MacOS/Omit" -verify_arch arm64 x86_64
 mkdir -p dist
